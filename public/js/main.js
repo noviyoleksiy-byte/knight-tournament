@@ -481,7 +481,7 @@ var recStr =
 ' · Кубков: ' +
 (k.titles || 0) +
 ' · Турнир: x' +
-Number(k.outrightOdds || 5).toFixed(1);
+Number(k.outrightOdds || 5).toFixed(2);
 
 return (
 '<div class="' +
@@ -1008,6 +1008,8 @@ if (c.mode === 'JOUST') {
 var prog = Math.min(1, elapsed / 5.2);
 var x1 = 160;
 var x2 = 1640;
+var facing1 = 1.45;
+var facing2 = -1.45;
 var pose1 = 'ready';
 var pose2 = 'ready';
 var fallen1 = false;
@@ -1062,13 +1064,11 @@ x2 = 1620 - easeIn * 680;
 pose1 = 'run';
 pose2 = 'run';
 } else {
-// horses run to opposite ends and stop
+// horses run to ends turn to center and rear
 var tAfter = (prog - 0.56) / 0.44;
-var tRun = Math.min(1, tAfter / 0.84);
-x1 = 860 + tRun * 780;
-x2 = 940 - tRun * 780;
-pose1 = tRun < 1 ? 'run' : 'idle';
-pose2 = tRun < 1 ? 'run' : 'idle';
+var tRun = Math.min(1, tAfter / 0.72);
+x1 = 860 + tRun * 760;
+x2 = 940 - tRun * 760;
 
 if (c.unseated1) {
 pose1 =
@@ -1076,11 +1076,13 @@ tRun < 1
 ? 'horse_only_run'
 : 'horse_only_idle';
 fallen1 = true;
-} else if (
-c.winnerSide === 1 &&
-tRun >= 1
-) {
-pose1 = 'victory';
+} else if (tRun < 1) {
+pose1 = 'run';
+} else {
+// turn left toward center and rear on hind legs
+facing1 = -1.45;
+pose1 =
+c.winnerSide === 1 ? 'victory' : 'rear';
 }
 
 if (c.unseated2) {
@@ -1089,11 +1091,13 @@ tRun < 1
 ? 'horse_only_run'
 : 'horse_only_idle';
 fallen2 = true;
-} else if (
-c.winnerSide === 2 &&
-tRun >= 1
-) {
-pose2 = 'victory';
+} else if (tRun < 1) {
+pose2 = 'run';
+} else {
+// turn right toward center and rear on hind legs
+facing2 = 1.45;
+pose2 =
+c.winnerSide === 2 ? 'victory' : 'rear';
 }
 }
 
@@ -1101,7 +1105,7 @@ window.KnightArt.drawMountedKnight(
 ctx,
 x1,
 370,
-1.45,
+facing1,
 visK1,
 animClock,
 pose1
@@ -1110,7 +1114,7 @@ window.KnightArt.drawMountedKnight(
 ctx,
 x2,
 370,
--1.45,
+facing2,
 visK2,
 animClock,
 pose2

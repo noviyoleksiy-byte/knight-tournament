@@ -662,105 +662,229 @@ if (k.isTired) score -= 18;
 return Math.max(30, score);
 }
 
-// compute match and outright bookmaker odds
-// we shift odds by history and money pool
-function updateAllOdds(state) {
-if (!state || !state.matches) return;
+// compute win probability for k1 vs k2
+// combines live combat score and bet pool
+function getMatchWinProb(
+k1,
+k2,
+matchIdx,
+state
+) {
+if (!k1 || !k2) return 0.5;
 var curIdx = state.currentMatchIndex;
-var curMode =
-state.combat && state.combat.mode === 'MELEE'
+var isLive = matchIdx === curIdx;
+var mode =
+isLive &&
+state.combat &&
+state.combat.mode === 'MELEE'
 ? 'MELEE'
 : 'JOUST';
+
+var s1 = calcPowerScore(k1, mode);
+var s2 = calcPowerScore(k2, mode);
+var wBase1 = Math.pow(s1, 2.2);
+var wBase2 = Math.pow(s2, 2.2);
+var p1 = wBase1 / (wBase1 + wBase2);
+
+var bet1 = 0;
+var bet2 = 0;
+var bets = state.activeBets || [];
+var outWeight = matchIdx === 6 ? 1.0 : 0.35;
+
+for (var b = 0; b < bets.length; b++) {
+var bet = bets[b];
+if (bet.betType === 'MATCH' && isLive) {
+if (bet.knightId === k1.id) {
+bet1 += bet.amount;
+} else if (bet.knightId === k2.id) {
+bet2 += bet.amount;
+}
+} else if (bet.betType === 'OUTRIGHT') {
+if (bet.knightId === k1.id) {
+bet1 += bet.amount * outWeight;
+} else if (bet.knightId === k2.id) {
+bet2 += bet.amount * outWeight;
+}
+}
+}
+
+var liq = 800;
+var w1 = liq * p1 + bet1;
+var w2 = liq * (1 - p1) + bet2;
+p1 = w1 / (w1 + w2);
+return Math.max(0.15, Math.min(0.85, p1));
+}
+
+// compute match and outright bookmaker odds
+// uses exact bracket tree so final matches
+function updateAllOdds(state) {
+if (!state || !state.matches) return;
+var vig = 1.06;
 
 for (var i = 0; i < state.matches.length; i++) {
 var m = state.matches[i];
 if (!m.k1 || !m.k2) continue;
 
-var s1 = calcPowerScore(
+var p1 = getMatchWinProb(
 m.k1,
-i === curIdx ? curMode : 'JOUST'
-);
-var s2 = calcPowerScore(
 m.k2,
-i === curIdx ? curMode : 'JOUST'
+i,
+state
 );
-
-var p1 = s1 / (s1 + s2);
-p1 = Math.max(0.18, Math.min(0.82, p1));
 var p2 = 1 - p1;
 
-// apply money line shift on active match
-if (i === curIdx) {
-var bet1 = 0;
-var bet2 = 0;
-var bets = state.activeBets || [];
-for (var b = 0; b < bets.length; b++) {
-if (bets[b].betType === 'MATCH') {
-if (bets[b].knightId === m.k1.id) {
-bet1 += bets[b].amount;
-} else if (bets[b].knightId === m.k2.id) {
-bet2 += bets[b].amount;
-}
-}
-}
-var liq = 900;
-var w1 = liq * p1 + bet1;
-var w2 = liq * p2 + bet2;
-p1 = w1 / (w1 + w2);
-p2 = 1 - p1;
-}
-
-// add bookmaker vig and round nicely
-var vig = 1.06;
 m.odds1 = Math.max(
 1.12,
-Math.min(5.8, 1 / (p1 * vig))
+Math.min(6.5, 1 / (p1 * vig))
 ).toFixed(2);
 m.odds2 = Math.max(
 1.12,
-Math.min(5.8, 1 / (p2 * vig))
+Math.min(6.5, 1 / (p2 * vig))
 ).toFixed(2);
 }
 
-// compute outright tournament odds
-var alive = state.aliveKnights || [];
-var totalScore = 0;
-var scores = {};
-for (var a = 0; a < alive.length; a++) {
-var ak = alive[a];
-var sc = calcPowerScore(ak, 'JOUST');
-var outBets = 0;
-for (
-var ob = 0;
-ob < state.activeBets.length;
-ob++
-) {
-var bet = state.activeBets[ob];
-if (
-bet.betType === 'OUTRIGHT' &&
-bet.knightId === ak.id
-) {
-outBets += bet.amount * 0.12;
+// build semi-finalists from quarterfinals
+function getQuarterSurvivors(qIdx) {
+var mq = state.matches[qIdx];
+if (!mq || !mq.k1 || !mq.k2) return [];
+if (mq.status === 'DONE') {
+var wk =
+mq.winnerId === mq.k1.id ? mq.k1 : mq.k2;
+return [{ k: wk, p: 1.0 }];
 }
-}
-scores[ak.id] = sc + outBets;
-totalScore += scores[ak.id];
+var pq1 = getMatchWinProb(
+mq.k1,
+mq.k2,
+qIdx,
+state
+);
+return [
+{ k: mq.k1, p: pq1 },
+{ k: mq.k2, p: 1 - pq1 }
+];
 }
 
+// build finalists from one bracket half
+function getHalfFinalists(sfIdx, qA, qB) {
+var msf = state.matches[sfIdx];
+if (msf && msf.status === 'DONE') {
+var wsf =
+msf.winnerId === msf.k1.id
+? msf.k1
+: msf.k2;
+return [{ k: wsf, p: 1.0 }];
+}
+var listA =
+msf && msf.k1
+? [{ k: msf.k1, p: 1.0 }]
+: getQuarterSurvivors(qA);
+var listB =
+msf && msf.k2
+? [{ k: msf.k2, p: 1.0 }]
+: getQuarterSurvivors(qB);
+
+var out = [];
+for (var a = 0; a < listA.length; a++) {
+var ca = listA[a];
+var sumA = 0;
+for (var b = 0; b < listB.length; b++) {
+var cb = listB[b];
+sumA +=
+cb.p *
+getMatchWinProb(
+ca.k,
+cb.k,
+sfIdx,
+state
+);
+}
+out.push({ k: ca.k, p: ca.p * sumA });
+}
+for (var b2 = 0; b2 < listB.length; b2++) {
+var cb2 = listB[b2];
+var sumB = 0;
+for (var a2 = 0; a2 < listA.length; a2++) {
+var ca2 = listA[a2];
+var pA2 = getMatchWinProb(
+ca2.k,
+cb2.k,
+sfIdx,
+state
+);
+sumB += ca2.p * (1 - pA2);
+}
+out.push({ k: cb2.k, p: cb2.p * sumB });
+}
+return out;
+}
+
+var mFinal = state.matches[6];
+var westFinalists =
+mFinal && mFinal.k1
+? [{ k: mFinal.k1, p: 1.0 }]
+: getHalfFinalists(4, 0, 1);
+var eastFinalists =
+mFinal && mFinal.k2
+? [{ k: mFinal.k2, p: 1.0 }]
+: getHalfFinalists(5, 2, 3);
+
+var champProb = {};
+for (
+var w = 0;
+w < westFinalists.length;
+w++
+) {
+var cw = westFinalists[w];
+var winSumW = 0;
+for (
+var e = 0;
+e < eastFinalists.length;
+e++
+) {
+var ce = eastFinalists[e];
+winSumW +=
+ce.p *
+getMatchWinProb(cw.k, ce.k, 6, state);
+}
+champProb[cw.k.id] = cw.p * winSumW;
+}
+
+for (
+var e2 = 0;
+e2 < eastFinalists.length;
+e2++
+) {
+var ce2 = eastFinalists[e2];
+var winSumE = 0;
+for (
+var w2 = 0;
+w2 < westFinalists.length;
+w2++
+) {
+var cw2 = westFinalists[w2];
+var pW2 = getMatchWinProb(
+cw2.k,
+ce2.k,
+6,
+state
+);
+winSumE += cw2.p * (1 - pW2);
+}
+champProb[ce2.k.id] = ce2.p * winSumE;
+}
+
+var alive = state.aliveKnights || [];
 for (var u = 0; u < alive.length; u++) {
 var uk = alive[u];
-var prob =
-totalScore > 0
-? scores[uk.id] / totalScore
-: 0.125;
-var rawOdd = 1 / (prob * 1.08);
+var prob = champProb[uk.id] || 0.125;
+var rawOdd = 1 / (prob * vig);
 uk.outrightOdds = Math.max(
-1.35,
-Math.min(14.0, rawOdd)
+1.12,
+Math.min(18.0, rawOdd)
 ).toFixed(2);
 }
 
-// sync outright odds into match slots
+// sync outright odds into all match slots
 for (var x = 0; x < state.matches.length; x++) {
 var mx = state.matches[x];
 for (var y = 0; y < alive.length; y++) {
@@ -936,21 +1060,6 @@ loseK.losses = rk.losses;
 }
 }
 
-// remove loser from alive knights list
-var nextAlive = [];
-for (
-var a = 0;
-a < gameState.aliveKnights.length;
-a++
-) {
-if (
-gameState.aliveKnights[a].id !== loseK.id
-) {
-nextAlive.push(gameState.aliveKnights[a]);
-}
-}
-gameState.aliveKnights = nextAlive;
-
 // pay winning match bets to tables
 var remainingBets = [];
 var payLogs = [];
@@ -983,6 +1092,22 @@ JSON.stringify(winK)
 );
 promoted.isTired = false;
 promoted.stamina = 100;
+
+// remove loser and sync promoted reference
+var nextAlive = [];
+for (
+var a = 0;
+a < gameState.aliveKnights.length;
+a++
+) {
+var ak = gameState.aliveKnights[a];
+if (ak.id === winK.id) {
+nextAlive.push(promoted);
+} else if (ak.id !== loseK.id) {
+nextAlive.push(ak);
+}
+}
+gameState.aliveKnights = nextAlive;
 
 if (idx === 0) {
 gameState.matches[4].k1 = promoted;

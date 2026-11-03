@@ -1794,23 +1794,53 @@ poseState === 'run' ||
 poseState === 'horse_only_run';
 var isStoppedHorse =
 poseState === 'horse_only_idle';
+var isRear =
+hasRider &&
+(poseState === 'rear' ||
+poseState === 'victory');
 
 var bounceY = isRun
 ? Math.sin(animPhase * 14) * 4.5
-: isStoppedHorse
+: isStoppedHorse || isRear
 ? 0
 : Math.sin(animPhase * 3.5) * 1.5;
 
 ctx.translate(-122, -88 + bounceY);
 
-var legA = isRun
-? Math.sin(animPhase * 14) * 30
+// pivot horse onto hind legs when rearing
+var rearDeg = isRear
+? -26 + Math.sin(animPhase * 6) * 2.5
 : 0;
-var legB = isRun
+if (isRear) {
+ctx.translate(88, 108);
+ctx.rotate((rearDeg * Math.PI) / 180);
+ctx.translate(-88, -108);
+}
+
+var hindLegA = isRun
+? Math.sin(animPhase * 14) * 30
+: isRear
+? -rearDeg + 4
+: 0;
+var hindLegB = isRun
 ? -Math.sin(animPhase * 14) * 30
+: isRear
+? -rearDeg - 2
+: 0;
+var frontLegA = isRun
+? Math.sin(animPhase * 14) * 30
+: isRear
+? -34 + Math.sin(animPhase * 8) * 14
+: 0;
+var frontLegB = isRun
+? -Math.sin(animPhase * 14) * 30
+: isRear
+? -18 - Math.sin(animPhase * 8) * 14
 : 0;
 var tailWave = isRun
 ? 18 + Math.sin(animPhase * 14) * 12
+: isRear
+? 24 + Math.sin(animPhase * 6) * 6
 : isStoppedHorse
 ? 4
 : Math.sin(animPhase * 3) * 5;
@@ -1824,12 +1854,12 @@ tailWave,
 coat.mane
 );
 
-// 2. far pony legs
+// 2. far pony legs (hind and front)
 drawPonyLeg(
 ctx,
 98,
 96,
-legA,
+hindLegA,
 coat.leg,
 coat.sock
 );
@@ -1837,7 +1867,7 @@ drawPonyLeg(
 ctx,
 150,
 94,
-legB,
+frontLegB,
 coat.leg,
 coat.sock
 );
@@ -1894,12 +1924,12 @@ ctx.closePath();
 ctx.fill();
 ctx.stroke();
 
-// 6. near pony legs
+// 6. near pony legs (hind and front)
 drawPonyLeg(
 ctx,
 78,
 94,
-legB,
+hindLegB,
 coat.body,
 coat.sock
 );
@@ -1907,7 +1937,7 @@ drawPonyLeg(
 ctx,
 132,
 96,
-legA,
+frontLegA,
 coat.body,
 coat.sock
 );
@@ -1915,9 +1945,14 @@ coat.sock
 // 7. cute pony head and ears
 ctx.save();
 var headDroop = tired ? 10 : 0;
+var headTilt = isRear
+? 14
+: isRun
+? 4
+: 0;
 ctx.translate(172, 62);
 ctx.rotate(
-((headDroop + (isRun ? 4 : 0)) * Math.PI) /
+((headDroop + headTilt) * Math.PI) /
 180
 );
 ctx.translate(-172, -62);
@@ -2018,6 +2053,9 @@ ctx.restore();
 if (hasRider) {
 ctx.save();
 ctx.translate(116, 46);
+if (isRear) {
+ctx.rotate(0.22);
+}
 
 fillRoundBox(
 ctx,
@@ -2062,7 +2100,9 @@ if (poseState !== 'parade_no_lance') {
 ctx.save();
 var lAng =
 poseState === 'victory'
-? -0.95
+? -0.82
+: poseState === 'rear'
+? -0.64
 : poseState === 'ready'
 ? -0.38
 : 0.02;

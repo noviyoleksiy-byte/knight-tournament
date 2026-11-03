@@ -1,8 +1,8 @@
 {
   "pubSeed": 257,
   "tournamentNumber": 3,
-  "lastChampionId": "K5",
-  "lastFinalistId": "K2",
+  "lastChampionId": null,
+  "lastFinalistId": null,
   "roster": [
     {
       "id": "K1",
@@ -19,7 +19,7 @@
       "gritSkill": 74,
       "isRare": false,
       "wins": 0,
-      "losses": 1,
+      "losses": 0,
       "titles": 0,
       "poolIndex": 2
     },
@@ -37,8 +37,8 @@
       "meleeSkill": 83,
       "gritSkill": 86,
       "isRare": false,
-      "wins": 2,
-      "losses": 1,
+      "wins": 0,
+      "losses": 0,
       "titles": 0,
       "poolIndex": 29
     },
@@ -94,9 +94,9 @@
       "meleeSkill": 81,
       "gritSkill": 83,
       "isRare": false,
-      "wins": 3,
+      "wins": 0,
       "losses": 0,
-      "titles": 1,
+      "titles": 0,
       "poolIndex": 42
     },
     {
@@ -114,7 +114,7 @@
       "gritSkill": 78,
       "isRare": false,
       "wins": 0,
-      "losses": 1,
+      "losses": 0,
       "titles": 0,
       "poolIndex": 68
     },
@@ -133,7 +133,7 @@
       "gritSkill": 91,
       "isRare": false,
       "wins": 0,
-      "losses": 0,
+      "losses": 1,
       "titles": 0,
       "poolIndex": 61
     },
@@ -190,7 +190,7 @@
       "gritSkill": 75,
       "isRare": false,
       "wins": 0,
-      "losses": 1,
+      "losses": 0,
       "titles": 0,
       "poolIndex": 97
     },
@@ -208,7 +208,7 @@
       "meleeSkill": 82,
       "gritSkill": 81,
       "isRare": false,
-      "wins": 0,
+      "wins": 1,
       "losses": 0,
       "titles": 0,
       "poolIndex": 94
@@ -266,7 +266,7 @@
       "gritSkill": 75,
       "isRare": false,
       "wins": 0,
-      "losses": 1,
+      "losses": 0,
       "titles": 0,
       "poolIndex": 123
     },
@@ -284,8 +284,8 @@
       "meleeSkill": 75,
       "gritSkill": 78,
       "isRare": false,
-      "wins": 1,
-      "losses": 1,
+      "wins": 0,
+      "losses": 0,
       "titles": 0,
       "poolIndex": 116
     },
@@ -303,8 +303,8 @@
       "meleeSkill": 72,
       "gritSkill": 77,
       "isRare": false,
-      "wins": 1,
-      "losses": 1,
+      "wins": 0,
+      "losses": 0,
       "titles": 0,
       "poolIndex": 112
     },
@@ -465,7 +465,7 @@
     {
       "id": 1,
       "name": "Стол №1",
-      "balance": 400
+      "balance": 666
     },
     {
       "id": 2,
@@ -475,7 +475,7 @@
     {
       "id": 3,
       "name": "Стол №3",
-      "balance": 500
+      "balance": 730
     },
     {
       "id": 4,
