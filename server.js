@@ -313,6 +313,8 @@ function selectPubTemplates(seed) {
 var picked = [];
 var usedFirst = {};
 var usedTitles = {};
+var usedNouns = {};
+var usedAdjs = {};
 
 for (var c = 0; c < 6; c++) {
 // pick 4 distinct helmets for color c
@@ -336,7 +338,9 @@ var cand =
 MASTER_KNIGHTS[c * 36 + h * 6 + s];
 if (
 !usedFirst[cand.first] &&
-!usedTitles[cand.secretTitle]
+!usedTitles[cand.secretTitle] &&
+!usedNouns[cand.noun] &&
+!usedAdjs[cand.adj]
 ) {
 chosen = cand;
 break;
@@ -349,6 +353,8 @@ MASTER_KNIGHTS[c * 36 + h * 6 + baseS];
 
 usedFirst[chosen.first] = true;
 usedTitles[chosen.secretTitle] = true;
+usedNouns[chosen.noun] = true;
+usedAdjs[chosen.adj] = true;
 picked.push(chosen);
 }
 }

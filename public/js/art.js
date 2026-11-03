@@ -1466,7 +1466,7 @@ ctx.fillRect(0, 0, w, wallBottomY);
 
 // 2. distant castle towers on left & right
 var towerW = Math.max(48, w * 0.08);
-var towerTop = Math.max(8, wallBottomY - 155);
+var towerTop = 4;
 ctx.fillStyle = '#334155';
 ctx.strokeStyle = '#090D16';
 ctx.lineWidth = 2;
@@ -1495,19 +1495,23 @@ towerW,
 wallBottomY - towerTop
 );
 
-var wallH = Math.max(42, wallBottomY * 0.36);
+var wallH = Math.max(42, wallBottomY * 0.34);
 var wallTop = wallBottomY - wallH;
 var merlonW = Math.max(22, Math.floor(w / 32));
 var gapW = Math.max(14, Math.floor(merlonW * 0.62));
 var stepX = merlonW + gapW;
 var merlonH = Math.max(14, wallH * 0.34);
 
-// 3. tiered bleachers & spectators behind wall
-// adapted from circus-tiger-runner renderer
+// 3. 5 tiered rows of larger spectators
+// fills upper stands without empty space
 if (w >= 600) {
-var stLeft = w * 0.135;
-var stRight = w * 0.865;
-var standsTop = Math.max(6, wallTop - 86);
+var stLeft = w * 0.132;
+var stRight = w * 0.868;
+var standsTop = 4;
+var numRows = wallTop > 130 ? 5 : 4;
+var rowStep = Math.floor(
+(wallTop - standsTop - 6) / numRows
+);
 
 ctx.fillStyle = '#151E2E';
 ctx.fillRect(
@@ -1517,42 +1521,42 @@ stRight - stLeft,
 wallTop - standsTop + 8
 );
 
-var seatStep = 34;
-for (var row = 0; row < 3; row++) {
-var rowY = standsTop + 18 + row * 24;
-ctx.strokeStyle = 'rgba(248,250,252,0.09)';
+var seatStep = 38;
+for (var row = 0; row < numRows; row++) {
+var rowY = standsTop + 16 + row * rowStep;
+ctx.strokeStyle = 'rgba(248,250,252,0.10)';
 ctx.lineWidth = 2;
 ctx.beginPath();
-ctx.moveTo(stLeft, rowY + 12);
-ctx.lineTo(stRight, rowY + 12);
+ctx.moveTo(stLeft, rowY + 14);
+ctx.lineTo(stRight, rowY + 14);
 ctx.stroke();
 
 for (
-var sx = stLeft + 20;
-sx < stRight - 18;
+var sx = stLeft + 22;
+sx < stRight - 20;
 sx += seatStep
 ) {
 var seed =
-Math.round(sx / seatStep) + row * 17;
+Math.round(sx / seatStep) + row * 19;
 var bounceSpeed = isVictory
 ? 9.0
 : isCheer
 ? 7.0
 : 3.0;
 var bounceAmp = isVictory
-? 6.5
+? 7.5
 : isCheer
-? 4.5
-: 1.8;
+? 5.2
+: 2.0;
 var bob =
 Math.abs(
 Math.sin(t * bounceSpeed + seed * 1.3)
 ) * bounceAmp;
 
-var px = sx + (row % 2) * 14;
+var px = sx + (row % 2) * 16;
 var py = rowY - bob;
 
-// spectator tunic in pub medieval colors
+// larger spectator shoulders (r = 12.2)
 var tunicIdx = seed % 5;
 ctx.fillStyle =
 tunicIdx === 0
@@ -1565,26 +1569,26 @@ tunicIdx === 0
 ? '#065F46'
 : '#881337';
 ctx.beginPath();
-ctx.arc(px, py + 8, 10, Math.PI, 0);
+ctx.arc(px, py + 10, 12.2, Math.PI, 0);
 ctx.fill();
 
-// spectator head
+// larger spectator head (r = 7.8)
 ctx.fillStyle = '#FED7AA';
 ctx.beginPath();
-ctx.arc(px, py - 2, 6.5, 0, Math.PI * 2);
+ctx.arc(px, py - 2, 7.8, 0, Math.PI * 2);
 ctx.fill();
 
 // wave arms when cheering in melee or win
 if (isCheer) {
 ctx.strokeStyle = '#FED7AA';
-ctx.lineWidth = 2.5;
+ctx.lineWidth = 3;
 var armWave =
-Math.sin(t * 10 + seed) * 5;
+Math.sin(t * 10 + seed) * 6;
 ctx.beginPath();
-ctx.moveTo(px - 6, py + 4);
-ctx.lineTo(px - 11, py - 7 + armWave);
-ctx.moveTo(px + 6, py + 4);
-ctx.lineTo(px + 11, py - 7 - armWave);
+ctx.moveTo(px - 8, py + 5);
+ctx.lineTo(px - 14, py - 8 + armWave);
+ctx.moveTo(px + 8, py + 5);
+ctx.lineTo(px + 14, py - 8 - armWave);
 ctx.stroke();
 }
 }
