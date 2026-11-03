@@ -1444,58 +1444,154 @@ ctx,
 ctx.restore();
 }
 
-// draw castle wall and dark green meadow
-// gives bright stone and grass contrast
+// draw castle wall spectators and meadow
+// crowd cheers in melee and on victory
 function drawCastleScene(
 ctx,
 w,
 h,
 wallBottomY,
-showRail
+showRail,
+animPhase,
+crowdMood
 ) {
+var t = animPhase || 0;
+var isVictory = crowdMood === 'VICTORY';
+var isCheer =
+isVictory || crowdMood === 'CHEER';
+
 // 1. twilight slate sky backdrop
 ctx.fillStyle = '#1E293B';
 ctx.fillRect(0, 0, w, wallBottomY);
 
 // 2. distant castle towers on left & right
 var towerW = Math.max(48, w * 0.08);
-var towerTop = Math.max(8, wallBottomY - 145);
+var towerTop = Math.max(8, wallBottomY - 155);
 ctx.fillStyle = '#334155';
 ctx.strokeStyle = '#090D16';
 ctx.lineWidth = 2;
 ctx.fillRect(
-w * 0.06,
+w * 0.05,
 towerTop,
 towerW,
 wallBottomY - towerTop
 );
 ctx.strokeRect(
-w * 0.06,
+w * 0.05,
 towerTop,
 towerW,
 wallBottomY - towerTop
 );
 ctx.fillRect(
-w * 0.86,
+w * 0.87,
 towerTop,
 towerW,
 wallBottomY - towerTop
 );
 ctx.strokeRect(
-w * 0.86,
+w * 0.87,
 towerTop,
 towerW,
 wallBottomY - towerTop
 );
 
-// 3. crenellated stone castle wall
-var wallH = Math.max(42, wallBottomY * 0.42);
+var wallH = Math.max(42, wallBottomY * 0.36);
 var wallTop = wallBottomY - wallH;
 var merlonW = Math.max(22, Math.floor(w / 32));
 var gapW = Math.max(14, Math.floor(merlonW * 0.62));
 var stepX = merlonW + gapW;
 var merlonH = Math.max(14, wallH * 0.34);
 
+// 3. tiered bleachers & spectators behind wall
+// adapted from circus-tiger-runner renderer
+if (w >= 600) {
+var stLeft = w * 0.135;
+var stRight = w * 0.865;
+var standsTop = Math.max(6, wallTop - 86);
+
+ctx.fillStyle = '#151E2E';
+ctx.fillRect(
+stLeft,
+standsTop,
+stRight - stLeft,
+wallTop - standsTop + 8
+);
+
+var seatStep = 34;
+for (var row = 0; row < 3; row++) {
+var rowY = standsTop + 18 + row * 24;
+ctx.strokeStyle = 'rgba(248,250,252,0.09)';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(stLeft, rowY + 12);
+ctx.lineTo(stRight, rowY + 12);
+ctx.stroke();
+
+for (
+var sx = stLeft + 20;
+sx < stRight - 18;
+sx += seatStep
+) {
+var seed =
+Math.round(sx / seatStep) + row * 17;
+var bounceSpeed = isVictory
+? 9.0
+: isCheer
+? 7.0
+: 3.0;
+var bounceAmp = isVictory
+? 6.5
+: isCheer
+? 4.5
+: 1.8;
+var bob =
+Math.abs(
+Math.sin(t * bounceSpeed + seed * 1.3)
+) * bounceAmp;
+
+var px = sx + (row % 2) * 14;
+var py = rowY - bob;
+
+// spectator tunic in pub medieval colors
+var tunicIdx = seed % 5;
+ctx.fillStyle =
+tunicIdx === 0
+? '#7C2D12'
+: tunicIdx === 1
+? '#1E3A8A'
+: tunicIdx === 2
+? '#701A75'
+: tunicIdx === 3
+? '#065F46'
+: '#881337';
+ctx.beginPath();
+ctx.arc(px, py + 8, 10, Math.PI, 0);
+ctx.fill();
+
+// spectator head
+ctx.fillStyle = '#FED7AA';
+ctx.beginPath();
+ctx.arc(px, py - 2, 6.5, 0, Math.PI * 2);
+ctx.fill();
+
+// wave arms when cheering in melee or win
+if (isCheer) {
+ctx.strokeStyle = '#FED7AA';
+ctx.lineWidth = 2.5;
+var armWave =
+Math.sin(t * 10 + seed) * 5;
+ctx.beginPath();
+ctx.moveTo(px - 6, py + 4);
+ctx.lineTo(px - 11, py - 7 + armWave);
+ctx.moveTo(px + 6, py + 4);
+ctx.lineTo(px + 11, py - 7 - armWave);
+ctx.stroke();
+}
+}
+}
+}
+
+// 4. crenellated stone castle wall in front
 ctx.fillStyle = '#475569';
 ctx.fillRect(0, wallTop, w, wallH);
 

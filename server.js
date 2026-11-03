@@ -1056,6 +1056,22 @@ pubData.tables[i].balance + delta
 gameState.tables = pubData.tables;
 }
 
+// damage shield by at most +1 per match
+// new shield cannot be lost in one bout
+function tryDamageShield(knight, chance) {
+if (!knight) return false;
+var cur = knight.shieldDamage || 0;
+var start =
+knight.matchStartShield !== undefined
+? knight.matchStartShield
+: cur;
+if (cur >= 2) return false;
+if (cur - start >= 1) return false;
+if (Math.random() >= chance) return false;
+knight.shieldDamage = cur + 1;
+return true;
+}
+
 // run one joust pass or foot melee phase
 // we compute shield shatter and unseating
 function runNextCombatPhase() {
@@ -1066,8 +1082,18 @@ gameState.currentMatchIndex
 if (!m || !m.k1 || !m.k2) return;
 var c = gameState.combat;
 
+if (c.pendingMelee) {
+c.pendingMelee = false;
+c.mode = 'MELEE';
+c.unseated1 = false;
+c.unseated2 = false;
+}
+
 c.stepId += 1;
 c.shatterSide = 0;
+c.shieldHit1 = false;
+c.shieldHit2 = false;
+c.throwFlowers = false;
 c.pausedForBets = false;
 
 if (c.mode === 'JOUST') {
@@ -1107,40 +1133,23 @@ Math.random() * 28;
 var def1 =
 s1.joustDef * 0.5 +
 h1.balance * 0.5 -
-m.k1.shieldDamage * 16;
+m.k1.shieldDamage * 14;
 var def2 =
 s2.joustDef * 0.5 +
 h2.balance * 0.5 -
-m.k2.shieldDamage * 16;
-
-// check shield crack or shatter on impact
-if (
-hit2 > s1.durability * 0.92 &&
-m.k1.shieldDamage < 2
-) {
-m.k1.shieldDamage += 1;
-if (m.k1.shieldDamage === 2) {
-c.shatterSide = 1;
-}
-}
-if (
-hit1 > s2.durability * 0.92 &&
-m.k2.shieldDamage < 2
-) {
-m.k2.shieldDamage += 1;
-if (m.k2.shieldDamage === 2) {
-c.shatterSide =
-c.shatterSide === 1 ? 3 : 2;
-}
-}
+m.k2.shieldDamage * 14;
 
 var fall1 = hit2 - def1 > 16;
 var fall2 = hit1 - def2 > 16;
 
+// single rider unseated: no shield break
 if (fall1 && !fall2) {
 c.unseated1 = true;
 c.finished = true;
 c.winnerSide = 2;
+c.throwFlowers =
+c.pass === 3 ||
+gameState.currentMatchIndex === 6;
 c.note = m.k1.name + ' выбит из седла!';
 c.bannerTitle =
 'ПОБЕДА СШИБКОЙ: ' + m.k2.name + '!';
@@ -1157,6 +1166,9 @@ if (fall2 && !fall1) {
 c.unseated2 = true;
 c.finished = true;
 c.winnerSide = 1;
+c.throwFlowers =
+c.pass === 3 ||
+gameState.currentMatchIndex === 6;
 c.note = m.k2.name + ' выбит из седла!';
 c.bannerTitle =
 'ПОБЕДА СШИБКОЙ: ' + m.k1.name + '!';
@@ -1169,15 +1181,27 @@ finishCurrentMatch(1);
 return;
 }
 
+// mutual fall: keep mode JOUST to animate
 if (fall1 && fall2) {
 c.unseated1 = true;
 c.unseated2 = true;
-c.mode = 'MELEE';
+c.pendingMelee = true;
 m.k1.isTired = true;
 m.k2.isTired = true;
-c.phaseTitle = 'ОБОЮДНОЕ ПАДЕНИЕ -> ПЕШИЙ БОЙ!';
+
+if (tryDamageShield(m.k1, 0.38)) {
+c.shieldHit1 = true;
+}
+if (tryDamageShield(m.k2, 0.38)) {
+c.shieldHit2 = true;
+}
+
+c.phaseTitle =
+'СШИБКА #' +
+c.pass +
+' — ОБОЮДНОЕ ПАДЕНИЕ!';
 c.note =
-'Оба выбиты из седла! Достают оружие!';
+'Оба выбиты из седла! Далее пеший бой!';
 gameState.soundToPlay = 'shatter';
 updateAllOdds(gameState);
 
@@ -1194,15 +1218,32 @@ m.k2.weaponName;
 return;
 }
 
+// neither fell: shield may crack (max +1)
+if (
+hit2 > s1.durability * 0.88 &&
+tryDamageShield(m.k1, 0.34)
+) {
+c.shieldHit1 = true;
+}
+if (
+hit1 > s2.durability * 0.88 &&
+tryDamageShield(m.k2, 0.34)
+) {
+c.shieldHit2 = true;
+}
+
 gameState.soundToPlay =
-c.shatterSide > 0 ? 'shatter' : 'clash';
+c.shieldHit1 || c.shieldHit2
+? 'shatter'
+: 'clash';
 
 if (c.pass >= 3) {
-c.mode = 'MELEE';
+// keep JOUST so 3rd pass animates fully
+c.pendingMelee = true;
 c.phaseTitle =
-'3 СШИБКИ ПОЗАДИ -> ПЕШЕЕ СРАЖЕНИЕ!';
+'КОННАЯ СШИБКА 3 ИЗ 3 -> ПЕШИЙ БОЙ!';
 c.note =
-'Никто не уступил в седле! Бой на земле!';
+'Никто не уступил в седле! Далее пеший бой!';
 updateAllOdds(gameState);
 
 if (gameState.allowLiveBets) {
@@ -1242,24 +1283,16 @@ var w1 = WEAPONS[m.k1.weaponIdx];
 var w2 = WEAPONS[m.k2.weaponIdx];
 
 if (
-w2.crush > 88 &&
-m.k1.shieldDamage < 2 &&
-Math.random() < 0.55
+w2.crush >= 80 &&
+tryDamageShield(m.k1, 0.36)
 ) {
-m.k1.shieldDamage += 1;
-if (m.k1.shieldDamage === 2) {
-c.shatterSide = 1;
-}
+c.shieldHit1 = true;
 }
 if (
-w1.crush > 88 &&
-m.k2.shieldDamage < 2 &&
-Math.random() < 0.55
+w1.crush >= 80 &&
+tryDamageShield(m.k2, 0.36)
 ) {
-m.k2.shieldDamage += 1;
-if (m.k2.shieldDamage === 2) {
-c.shatterSide = 2;
-}
+c.shieldHit2 = true;
 }
 
 var score1 =
@@ -1276,9 +1309,11 @@ m.k2.isTired = true;
 m.k1.isTired = true;
 }
 gameState.soundToPlay =
-c.shatterSide > 0 ? 'shatter' : 'sword';
+c.shieldHit1 || c.shieldHit2
+? 'shatter'
+: 'sword';
 c.note =
-'Яростный размен ударами в центре арены!';
+'Тяжёлый обмен ударами со щитами!';
 updateAllOdds(gameState);
 return;
 }
@@ -1290,6 +1325,8 @@ loseK.isTired = true;
 
 c.finished = true;
 c.winnerSide = winSide;
+c.throwFlowers =
+gameState.currentMatchIndex === 6;
 c.note =
 loseK.name +
 ' преклоняет колено от изнеможения!';
@@ -1593,9 +1630,14 @@ return;
 if (gameState.tvScreen !== 'COMBAT') {
 gameState.tvScreen = 'COMBAT';
 gameState.statusText = 'ИДЁТ ПОЕДИНОК!';
+curM.k1.matchStartShield =
+curM.k1.shieldDamage || 0;
+curM.k2.matchStartShield =
+curM.k2.shieldDamage || 0;
 gameState.combat = {
 active: true,
 mode: 'JOUST',
+pendingMelee: false,
 pass: 0,
 meleeRound: 0,
 pausedForBets: false,
@@ -1603,6 +1645,9 @@ finished: false,
 winnerSide: null,
 unseated1: false,
 unseated2: false,
+shieldHit1: false,
+shieldHit2: false,
+throwFlowers: false,
 shatterSide: 0,
 stepId: gameState.combat.stepId + 1,
 phaseTitle: 'ВЫХОД НА РИСТАЛИЩЕ',

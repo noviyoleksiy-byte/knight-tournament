@@ -12,10 +12,20 @@ var currentState = null;
 var animClock = 0;
 var animStepId = 0;
 var stepStartTime = 0;
+var impactDone1 = false;
+var impactDone2 = false;
 var paradeIndexSeen = -1;
 var paradeSubSeen = '';
 var paradeAnimStart = Date.now();
 var particles = [];
+
+var FLOWER_COLORS = [
+'#F43F5E',
+'#38BDF8',
+'#34D399',
+'#A855F7',
+'#FB923C'
+];
 
 // dom references for header and screens
 // we cache nodes once at startup
@@ -69,21 +79,48 @@ var arenaCanvas =
 document.getElementById('arenaCanvas');
 
 // spawn wood or steel debris particles
-// we burst splinters when shield shatters
+// we burst splinters when shield cracks
 function spawnDebris(x, y, colorHex, count) {
 for (var i = 0; i < count; i++) {
 var ang = Math.random() * Math.PI * 2;
 var spd = 2 + Math.random() * 8;
 particles.push({
+kind: 'DEBRIS',
 x: x,
 y: y,
 vx: Math.cos(ang) * spd,
 vy: Math.sin(ang) * spd - 3,
+rot: 0,
+vrot: 0,
 size: 4 + Math.random() * 7,
 color: colorHex || '#CBD5E1',
-life: 40
+life: 40,
+maxLife: 40
 });
 }
+}
+
+// throw flower from crowd over castle wall
+// adapted from circus-tiger-runner renderer
+function spawnCrowdFlower(w) {
+var fx = w * (0.16 + Math.random() * 0.68);
+var fy = 95 + Math.random() * 55;
+var cIdx = Math.floor(
+Math.random() * FLOWER_COLORS.length
+);
+particles.push({
+kind: 'FLOWER',
+x: fx,
+y: fy,
+vx: (Math.random() - 0.5) * 4.5,
+vy: 1.2 + Math.random() * 3.2,
+rot: Math.random() * 6.28,
+vrot: (Math.random() - 0.5) * 0.16,
+size: 7.5 + Math.random() * 4.5,
+color: FLOWER_COLORS[cIdx],
+life: 85,
+maxLife: 85
+});
 }
 
 // play sound effect triggered by server
@@ -254,16 +291,17 @@ var w = paradeCanvas.width;
 var h = paradeCanvas.height;
 ctx.clearRect(0, 0, w, h);
 
-// draw castle wall and dark green meadow
+var p = currentState.parade || {};
+// draw castle wall spectators and meadow
 window.KnightArt.drawCastleScene(
 ctx,
 w,
 h,
 185,
-false
+false,
+animClock,
+p.finished ? 'CHEER' : 'IDLE'
 );
-
-var p = currentState.parade || {};
 var list = currentState.aliveKnights || [];
 var curIdx = p.currentIndex || 0;
 var takenMap = {};
@@ -623,18 +661,40 @@ Number(k.outrightOdds || 5).toFixed(2);
 }
 
 // describe visual shield and fatigue state
-function describeVisualCondition(k) {
+function describeVisualCondition(k, hideHit) {
 if (!k) return '';
+var dmg =
+(k.shieldDamage || 0) - (hideHit ? 1 : 0);
+if (dmg < 0) dmg = 0;
 var sh = 'Щит цел';
-if (k.shieldDamage === 1) {
+if (dmg === 1) {
 sh = 'Щит треснул!';
-} else if (k.shieldDamage >= 2) {
+} else if (dmg >= 2) {
 sh = 'Щит разбит в щепки!';
 }
 var fat = k.isTired
 ? 'Тяжело дышит'
 : 'Полон сил';
 return sh + ' · ' + fat;
+}
+
+// clone knight with pre-impact shield state
+function getVisualKnight(k, hideShieldHit) {
+if (!k || !hideShieldHit) return k;
+return {
+id: k.id,
+name: k.name,
+colorIdx: k.colorIdx,
+helmIdx: k.helmIdx,
+shieldIdx: k.shieldIdx,
+horseIdx: k.horseIdx,
+weaponIdx: k.weaponIdx,
+isTired: k.isTired,
+shieldDamage: Math.max(
+0,
+(k.shieldDamage || 0) - 1
+)
+};
 }
 
 // update top hud on combat arena screen
@@ -645,6 +705,19 @@ s.matches[s.currentMatchIndex];
 if (!m || !m.k1 || !m.k2) return;
 
 var c = s.combat || {};
+var elapsed =
+(Date.now() - stepStartTime) / 1000;
+var hide1 =
+c.shieldHit1 &&
+(c.mode === 'JOUST'
+? elapsed < 2.85
+: elapsed < 3.75);
+var hide2 =
+c.shieldHit2 &&
+(c.mode === 'JOUST'
+? elapsed < 2.85
+: elapsed < 1.75);
+
 document.getElementById(
 'cLeftName'
 ).innerHTML = m.k1.name;
@@ -654,7 +727,10 @@ document.getElementById(
 m.k1.horseName + ' · ' + m.k1.weaponName;
 document.getElementById(
 'cLeftStatus'
-).innerHTML = describeVisualCondition(m.k1);
+).innerHTML = describeVisualCondition(
+m.k1,
+hide1
+);
 
 document.getElementById(
 'cRightName'
@@ -665,14 +741,18 @@ document.getElementById(
 m.k2.horseName + ' · ' + m.k2.weaponName;
 document.getElementById(
 'cRightStatus'
-).innerHTML = describeVisualCondition(m.k2);
+).innerHTML = describeVisualCondition(
+m.k2,
+hide2
+);
 
 document.getElementById(
 'combatPassBadge'
 ).innerHTML = c.phaseTitle || 'ПОЕДИНОК';
 document.getElementById(
 'combatSubNote'
-).innerHTML = c.note || '';
+).innerHTML =
+elapsed >= 2.85 ? c.note || '' : 'Бой в разгаре...';
 document.getElementById(
 'cLeftLiveOdds'
 ).innerHTML =
@@ -686,7 +766,12 @@ var banner =
 document.getElementById(
 'combatOverlayBanner'
 );
-if (c.pausedForBets || c.finished) {
+var bannerDelay =
+c.mode === 'JOUST' ? 4.35 : 4.65;
+if (
+(c.pausedForBets || c.finished) &&
+elapsed >= bannerDelay
+) {
 banner.className = 'arenaBanner';
 document.getElementById(
 'arenaBannerMain'
@@ -704,6 +789,16 @@ banner.className = 'arenaBanner hidden';
 function applyState(s) {
 if (!s) return;
 currentState = s;
+
+if (
+s.combat &&
+s.combat.stepId !== animStepId
+) {
+animStepId = s.combat.stepId;
+stepStartTime = Date.now();
+impactDone1 = false;
+impactDone2 = false;
+}
 
 pubSeedBadge.innerHTML =
 'ПАБ #' + s.pubSeed;
@@ -758,21 +853,6 @@ s.currentMatchIndex
 }
 renderPreviewCard(s);
 renderBottomBar(s);
-
-if (
-s.combat &&
-s.combat.stepId !== animStepId
-) {
-animStepId = s.combat.stepId;
-stepStartTime = Date.now();
-if (s.combat.shatterSide === 1) {
-spawnDebris(780, 320, '#BE123C', 24);
-} else if (s.combat.shatterSide === 2) {
-spawnDebris(1020, 320, '#1D4ED8', 24);
-} else if (s.combat.shatterSide === 3) {
-spawnDebris(850, 320, '#CBD5E1', 32);
-}
-}
 
 if (s.version > lastVersion) {
 if (s.soundToPlay) {
@@ -881,14 +961,32 @@ currentState.matches[
 currentState.currentMatchIndex
 ];
 var c = currentState.combat || {};
+var elapsed =
+(Date.now() - stepStartTime) / 1000;
 
-// draw castle battlements and green meadow
+// refresh hud as impact/banner timers pass
+renderCombatHud(currentState);
+
+// determine spectator crowd mood
+var crowdMood = 'IDLE';
+if (c.finished && elapsed >= 2.85) {
+crowdMood = 'VICTORY';
+} else if (
+c.mode === 'MELEE' ||
+(c.mode === 'JOUST' && elapsed >= 2.85)
+) {
+crowdMood = 'CHEER';
+}
+
+// draw castle battlements spectators meadow
 window.KnightArt.drawCastleScene(
 ctx,
 w,
 h,
 240,
-c.mode === 'JOUST'
+c.mode === 'JOUST',
+animClock,
+crowdMood
 );
 
 if (!m || !m.k1 || !m.k2) {
@@ -896,8 +994,14 @@ requestNextFrame();
 return;
 }
 
-var elapsed =
-(Date.now() - stepStartTime) / 1000;
+// toss flowers from spectators on final/pass3 win
+if (
+c.throwFlowers &&
+elapsed >= 2.9 &&
+Math.random() < 0.42
+) {
+spawnCrowdFlower(w);
+}
 
 if (c.mode === 'JOUST') {
 // 5.2s dramatic joust pass with full run
@@ -908,6 +1012,39 @@ var pose1 = 'ready';
 var pose2 = 'ready';
 var fallen1 = false;
 var fallen2 = false;
+
+var preImpact = prog < 0.55;
+var visK1 = getVisualKnight(
+m.k1,
+c.shieldHit1 && preImpact
+);
+var visK2 = getVisualKnight(
+m.k2,
+c.shieldHit2 && preImpact
+);
+
+if (!preImpact) {
+if (c.shieldHit1 && !impactDone1) {
+impactDone1 = true;
+spawnDebris(
+870,
+320,
+window.KnightArt.getArmor(m.k1.colorIdx)
+.main,
+22
+);
+}
+if (c.shieldHit2 && !impactDone2) {
+impactDone2 = true;
+spawnDebris(
+930,
+320,
+window.KnightArt.getArmor(m.k2.colorIdx)
+.main,
+22
+);
+}
+}
 
 if (prog < 0.22) {
 // pause at ends of tilt rail before charge
@@ -965,7 +1102,7 @@ ctx,
 x1,
 370,
 1.45,
-m.k1,
+visK1,
 animClock,
 pose1
 );
@@ -974,7 +1111,7 @@ ctx,
 x2,
 370,
 -1.45,
-m.k2,
+visK2,
 animClock,
 pose2
 );
@@ -991,7 +1128,7 @@ ctx,
 850 - fallProgress1 * 45,
 dropY1,
 1.35,
-m.k1
+visK1
 );
 }
 if (fallen2) {
@@ -1005,7 +1142,7 @@ ctx,
 950 + fallProgress2 * 45,
 dropY2,
 -1.35,
-m.k2
+visK2
 );
 }
 
@@ -1033,7 +1170,46 @@ var mState2 = 'guard';
 var sparkX = 0;
 var sparkY = 0;
 
-if (c.finished) {
+// delay shield crack until weapon strike lands
+var visM1 = getVisualKnight(
+m.k1,
+c.shieldHit1 && elapsed < 3.75
+);
+var visM2 = getVisualKnight(
+m.k2,
+c.shieldHit2 && elapsed < 1.75
+);
+
+if (
+c.shieldHit2 &&
+elapsed >= 1.75 &&
+!impactDone2
+) {
+impactDone2 = true;
+spawnDebris(
+940,
+345,
+window.KnightArt.getArmor(m.k2.colorIdx)
+.main,
+20
+);
+}
+if (
+c.shieldHit1 &&
+elapsed >= 3.75 &&
+!impactDone1
+) {
+impactDone1 = true;
+spawnDebris(
+860,
+345,
+window.KnightArt.getArmor(m.k1.colorIdx)
+.main,
+20
+);
+}
+
+if (c.finished && elapsed >= 4.4) {
 if (c.winnerSide === 1) {
 fx1 = 830;
 fx2 = 990;
@@ -1045,7 +1221,7 @@ fx2 = 970;
 mState1 = 'kneel';
 mState2 = 'guard';
 }
-} else if (c.pausedForBets) {
+} else if (c.pausedForBets && elapsed >= 4.6) {
 mState1 = 'guard';
 mState2 = 'guard';
 } else {
@@ -1117,7 +1293,7 @@ ctx,
 fx1,
 385,
 1.65,
-m.k1,
+visM1,
 animClock,
 mState1
 );
@@ -1126,7 +1302,7 @@ ctx,
 fx2,
 385,
 -1.65,
-m.k2,
+visM2,
 animClock + 1.5,
 mState2
 );
@@ -1151,25 +1327,59 @@ ctx.stroke();
 }
 }
 
+// render splinters and crowd flowers
 for (
-var p = particles.length - 1;
-p >= 0;
-p--
+var pIdx = particles.length - 1;
+pIdx >= 0;
+pIdx--
 ) {
-var pt = particles[p];
+var pt = particles[pIdx];
 pt.x += pt.vx;
 pt.y += pt.vy;
+pt.rot = (pt.rot || 0) + (pt.vrot || 0);
+if (pt.kind === 'FLOWER') {
+pt.vy += 0.08;
+} else {
 pt.vy += 0.35;
+}
 pt.life -= 1;
+
+ctx.save();
+ctx.translate(pt.x, pt.y);
+ctx.rotate(pt.rot || 0);
+
+if (pt.kind === 'FLOWER') {
+// 5-petal flower from circus-tiger-runner
+ctx.fillStyle = pt.color;
+for (var fl = 0; fl < 5; fl++) {
+var fa = (fl * Math.PI * 2) / 5;
+ctx.beginPath();
+ctx.arc(
+Math.cos(fa) * pt.size * 0.6,
+Math.sin(fa) * pt.size * 0.6,
+pt.size * 0.5,
+0,
+Math.PI * 2
+);
+ctx.fill();
+}
+ctx.fillStyle = '#F8FAFC';
+ctx.beginPath();
+ctx.arc(0, 0, pt.size * 0.38, 0, Math.PI * 2);
+ctx.fill();
+} else {
 ctx.fillStyle = pt.color;
 ctx.fillRect(
-pt.x,
-pt.y,
+-pt.size * 0.5,
+-pt.size * 0.5,
 pt.size,
 pt.size
 );
+}
+ctx.restore();
+
 if (pt.life <= 0) {
-particles.splice(p, 1);
+particles.splice(pIdx, 1);
 }
 }
 
