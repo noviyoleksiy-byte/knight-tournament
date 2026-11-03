@@ -1,0 +1,1262 @@
+// main tv client controller and animator
+// we poll state and draw parade or bout
+(function () {
+'use strict';
+
+var lastVersion = 0;
+var isPolling = false;
+var currentState = null;
+
+// animation clocks for parade and combat
+// we drive smooth 60fps canvas motion
+var animClock = 0;
+var animStepId = 0;
+var stepStartTime = 0;
+var paradeIndexSeen = -1;
+var paradeSubSeen = '';
+var paradeAnimStart = Date.now();
+var particles = [];
+
+// dom references for header and screens
+// we cache nodes once at startup
+var pubSeedBadge =
+document.getElementById('pubSeedBadge');
+var tourCounter =
+document.getElementById('tourCounter');
+var phaseText =
+document.getElementById('phaseText');
+var modeBadge =
+document.getElementById('modeBadge');
+var btnSoundToggle =
+document.getElementById('btnSoundToggle');
+var prizeToast =
+document.getElementById('prizeToast');
+var prizeToastText =
+document.getElementById('prizeToastText');
+
+var screenParade =
+document.getElementById('screenParade');
+var screenBracket =
+document.getElementById('screenBracket');
+var screenCombat =
+document.getElementById('screenCombat');
+
+var paradeStepBadge =
+document.getElementById('paradeStepBadge');
+var paradeHeroName =
+document.getElementById('paradeHeroName');
+var paradeHeroDetails =
+document.getElementById('paradeHeroDetails');
+var paradeLineupRow =
+document.getElementById('paradeLineupRow');
+var paradeCanvas =
+document.getElementById('paradeCanvas');
+
+var nextBoutPanel =
+document.getElementById('nextBoutPanel');
+var champRevealCard =
+document.getElementById('championRevealCard');
+var champSecretTitle =
+document.getElementById('champSecretTitle');
+var champNameText =
+document.getElementById('champNameText');
+
+var pCanvasLeft =
+document.getElementById('previewCanvasLeft');
+var pCanvasRight =
+document.getElementById('previewCanvasRight');
+var arenaCanvas =
+document.getElementById('arenaCanvas');
+
+// spawn wood or steel debris particles
+// we burst splinters when shield shatters
+function spawnDebris(x, y, colorHex, count) {
+for (var i = 0; i < count; i++) {
+var ang = Math.random() * Math.PI * 2;
+var spd = 2 + Math.random() * 8;
+particles.push({
+x: x,
+y: y,
+vx: Math.cos(ang) * spd,
+vy: Math.sin(ang) * spd - 3,
+size: 4 + Math.random() * 7,
+color: colorHex || '#CBD5E1',
+life: 40
+});
+}
+}
+
+// play sound effect triggered by server
+// we map sound key to web audio synth
+function triggerSound(snd) {
+if (!window.GameSound || !snd) return;
+if (snd === 'horn') {
+window.GameSound.playHorn();
+} else if (snd === 'hoof') {
+window.GameSound.playHoof();
+} else if (snd === 'clash') {
+window.GameSound.playClash();
+} else if (snd === 'shatter') {
+window.GameSound.playShatter();
+} else if (snd === 'sword') {
+window.GameSound.playSword();
+} else if (snd === 'bet') {
+window.GameSound.playBet();
+} else if (snd === 'fanfare') {
+window.GameSound.playFanfare();
+} else if (snd === 'prize') {
+window.GameSound.playPrize();
+}
+}
+
+// format currency value by active mode
+// we show caps in pub mode or cash symbol
+function fmtVal(amount, mode) {
+var n = Math.round(amount || 0);
+if (mode === 'CASH') {
+return n + ' ₽';
+}
+return n + ' КР';
+}
+
+// update knight parade presentation text
+// we show banner and 8 lineup cards below
+function renderParadeView(s) {
+var p = s.parade || {};
+var list = s.aliveKnights || [];
+var idx = p.currentIndex || 0;
+
+if (
+idx !== paradeIndexSeen ||
+p.subStep !== paradeSubSeen
+) {
+paradeIndexSeen = idx;
+paradeSubSeen = p.subStep;
+paradeAnimStart = Date.now();
+}
+
+if (p.finished) {
+paradeStepBadge.innerHTML =
+'ПАРАД ЗАВЕРШЁН · ПЕРВЫЙ РАУНД ПРИЁМА СТАВОК С БОНУСОМ +20% К КОЭФФИЦИЕНТАМ!';
+paradeHeroName.innerHTML =
+'Все 8 рыцарей в строю и выбрали оружие!';
+paradeHeroDetails.innerHTML =
+'Делайте первые ставки с повышенным бонусом до перехода к Турнирной Сетке!';
+} else {
+var curK = list[idx];
+paradeStepBadge.innerHTML =
+'ПАРАД УЧАСТНИКОВ И ВЫБОР ОРУЖИЯ (' +
+(idx + 1) +
+' ИЗ 8)';
+if (curK) {
+paradeHeroName.innerHTML =
+curK.name +
+' (Побед: ' +
+(curK.wins || 0) +
+' · Поражений: ' +
+(curK.losses || 0) +
+')';
+if (p.subStep === 'RIDE_TO_RACK') {
+paradeHeroDetails.innerHTML =
+'Выезжает на коне: ' +
+curK.horseName +
+' · Щит: ' +
+curK.shieldName +
+' · Скачет к оружейной стойке...';
+} else {
+var favNote = curK.hasFavWeapon
+? ' (ЕГО ЛЮБИМОЕ ОРУЖИЕ! ★)'
+: ' (Случайный выбор со стойки)';
+paradeHeroDetails.innerHTML =
+'Берёт со стойки: ' +
+curK.weaponName +
+favNote +
+' и встаёт в строй!';
+}
+}
+}
+
+// build 8 lineup cards with bonus odds
+var html = '';
+for (var i = 0; i < 8; i++) {
+var k = list[i];
+if (!k) continue;
+var revealed =
+p.finished ||
+i < idx ||
+(i === idx && p.subStep === 'PICKED');
+var isCur = !p.finished && i === idx;
+var cls = 'paradeCard';
+if (isCur) cls += ' activeParadeCard';
+else if (revealed) cls += ' revealedCard';
+
+var col =
+window.KnightArt.getArmor(k.colorIdx).main;
+var wText = revealed
+? k.weaponName + (k.hasFavWeapon ? ' ★' : '')
+: 'Выбирает оружие...';
+
+var baseOdd = parseFloat(
+k.outrightOdds || 5.0
+);
+var bonusOdd = (baseOdd * 1.2).toFixed(2);
+
+html +=
+'<div class="' +
+cls +
+'">' +
+'<div>' +
+'<div class="pCardNum">УЧАСТНИК #' +
+(i + 1) +
+'</div>' +
+'<div class="pCardColorBar" style="background:' +
+col +
+'"></div>' +
+'<div class="pCardName">' +
+k.name +
+'</div>' +
+'<div class="pCardGear">' +
+k.horseName +
+'<br>' +
+wText +
+'</div>' +
+'<div class="pCardRec">Побед: ' +
+(k.wins || 0) +
+' · Кубков: ' +
+(k.titles || 0) +
+'</div>' +
+'</div>' +
+'<div class="pCardOddsBox">' +
+'<span class="pCardOddsLabel">' +
+'БОНУС СТАВКА +20%' +
+'</span>' +
+'<span class="pCardOddsVal">x' +
+bonusOdd +
+'</span>' +
+'</div></div>';
+}
+paradeLineupRow.innerHTML = html;
+}
+
+// draw parade canvas animation every frame
+// knight rides to rack picks weapon lines up
+function drawParadeFrame() {
+if (
+!currentState ||
+currentState.tvScreen !== 'PARADE' ||
+!paradeCanvas
+) {
+return;
+}
+
+var ctx = paradeCanvas.getContext('2d');
+var w = paradeCanvas.width;
+var h = paradeCanvas.height;
+ctx.clearRect(0, 0, w, h);
+
+// draw castle wall and dark green meadow
+window.KnightArt.drawCastleScene(
+ctx,
+w,
+h,
+185,
+false
+);
+
+var p = currentState.parade || {};
+var list = currentState.aliveKnights || [];
+var curIdx = p.currentIndex || 0;
+var takenMap = {};
+
+for (var t = 0; t < list.length; t++) {
+var tk = list[t];
+if (
+p.finished ||
+t < curIdx ||
+(t === curIdx && p.subStep === 'PICKED')
+) {
+takenMap[tk.weaponIdx] = true;
+}
+}
+
+// draw weapon rack on left side of field
+window.KnightArt.drawWeaponRack(
+ctx,
+250,
+235,
+takenMap
+);
+
+// draw already lined up knights in a row
+for (var i = 0; i < list.length; i++) {
+var lk = list[i];
+var slotX = 560 + i * 172;
+var slotY = 305;
+
+if (p.finished || i < curIdx) {
+window.KnightArt.drawMountedKnight(
+ctx,
+slotX,
+slotY,
+0.78,
+lk,
+animClock + i,
+'parade_no_lance'
+);
+} else if (i === curIdx && !p.finished) {
+var dt =
+(Date.now() - paradeAnimStart) / 1000;
+var tProg = Math.min(1, dt / 1.6);
+
+if (p.subStep === 'RIDE_TO_RACK') {
+var rx = -60 + tProg * 310;
+var tempK = {
+colorIdx: lk.colorIdx,
+helmIdx: lk.helmIdx,
+shieldIdx: lk.shieldIdx,
+horseIdx: lk.horseIdx,
+weaponIdx: -1
+};
+window.KnightArt.drawMountedKnight(
+ctx,
+rx,
+285,
+1.05,
+tempK,
+animClock,
+tProg < 1 ? 'run' : 'parade_no_lance'
+);
+} else {
+var lx =
+250 + tProg * (slotX - 250);
+var ly =
+285 + tProg * (slotY - 285);
+var sc = 1.05 - tProg * 0.27;
+window.KnightArt.drawMountedKnight(
+ctx,
+lx,
+ly,
+sc,
+lk,
+animClock,
+tProg < 1 ? 'run' : 'parade_no_lance'
+);
+
+// highlight chosen weapon above knight
+if (tProg < 0.75) {
+window.KnightArt.drawWeapon(
+ctx,
+lx,
+ly - 115,
+0.95,
+lk.weaponIdx,
+0.25
+);
+}
+}
+}
+}
+}
+
+// build single bracket match box html
+// we render both knights and match odds
+function renderMatchBox(m, idx, curIdx) {
+var el =
+document.getElementById('matchBox' + idx);
+if (!el || !m) return;
+
+var cls = 'matchBox';
+if (idx === curIdx && m.status !== 'DONE') {
+cls += ' activeMatch';
+} else if (m.status === 'DONE') {
+cls += ' doneMatch';
+}
+el.className = cls;
+
+var stageLabel = '1/4 ФИНАЛА';
+if (idx === 4 || idx === 5) {
+stageLabel = '1/2 ФИНАЛА';
+} else if (idx === 6) {
+stageLabel = 'ФИНАЛ КУБКА';
+}
+
+var stText = 'ОЖИДАНИЕ';
+if (m.status === 'DONE') {
+stText = 'ЗАВЕРШЁН';
+} else if (idx === curIdx) {
+stText = 'ТЕКУЩИЙ БОЙ';
+}
+
+var html =
+'<div class="mHead"><span>' +
+stageLabel +
+'</span><span>' +
+stText +
+'</span></div>';
+
+html += buildFighterSlot(
+m.k1,
+m.odds1,
+m.winnerId
+);
+html += buildFighterSlot(
+m.k2,
+m.odds2,
+m.winnerId
+);
+el.innerHTML = html;
+}
+
+// build one knight row inside match box
+// we show color bar sir name and record
+function buildFighterSlot(k, odds, winId) {
+if (!k) {
+return (
+'<div class="mSlot">' +
+'<div class="mSlotLeft">' +
+'<div class="colorDot" ' +
+'style="background:#334155"></div>' +
+'<div class="mNameWrap">' +
+'<div class="mSirName">Ожидание пары...</div>' +
+'<div class="mSubStat">—</div>' +
+'</div></div>' +
+'<div class="mOddsTag">—</div></div>'
+);
+}
+
+var col =
+window.KnightArt.getArmor(k.colorIdx).main;
+var slotCls = 'mSlot';
+if (winId) {
+if (winId === k.id) {
+slotCls += ' winnerSlot';
+} else {
+slotCls += ' loserSlot';
+}
+}
+
+var oddStr =
+odds ? Number(odds).toFixed(2) : '—';
+var recStr =
+'Побед: ' +
+(k.wins || 0) +
+' · Кубков: ' +
+(k.titles || 0) +
+' · Турнир: x' +
+Number(k.outrightOdds || 5).toFixed(1);
+
+return (
+'<div class="' +
+slotCls +
+'">' +
+'<div class="mSlotLeft">' +
+'<div class="colorDot" style="background:' +
+col +
+'"></div>' +
+'<div class="mNameWrap">' +
+'<div class="mSirName">' +
+k.name +
+'</div>' +
+'<div class="mSubStat">' +
+recStr +
+'</div>' +
+'</div></div>' +
+'<div class="mOddsTag">' +
+oddStr +
+'</div></div>'
+);
+}
+
+// update center preview card for next bout
+// we fit knights nicely inside 245x190 box
+function renderPreviewCard(s) {
+var m =
+s.matches &&
+s.matches[s.currentMatchIndex];
+
+if (
+s.tournamentStatus === 'FINISHED' &&
+s.champion
+) {
+nextBoutPanel.className =
+'nextBoutCard hidden';
+champRevealCard.className = 'champCard';
+champSecretTitle.innerHTML =
+s.champion.secretTitle;
+champNameText.innerHTML =
+s.champion.name;
+return;
+}
+
+nextBoutPanel.className = 'nextBoutCard';
+champRevealCard.className =
+'champCard hidden';
+if (!m || !m.k1 || !m.k2) return;
+
+document.getElementById(
+'nextBoutTitle'
+).innerHTML =
+'МАТЧ #' +
+(s.currentMatchIndex + 1) +
+' — ' +
+m.stageName;
+
+document.getElementById(
+'liveBetIndicator'
+).innerHTML = s.allowLiveBets
+? 'LIVE-СТАВКИ В БОЮ: ВКЛ'
+: 'СТАВКИ ДО НАЧАЛА БОЯ';
+
+fillPreviewSide('Left', m.k1, m.odds1);
+fillPreviewSide('Right', m.k2, m.odds2);
+
+// draw mounted previews on castle meadow
+if (pCanvasLeft && window.KnightArt) {
+var ctxL = pCanvasLeft.getContext('2d');
+ctxL.clearRect(0, 0, 245, 190);
+window.KnightArt.drawCastleScene(
+ctxL,
+245,
+190,
+68,
+false
+);
+window.KnightArt.drawMountedKnight(
+ctxL,
+112,
+138,
+0.78,
+m.k1,
+animClock,
+'idle'
+);
+}
+if (pCanvasRight && window.KnightArt) {
+var ctxR = pCanvasRight.getContext('2d');
+ctxR.clearRect(0, 0, 245, 190);
+window.KnightArt.drawCastleScene(
+ctxR,
+245,
+190,
+68,
+false
+);
+window.KnightArt.drawMountedKnight(
+ctxR,
+133,
+138,
+-0.78,
+m.k2,
+animClock + 1.2,
+'idle'
+);
+}
+
+var poolEl =
+document.getElementById('matchPoolText');
+var listEl =
+document.getElementById('activeBetsList');
+var bets = s.activeBets || [];
+var totalPool = 0;
+var rowsHtml = '';
+
+for (var i = 0; i < bets.length; i++) {
+var b = bets[i];
+totalPool += b.amount;
+var tag =
+b.betType === 'OUTRIGHT'
+? '[ТУРНИР]'
+: '[БОЙ]';
+rowsHtml +=
+'<div class="betItemRow"><b>' +
+b.tableName +
+'</b>: ' +
+fmtVal(b.amount, s.gameMode) +
+' → ' +
+b.knightName +
+' (x' +
+Number(b.odds).toFixed(2) +
+') ' +
+tag +
+'</div>';
+}
+
+poolEl.innerHTML =
+'Принято ставок: ' +
+fmtVal(totalPool, s.gameMode);
+listEl.innerHTML =
+rowsHtml ||
+'Ведущий принимает ставки столов...';
+}
+
+// fill fighter text fields in preview box
+function fillPreviewSide(side, k, odds) {
+var favTag = k.hasFavWeapon ? ' ★' : '';
+document.getElementById(
+'p' + side + 'Name'
+).innerHTML = k.name;
+document.getElementById(
+'p' + side + 'Gear'
+).innerHTML =
+k.horseName +
+' · ' +
+k.weaponName +
+favTag;
+document.getElementById(
+'p' + side + 'Rec'
+).innerHTML =
+'Побед: ' +
+(k.wins || 0) +
+' · Поражений: ' +
+(k.losses || 0) +
+' · Щит: ' +
+k.shieldName;
+document.getElementById(
+'p' + side + 'Odds'
+).innerHTML =
+'x' + Number(odds || 1.9).toFixed(2);
+document.getElementById(
+'p' + side + 'Outright'
+).innerHTML =
+'Победа в турнире: x' +
+Number(k.outrightOdds || 5).toFixed(2);
+}
+
+// describe visual shield and fatigue state
+function describeVisualCondition(k) {
+if (!k) return '';
+var sh = 'Щит цел';
+if (k.shieldDamage === 1) {
+sh = 'Щит треснул!';
+} else if (k.shieldDamage >= 2) {
+sh = 'Щит разбит в щепки!';
+}
+var fat = k.isTired
+? 'Тяжело дышит'
+: 'Полон сил';
+return sh + ' · ' + fat;
+}
+
+// update top hud on combat arena screen
+function renderCombatHud(s) {
+var m =
+s.matches &&
+s.matches[s.currentMatchIndex];
+if (!m || !m.k1 || !m.k2) return;
+
+var c = s.combat || {};
+document.getElementById(
+'cLeftName'
+).innerHTML = m.k1.name;
+document.getElementById(
+'cLeftSub'
+).innerHTML =
+m.k1.horseName + ' · ' + m.k1.weaponName;
+document.getElementById(
+'cLeftStatus'
+).innerHTML = describeVisualCondition(m.k1);
+
+document.getElementById(
+'cRightName'
+).innerHTML = m.k2.name;
+document.getElementById(
+'cRightSub'
+).innerHTML =
+m.k2.horseName + ' · ' + m.k2.weaponName;
+document.getElementById(
+'cRightStatus'
+).innerHTML = describeVisualCondition(m.k2);
+
+document.getElementById(
+'combatPassBadge'
+).innerHTML = c.phaseTitle || 'ПОЕДИНОК';
+document.getElementById(
+'combatSubNote'
+).innerHTML = c.note || '';
+document.getElementById(
+'cLeftLiveOdds'
+).innerHTML =
+'К1: x' + Number(m.odds1 || 1.9).toFixed(2);
+document.getElementById(
+'cRightLiveOdds'
+).innerHTML =
+'К2: x' + Number(m.odds2 || 1.9).toFixed(2);
+
+var banner =
+document.getElementById(
+'combatOverlayBanner'
+);
+if (c.pausedForBets || c.finished) {
+banner.className = 'arenaBanner';
+document.getElementById(
+'arenaBannerMain'
+).innerHTML = c.bannerTitle || '';
+document.getElementById(
+'arenaBannerDetail'
+).innerHTML = c.bannerSub || '';
+} else {
+banner.className = 'arenaBanner hidden';
+}
+}
+
+// apply received server state to dom
+// we switch between parade bracket combat
+function applyState(s) {
+if (!s) return;
+currentState = s;
+
+pubSeedBadge.innerHTML =
+'ПАБ #' + s.pubSeed;
+tourCounter.innerHTML =
+'ТУРНИР №' + s.tournamentNumber;
+phaseText.innerHTML =
+s.statusText || 'ПАРАД РЫЦАРЕЙ';
+modeBadge.innerHTML =
+s.gameMode === 'CASH'
+? 'РЕЖИМ: НА ДЕНЬГИ (БАНК)'
+: 'РЕЖИМ: ПАБ (КРЫШКИ И ПРИЗЫ)';
+
+if (s.prizeBannerText) {
+prizeToast.className = 'prizeBanner';
+prizeToastText.innerHTML =
+s.prizeBannerText;
+} else {
+prizeToast.className =
+'prizeBanner hidden';
+}
+
+if (s.tvScreen === 'PARADE') {
+screenParade.className = 'tvScreen';
+screenBracket.className =
+'tvScreen hidden';
+screenCombat.className =
+'tvScreen hidden';
+renderParadeView(s);
+} else if (s.tvScreen === 'COMBAT') {
+screenParade.className =
+'tvScreen hidden';
+screenBracket.className =
+'tvScreen hidden';
+screenCombat.className = 'tvScreen';
+renderCombatHud(s);
+} else {
+screenParade.className =
+'tvScreen hidden';
+screenBracket.className = 'tvScreen';
+screenCombat.className =
+'tvScreen hidden';
+}
+
+if (s.matches) {
+for (var i = 0; i < 7; i++) {
+renderMatchBox(
+s.matches[i],
+i,
+s.currentMatchIndex
+);
+}
+}
+renderPreviewCard(s);
+renderBottomBar(s);
+
+if (
+s.combat &&
+s.combat.stepId !== animStepId
+) {
+animStepId = s.combat.stepId;
+stepStartTime = Date.now();
+if (s.combat.shatterSide === 1) {
+spawnDebris(780, 320, '#BE123C', 24);
+} else if (s.combat.shatterSide === 2) {
+spawnDebris(1020, 320, '#1D4ED8', 24);
+} else if (s.combat.shatterSide === 3) {
+spawnDebris(850, 320, '#CBD5E1', 32);
+}
+}
+
+if (s.version > lastVersion) {
+if (s.soundToPlay) {
+triggerSound(s.soundToPlay);
+}
+lastVersion = s.version;
+}
+}
+
+// render bottom tables and prize showcase
+function renderBottomBar(s) {
+var tTitle =
+document.getElementById('tablesTitle');
+var pTitle =
+document.getElementById('prizesTitle');
+var tRow =
+document.getElementById('tablesRow');
+var pRow =
+document.getElementById('prizesRow');
+
+tTitle.innerHTML =
+s.gameMode === 'CASH'
+? 'ИГРОКИ И СТОЛЫ (БАНК В КАССЕ):'
+: 'СТОЛЫ ПАБА (БАЛАНС КРЫШЕК ЗА ЗАКАЗЫ):';
+
+var tHtml = '';
+var tables = s.tables || [];
+for (var i = 0; i < tables.length; i++) {
+var tb = tables[i];
+tHtml +=
+'<div class="tableChip">' +
+tb.name +
+'<span>' +
+fmtVal(tb.balance, s.gameMode) +
+'</span></div>';
+}
+tRow.innerHTML = tHtml;
+
+if (s.gameMode === 'CASH') {
+pTitle.innerHTML =
+'ПОСЛЕДНИЕ ВЫПЛАТЫ ТОТАЛИЗАТОРА:';
+var logs = s.recentPayouts || [];
+var lHtml = '';
+for (var j = 0; j < logs.length; j++) {
+lHtml +=
+'<div class="prizeChip">' +
+logs[j] +
+'</div>';
+}
+pRow.innerHTML =
+lHtml ||
+'<div class="prizeChip">' +
+'Ожидание расчёта ставок' +
+'</div>';
+} else {
+pTitle.innerHTML =
+'ВИТРИНА ПРИЗОВ ПАБА (ОБМЕН КРЫШЕК):';
+var prizes = s.prizes || [];
+var pHtml = '';
+for (var k = 0; k < prizes.length; k++) {
+var pr = prizes[k];
+pHtml +=
+'<div class="prizeChip">' +
+pr.title +
+'<b>' +
+pr.cost +
+' КР</b></div>';
+}
+pRow.innerHTML = pHtml;
+}
+}
+
+// draw parade or combat canvas every frame
+function drawArenaFrame() {
+animClock += 0.035;
+if (!currentState) {
+requestNextFrame();
+return;
+}
+
+if (currentState.tvScreen === 'PARADE') {
+drawParadeFrame();
+requestNextFrame();
+return;
+}
+
+if (currentState.tvScreen === 'BRACKET') {
+renderPreviewCard(currentState);
+requestNextFrame();
+return;
+}
+
+if (!arenaCanvas) {
+requestNextFrame();
+return;
+}
+
+var ctx = arenaCanvas.getContext('2d');
+var w = arenaCanvas.width;
+var h = arenaCanvas.height;
+ctx.clearRect(0, 0, w, h);
+
+var m =
+currentState.matches &&
+currentState.matches[
+currentState.currentMatchIndex
+];
+var c = currentState.combat || {};
+
+// draw castle battlements and green meadow
+window.KnightArt.drawCastleScene(
+ctx,
+w,
+h,
+240,
+c.mode === 'JOUST'
+);
+
+if (!m || !m.k1 || !m.k2) {
+requestNextFrame();
+return;
+}
+
+var elapsed =
+(Date.now() - stepStartTime) / 1000;
+
+if (c.mode === 'JOUST') {
+// 5.2s dramatic joust pass with full run
+var prog = Math.min(1, elapsed / 5.2);
+var x1 = 160;
+var x2 = 1640;
+var pose1 = 'ready';
+var pose2 = 'ready';
+var fallen1 = false;
+var fallen2 = false;
+
+if (prog < 0.22) {
+// pause at ends of tilt rail before charge
+var readyWave = prog / 0.22;
+x1 = 150 + readyWave * 30;
+x2 = 1650 - readyWave * 30;
+pose1 = 'ready';
+pose2 = 'ready';
+} else if (prog < 0.56) {
+// accelerating gallop toward center clash
+var tCharge = (prog - 0.22) / 0.34;
+var easeIn = tCharge * tCharge;
+x1 = 180 + easeIn * 680;
+x2 = 1620 - easeIn * 680;
+pose1 = 'run';
+pose2 = 'run';
+} else {
+// horses run to opposite ends and stop
+var tAfter = (prog - 0.56) / 0.44;
+var tRun = Math.min(1, tAfter / 0.84);
+x1 = 860 + tRun * 780;
+x2 = 940 - tRun * 780;
+pose1 = tRun < 1 ? 'run' : 'idle';
+pose2 = tRun < 1 ? 'run' : 'idle';
+
+if (c.unseated1) {
+pose1 =
+tRun < 1
+? 'horse_only_run'
+: 'horse_only_idle';
+fallen1 = true;
+} else if (
+c.winnerSide === 1 &&
+tRun >= 1
+) {
+pose1 = 'victory';
+}
+
+if (c.unseated2) {
+pose2 =
+tRun < 1
+? 'horse_only_run'
+: 'horse_only_idle';
+fallen2 = true;
+} else if (
+c.winnerSide === 2 &&
+tRun >= 1
+) {
+pose2 = 'victory';
+}
+}
+
+window.KnightArt.drawMountedKnight(
+ctx,
+x1,
+370,
+1.45,
+m.k1,
+animClock,
+pose1
+);
+window.KnightArt.drawMountedKnight(
+ctx,
+x2,
+370,
+-1.45,
+m.k2,
+animClock,
+pose2
+);
+
+// draw unseated knight lying on meadow
+if (fallen1) {
+var fallProgress1 = Math.min(
+1,
+(prog - 0.56) * 5
+);
+var dropY1 = 320 + fallProgress1 * 88;
+window.KnightArt.drawFallenKnightOnGround(
+ctx,
+850 - fallProgress1 * 45,
+dropY1,
+1.35,
+m.k1
+);
+}
+if (fallen2) {
+var fallProgress2 = Math.min(
+1,
+(prog - 0.56) * 5
+);
+var dropY2 = 320 + fallProgress2 * 88;
+window.KnightArt.drawFallenKnightOnGround(
+ctx,
+950 + fallProgress2 * 45,
+dropY2,
+-1.35,
+m.k2
+);
+}
+
+// draw star burst at center impact moment
+if (prog > 0.52 && prog < 0.64) {
+ctx.fillStyle = '#38BDF8';
+ctx.beginPath();
+for (var s = 0; s < 16; s++) {
+var rad = (s * Math.PI) / 8;
+var dist = s % 2 === 0 ? 68 : 26;
+var sx = 900 + Math.cos(rad) * dist;
+var sy = 315 + Math.sin(rad) * dist;
+if (s === 0) ctx.moveTo(sx, sy);
+else ctx.lineTo(sx, sy);
+}
+ctx.closePath();
+ctx.fill();
+}
+} else {
+// slow turn-by-turn melee with shield block
+var fx1 = 800;
+var fx2 = 1000;
+var mState1 = 'guard';
+var mState2 = 'guard';
+var sparkX = 0;
+var sparkY = 0;
+
+if (c.finished) {
+if (c.winnerSide === 1) {
+fx1 = 830;
+fx2 = 990;
+mState1 = 'guard';
+mState2 = 'kneel';
+} else if (c.winnerSide === 2) {
+fx1 = 810;
+fx2 = 970;
+mState1 = 'kneel';
+mState2 = 'guard';
+}
+} else if (c.pausedForBets) {
+mState1 = 'guard';
+mState2 = 'guard';
+} else {
+if (elapsed < 0.9) {
+// step forward into guard stance
+var p0 = elapsed / 0.9;
+fx1 = 755 + p0 * 50;
+fx2 = 1045 - p0 * 50;
+mState1 = 'guard';
+mState2 = 'guard';
+} else if (elapsed < 1.65) {
+// left knight winds up heavy strike
+fx1 = 815;
+fx2 = 995;
+mState1 = 'windup';
+mState2 = 'block';
+} else if (elapsed < 2.35) {
+// left strikes right blocks with shield
+fx1 = 850;
+fx2 = 982;
+mState1 = 'strike';
+mState2 = 'block';
+sparkX = 935;
+sparkY = 345;
+} else if (elapsed < 2.95) {
+// reset to guard after first exchange
+fx1 = 805;
+fx2 = 995;
+mState1 = 'guard';
+mState2 = 'guard';
+} else if (elapsed < 3.7) {
+// right knight winds up counter blow
+fx1 = 805;
+fx2 = 985;
+mState1 = 'block';
+mState2 = 'windup';
+} else if (elapsed < 4.4) {
+// right strikes left blocks with shield
+fx1 = 818;
+fx2 = 950;
+mState1 = 'block';
+mState2 = 'strike';
+sparkX = 865;
+sparkY = 345;
+} else if (elapsed < 5.1) {
+// second heavy windup by left knight
+fx1 = 818;
+fx2 = 990;
+mState1 = 'windup';
+mState2 = 'block';
+} else if (elapsed < 5.75) {
+// second heavy strike onto right shield
+fx1 = 852;
+fx2 = 980;
+mState1 = 'strike';
+mState2 = 'block';
+sparkX = 935;
+sparkY = 345;
+} else {
+fx1 = 805;
+fx2 = 995;
+mState1 = 'guard';
+mState2 = 'guard';
+}
+}
+
+window.KnightArt.drawFootKnight(
+ctx,
+fx1,
+385,
+1.65,
+m.k1,
+animClock,
+mState1
+);
+window.KnightArt.drawFootKnight(
+ctx,
+fx2,
+385,
+-1.65,
+m.k2,
+animClock + 1.5,
+mState2
+);
+
+// draw silver shield block impact flash
+if (sparkX > 0) {
+ctx.fillStyle = '#F8FAFC';
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 2;
+ctx.beginPath();
+for (var sp = 0; sp < 10; sp++) {
+var sa = (sp * Math.PI) / 5;
+var sr = sp % 2 === 0 ? 28 : 11;
+var px = sparkX + Math.cos(sa) * sr;
+var py = sparkY + Math.sin(sa) * sr;
+if (sp === 0) ctx.moveTo(px, py);
+else ctx.lineTo(px, py);
+}
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+}
+}
+
+for (
+var p = particles.length - 1;
+p >= 0;
+p--
+) {
+var pt = particles[p];
+pt.x += pt.vx;
+pt.y += pt.vy;
+pt.vy += 0.35;
+pt.life -= 1;
+ctx.fillStyle = pt.color;
+ctx.fillRect(
+pt.x,
+pt.y,
+pt.size,
+pt.size
+);
+if (pt.life <= 0) {
+particles.splice(p, 1);
+}
+}
+
+requestNextFrame();
+}
+
+// schedule next animation frame safely
+function requestNextFrame() {
+var raf =
+window.requestAnimationFrame ||
+function (cb) {
+return setTimeout(cb, 33);
+};
+raf(drawArenaFrame);
+}
+
+// poll server state periodically via xhr
+function pollState() {
+if (isPolling) return;
+isPolling = true;
+var xhr = new XMLHttpRequest();
+xhr.open('GET', '/api/state', true);
+xhr.timeout = 2500;
+xhr.onreadystatechange = function () {
+if (xhr.readyState === 4) {
+isPolling = false;
+if (xhr.status === 200) {
+try {
+var data =
+JSON.parse(xhr.responseText);
+applyState(data);
+} catch (e) {
+// skip json parse error
+}
+}
+}
+};
+xhr.ontimeout = function () {
+isPolling = false;
+};
+xhr.onerror = function () {
+isPolling = false;
+};
+xhr.send();
+}
+
+if (btnSoundToggle) {
+btnSoundToggle.onclick = function () {
+if (window.GameSound) {
+window.GameSound.init();
+var m =
+window.GameSound.toggleMute();
+btnSoundToggle.innerHTML = m
+? 'ЗВУК: ВЫКЛ'
+: 'ЗВУК: ВКЛ';
+}
+};
+}
+
+var btnRestartParade =
+document.getElementById('btnRestartParade');
+if (btnRestartParade) {
+btnRestartParade.onclick = function () {
+var xhr = new XMLHttpRequest();
+xhr.open('POST', '/api/action', true);
+xhr.setRequestHeader(
+'Content-Type',
+'application/json;charset=UTF-8'
+);
+xhr.onreadystatechange = function () {
+if (
+xhr.readyState === 4 &&
+xhr.status === 200
+) {
+try {
+var r = JSON.parse(xhr.responseText);
+if (r.state) applyState(r.state);
+} catch (e) {}
+}
+};
+xhr.send(
+JSON.stringify({ type: 'restart_parade' })
+);
+};
+}
+
+pollState();
+setInterval(pollState, 500);
+requestNextFrame();
+})();

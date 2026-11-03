@@ -1,0 +1,228 @@
+/* mobile host touch stylesheet */
+/* we avoid yellow and keep 48px targets */
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+-webkit-tap-highlight-color: transparent;
+}
+
+body {
+background: #090D16;
+color: #F1F5F9;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+padding: 12px;
+}
+
+#hostApp {
+max-width: 520px;
+margin: 0 auto;
+padding-bottom: 36px;
+}
+
+/* top header bar on phone */
+/* we show title and tournament number */
+.topBar {
+height: 48px;
+background: #131C2E;
+border: 1px solid #1E293B;
+border-radius: 8px;
+padding: 9px 14px;
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+
+.barTitle {
+font-size: 17px;
+font-weight: 800;
+color: #38BDF8;
+}
+
+.barBadge {
+background: #1D4ED8;
+color: #FFFFFF;
+padding: 5px 10px;
+border-radius: 6px;
+font-size: 13px;
+font-weight: 800;
+}
+
+/* status card and form containers */
+/* we use dark slate borders */
+.card {
+background: #131C2E;
+border: 1px solid #1E293B;
+border-radius: 10px;
+padding: 12px;
+margin-bottom: 12px;
+}
+
+.statusRow {
+display: flex;
+justify-content: space-between;
+font-size: 13px;
+color: #94A3B8;
+margin-bottom: 8px;
+}
+
+.statusRow b {
+color: #34D399;
+}
+
+.boutSummary {
+font-size: 16px;
+font-weight: 800;
+color: #F8FAFC;
+background: #090D16;
+padding: 10px;
+border-radius: 6px;
+border: 1px solid #1E293B;
+}
+
+.boutSubStatus {
+font-size: 13px;
+color: #38BDF8;
+font-weight: 700;
+margin-top: 6px;
+}
+
+.sectionTitle {
+font-size: 12px;
+font-weight: 800;
+letter-spacing: 1px;
+color: #94A3B8;
+margin: 14px 0 6px 2px;
+}
+
+.fieldLabel {
+font-size: 11px;
+font-weight: 800;
+color: #94A3B8;
+margin: 8px 0 4px 0;
+}
+
+/* button grids for touch controls */
+/* we use flexbox for old webviews */
+.btnGrid {
+display: flex;
+gap: 8px;
+margin-bottom: 8px;
+}
+
+.grid2 .btn,
+.grid3 .btn,
+.grid4 .btn {
+flex: 1;
+}
+
+.btn {
+min-height: 48px;
+border: none;
+border-radius: 8px;
+font-size: 14px;
+font-weight: 800;
+color: #FFFFFF;
+cursor: pointer;
+padding: 0 10px;
+}
+
+.btn:active {
+opacity: 0.75;
+}
+
+.btnGreen {
+background: #059669;
+}
+
+.btnBlue {
+background: #2563EB;
+}
+
+.btnCopper {
+background: #C2410C;
+}
+
+.btnPurple {
+background: #6D28D9;
+}
+
+.btnRed {
+background: #BE123C;
+}
+
+.btnDark {
+background: #334155;
+}
+
+.btnSmallTab {
+min-height: 42px;
+background: #1E293B;
+color: #94A3B8;
+font-size: 13px;
+}
+
+.btnSmallTab.activeTab {
+background: #2563EB;
+color: #FFFFFF;
+}
+
+.btnChip {
+min-height: 42px;
+background: #1E293B;
+border: 1px solid #334155;
+font-size: 14px;
+}
+
+/* dropdowns and text inputs */
+/* we keep high contrast dark fields */
+.selectBox {
+width: 100%;
+height: 46px;
+background: #090D16;
+color: #F8FAFC;
+border: 1px solid #334155;
+border-radius: 8px;
+padding: 0 10px;
+font-size: 14px;
+font-weight: 700;
+margin-bottom: 4px;
+}
+
+.inputRow {
+display: flex;
+gap: 8px;
+margin-top: 4px;
+}
+
+.inputRow input {
+flex: 1;
+height: 48px;
+background: #090D16;
+color: #FFFFFF;
+border: 1px solid #334155;
+border-radius: 8px;
+padding: 0 12px;
+font-size: 15px;
+font-weight: 700;
+}
+
+.btnAcceptBet {
+width: 165px;
+}
+
+.btnRedeem {
+width: 145px;
+}
+
+.btnSmallAdd {
+width: 110px;
+}
+
+.linkBtn {
+display: flex;
+align-items: center;
+justify-content: center;
+text-decoration: none;
+}

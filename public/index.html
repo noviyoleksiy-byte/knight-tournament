@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рыцарский Турнир — Экран ТВ</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="tvStage">
+
+<div class="topHeader">
+<div class="brandBox">
+<span class="brandTitle">РЫЦАРСКИЙ ТУРНИР</span>
+<span class="pubSeedTag" id="pubSeedBadge">ПАБ #101</span>
+</div>
+<div class="headerCenter">
+<span class="tourBadge" id="tourCounter">ТУРНИР №1</span>
+<span class="dotSep">·</span>
+<span class="phaseBadge" id="phaseText">ПАРАД РЫЦАРЕЙ</span>
+<span class="dotSep">·</span>
+<span class="modeBadge" id="modeBadge">РЕЖИМ: ПАБ (КРЫШКИ)</span>
+</div>
+<div class="headerRight">
+<button class="muteBtn" id="btnRestartParade">ПАРАД С НАЧАЛА</button>
+<a href="/host" target="_blank" class="hostLinkBtn">ПУЛЬТ ВЕДУЩЕГО (/HOST)</a>
+<button class="muteBtn" id="btnSoundToggle">ЗВУК: ВКЛ</button>
+</div>
+</div>
+
+<div id="prizeToast" class="prizeBanner hidden">
+<div class="prizeBannerInner" id="prizeToastText">СТОЛ №1 ЗАБИРАЕТ ПРИЗ!</div>
+</div>
+
+<div id="screenParade" class="tvScreen">
+<div class="paradeHeaderBanner">
+<div class="paradeKicker" id="paradeStepBadge">ПАРАД УЧАСТНИКОВ ТУРНИРА И ВЫБОР ОРУЖИЯ (1 / 8)</div>
+<div class="paradeMainTitle" id="paradeHeroName">Сир Рагнар Кровавый Рог выезжает на ристалище!</div>
+<div class="paradeSubTitle" id="paradeHeroDetails">Конь: Вороной · Подъезжает к стойке и выбирает оружие...</div>
+</div>
+
+<div class="paradeCanvasWrap">
+<canvas id="paradeCanvas" width="1860" height="440"></canvas>
+</div>
+
+<div class="paradeLineupGrid" id="paradeLineupRow"></div>
+</div>
+
+<div id="screenBracket" class="tvScreen hidden">
+<div class="bracketArea">
+
+<div class="bracketCol colLeftQF">
+<div class="colHeader">1/4 ФИНАЛА (ЗАПАД)</div>
+<div class="matchBox" id="matchBox0"></div>
+<div class="matchBox" id="matchBox1"></div>
+</div>
+
+<div class="bracketCol colLeftSF">
+<div class="colHeader">1/2 ФИНАЛА</div>
+<div class="matchBox sfBox" id="matchBox4"></div>
+</div>
+
+<div class="bracketCenter">
+<div class="finalBoxWrap">
+<div class="colHeader finalHeader">ГРАНД-ФИНАЛ ТУРНИРА</div>
+<div class="matchBox finalBox" id="matchBox6"></div>
+</div>
+
+<div class="nextBoutCard" id="nextBoutPanel">
+<div class="boutCardHeader">
+<span id="nextBoutTitle">СЛЕДУЮЩИЙ ПОЕДИНОК</span>
+<span id="liveBetIndicator" class="liveTag">ПРИЁМ СТАВОК</span>
+</div>
+<div class="boutVsRow">
+<div class="boutFighter leftFighter">
+<canvas id="previewCanvasLeft" width="245" height="190"></canvas>
+<div class="fName" id="pLeftName">Сир Рагнар</div>
+<div class="fMeta" id="pLeftGear">Конь · Оружие</div>
+<div class="fRecord" id="pLeftRec">Побед: 0 · Поражений: 0</div>
+<div class="fOddsBox">
+<span class="oddsLabel">ПОБЕДА В БОЮ</span>
+<span class="oddsValue" id="pLeftOdds">1.85</span>
+<span class="outrightSub" id="pLeftOutright">Турнир: x5.20</span>
+</div>
+</div>
+
+<div class="vsCenterCol">
+<div class="vsBadge">VS</div>
+<div class="poolInfo" id="matchPoolText">Банк боя: 0</div>
+<div class="betsList" id="activeBetsList">Ставок пока нет</div>
+</div>
+
+<div class="boutFighter rightFighter">
+<canvas id="previewCanvasRight" width="245" height="190"></canvas>
+<div class="fName" id="pRightName">Сир Корвус</div>
+<div class="fMeta" id="pRightGear">Конь · Оружие</div>
+<div class="fRecord" id="pRightRec">Побед: 0 · Поражений: 0</div>
+<div class="fOddsBox">
+<span class="oddsLabel">ПОБЕДА В БОЮ</span>
+<span class="oddsValue" id="pRightOdds">1.95</span>
+<span class="outrightSub" id="pRightOutright">Турнир: x5.80</span>
+</div>
+</div>
+</div>
+</div>
+
+<div id="championRevealCard" class="champCard hidden">
+<div class="champKicker">ЧЕМПИОН СНИМАЕТ ШЛЕМ! ИСТИННЫЙ ТИТУЛ РАСКРЫТ:</div>
+<div class="champRoyalTitle" id="champSecretTitle">Его Высочество Кронпринц</div>
+<div class="champSirName" id="champNameText">Сир Рагнар Кровавый Рог</div>
+<div class="champLore" id="champNoticeText">В следующем турнире он вновь выйдет как простой Сир!</div>
+</div>
+</div>
+
+<div class="bracketCol colRightSF">
+<div class="colHeader">1/2 ФИНАЛА</div>
+<div class="matchBox sfBox" id="matchBox5"></div>
+</div>
+
+<div class="bracketCol colRightQF">
+<div class="colHeader">1/4 ФИНАЛА (ВОСТОК)</div>
+<div class="matchBox" id="matchBox2"></div>
+<div class="matchBox" id="matchBox3"></div>
+</div>
+
+</div>
+</div>
+
+<div id="screenCombat" class="tvScreen hidden">
+<div class="combatHudTop">
+<div class="combatFighterHud leftHud">
+<div class="cHudName" id="cLeftName">Сир Рагнар</div>
+<div class="cHudSub" id="cLeftSub">Вороной · Боевой топор</div>
+<div class="cHudStatus" id="cLeftStatus">Щит цел · В седле</div>
+</div>
+
+<div class="combatCenterHud">
+<div class="combatPassTitle" id="combatPassBadge">КОННАЯ СШИБКА 1 ИЗ 3</div>
+<div class="combatLiveOddsRow">
+<span class="cOddsPill leftOddsPill" id="cLeftLiveOdds">К1: 1.85</span>
+<span class="cPhaseNote" id="combatSubNote">Разгон по барьеру</span>
+<span class="cOddsPill rightOddsPill" id="cRightLiveOdds">К2: 1.95</span>
+</div>
+</div>
+
+<div class="combatFighterHud rightHud">
+<div class="cHudName" id="cRightName">Сир Корвус</div>
+<div class="cHudSub" id="cRightSub">Белоснежный · Алебарда</div>
+<div class="cHudStatus" id="cRightStatus">Щит цел · В седле</div>
+</div>
+</div>
+
+<div class="arenaCanvasWrap">
+<canvas id="arenaCanvas" width="1800" height="620"></canvas>
+<div id="combatOverlayBanner" class="arenaBanner hidden">
+<div class="arenaBannerTitle" id="arenaBannerMain">ПАУЗА LIVE-СТАВОК!</div>
+<div class="arenaBannerSub" id="arenaBannerDetail">Коэффициенты обновлены</div>
+</div>
+</div>
+</div>
+
+<div class="bottomBar">
+<div class="tablesPanel">
+<div class="panelLabel" id="tablesTitle">СТОЛЫ ПАБА (БАЛАНС КРЫШЕК):</div>
+<div class="tablesList" id="tablesRow"></div>
+</div>
+<div class="prizesPanel">
+<div class="panelLabel" id="prizesTitle">ВИТРИНА ПРИЗОВ ПАБА:</div>
+<div class="prizesList" id="prizesRow"></div>
+</div>
+</div>
+
+</div>
+
+<script src="js/tvscale.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/art.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
