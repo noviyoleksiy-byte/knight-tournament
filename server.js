@@ -5,7 +5,10 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import { fileURLToPath } from 'url';
-import { SECRET_TITLES } from './titles.js';
+import {
+SECRET_TITLES,
+MASTER_KNIGHTS
+} from './titles.js';
 
 var __filename =
 fileURLToPath(import.meta.url);
@@ -118,7 +121,7 @@ balance: 94
 }
 ];
 
-// 6 shield shapes with durability stats
+// 12 shield shapes and heraldic blazons
 // some resist lances some suit melee
 var SHIELDS = [
 {
@@ -140,11 +143,11 @@ id: 2,
 name: 'Круглый (Умбон)',
 joustDef: 76,
 meleeDef: 92,
-durability: 75
+durability: 76
 },
 {
 id: 3,
-name: 'Башенный (Полосы)',
+name: 'Башенный (Столбы)',
 joustDef: 96,
 meleeDef: 76,
 durability: 96
@@ -158,8 +161,50 @@ durability: 82
 },
 {
 id: 5,
-name: 'Рассечённый (Тарч)',
-joustDef: 90,
+name: 'Турнирный тарч (Выемка)',
+joustDef: 94,
+meleeDef: 80,
+durability: 90
+},
+{
+id: 6,
+name: 'Полукруглый (Косой крест)',
+joustDef: 87,
+meleeDef: 87,
+durability: 86
+},
+{
+id: 7,
+name: 'Крылатый (Пояс)',
+joustDef: 89,
+meleeDef: 85,
+durability: 87
+},
+{
+id: 8,
+name: 'Каплевидный (Зубцы)',
+joustDef: 93,
+meleeDef: 81,
+durability: 91
+},
+{
+id: 9,
+name: 'Овальный (Три кольца)',
+joustDef: 81,
+meleeDef: 91,
+durability: 83
+},
+{
+id: 10,
+name: 'Стрельчатый (Звезда)',
+joustDef: 88,
+meleeDef: 86,
+durability: 86
+},
+{
+id: 11,
+name: 'Шестигранный (Шахматы)',
+joustDef: 91,
 meleeDef: 84,
 durability: 89
 }
@@ -254,203 +299,6 @@ crush: 88
 }
 ];
 
-// 24 distinct knights for the pub league
-// all start with Sir and have secret title
-var KNIGHT_TEMPLATES = [
-{
-first: 'Рагнар',
-epithet: 'Кровавый Рог',
-colorIdx: 0,
-helmIdx: 0,
-shieldIdx: 0,
-secretTitle: SECRET_TITLES[0]
-},
-{
-first: 'Корвус',
-epithet: 'Алый Клюв',
-colorIdx: 0,
-helmIdx: 1,
-shieldIdx: 1,
-secretTitle: SECRET_TITLES[1]
-},
-{
-first: 'Таран',
-epithet: 'Багровый Бастион',
-colorIdx: 0,
-helmIdx: 2,
-shieldIdx: 3,
-secretTitle: SECRET_TITLES[2]
-},
-{
-first: 'Данте',
-epithet: 'Пламенный Гребень',
-colorIdx: 0,
-helmIdx: 4,
-shieldIdx: 4,
-secretTitle: SECRET_TITLES[3]
-},
-{
-first: 'Тормунд',
-epithet: 'Ледяной Рог',
-colorIdx: 1,
-helmIdx: 0,
-shieldIdx: 5,
-secretTitle: SECRET_TITLES[4]
-},
-{
-first: 'Фалькон',
-epithet: 'Кобальтовый Клин',
-colorIdx: 1,
-helmIdx: 1,
-shieldIdx: 1,
-secretTitle: SECRET_TITLES[5]
-},
-{
-first: 'Магнус',
-epithet: 'Северный Венец',
-colorIdx: 1,
-helmIdx: 3,
-shieldIdx: 0,
-secretTitle: SECRET_TITLES[6]
-},
-{
-first: 'Вейн',
-epithet: 'Холодный Страж',
-colorIdx: 1,
-helmIdx: 5,
-shieldIdx: 2,
-secretTitle: SECRET_TITLES[7]
-},
-{
-first: 'Ульф',
-epithet: 'Лесной Вепрь',
-colorIdx: 2,
-helmIdx: 0,
-shieldIdx: 2,
-secretTitle: SECRET_TITLES[8]
-},
-{
-first: 'Варг',
-epithet: 'Зелёный Коршун',
-colorIdx: 2,
-helmIdx: 1,
-shieldIdx: 4,
-secretTitle: SECRET_TITLES[9]
-},
-{
-first: 'Драган',
-epithet: 'Изумрудный Змей',
-colorIdx: 2,
-helmIdx: 4,
-shieldIdx: 1,
-secretTitle: SECRET_TITLES[10]
-},
-{
-first: 'Морган',
-epithet: 'Дикий Охотник',
-colorIdx: 2,
-helmIdx: 5,
-shieldIdx: 5,
-secretTitle: SECRET_TITLES[11]
-},
-{
-first: 'Хальфдан',
-epithet: 'Сумеречный Рог',
-colorIdx: 3,
-helmIdx: 0,
-shieldIdx: 4,
-secretTitle: SECRET_TITLES[12]
-},
-{
-first: 'Голиаф',
-epithet: 'Ночной Монолит',
-colorIdx: 3,
-helmIdx: 2,
-shieldIdx: 3,
-secretTitle: SECRET_TITLES[13]
-},
-{
-first: 'Лазарь',
-epithet: 'Тёмный Венец',
-colorIdx: 3,
-helmIdx: 3,
-shieldIdx: 0,
-secretTitle: SECRET_TITLES[14]
-},
-{
-first: 'Мордред',
-epithet: 'Ночной Палач',
-colorIdx: 3,
-helmIdx: 5,
-shieldIdx: 1,
-secretTitle: SECRET_TITLES[15]
-},
-{
-first: 'Кречет',
-epithet: 'Стальной Клюв',
-colorIdx: 4,
-helmIdx: 1,
-shieldIdx: 5,
-secretTitle: SECRET_TITLES[16]
-},
-{
-first: 'Бастион',
-epithet: 'Чёрный Чугун',
-colorIdx: 4,
-helmIdx: 2,
-shieldIdx: 3,
-secretTitle: SECRET_TITLES[17]
-},
-{
-first: 'Кассиан',
-epithet: 'Пепельный Клинок',
-colorIdx: 4,
-helmIdx: 4,
-shieldIdx: 2,
-secretTitle: SECRET_TITLES[18]
-},
-{
-first: 'Страж',
-epithet: 'Обсидиановый Крест',
-colorIdx: 4,
-helmIdx: 5,
-shieldIdx: 0,
-secretTitle: SECRET_TITLES[19]
-},
-{
-first: 'Титан',
-epithet: 'Медный Молот',
-colorIdx: 5,
-helmIdx: 2,
-shieldIdx: 0,
-secretTitle: SECRET_TITLES[20]
-},
-{
-first: 'Валтор',
-epithet: 'Бронзовая Корона',
-colorIdx: 5,
-helmIdx: 3,
-shieldIdx: 4,
-secretTitle: SECRET_TITLES[21]
-},
-{
-first: 'Гаскон',
-epithet: 'Медный Шеврон',
-colorIdx: 5,
-helmIdx: 4,
-shieldIdx: 1,
-secretTitle: SECRET_TITLES[22]
-},
-{
-first: 'Регент',
-epithet: 'Кованый Раскол',
-colorIdx: 5,
-helmIdx: 3,
-shieldIdx: 5,
-secretTitle: SECRET_TITLES[23]
-}
-];
-
 // pseudo random helper from numeric seed
 // we get deterministic pub variations
 function seededHash(seed, salt) {
@@ -459,20 +307,69 @@ Math.sin(seed * 997 + salt * 131) * 10000;
 return x - Math.floor(x);
 }
 
+// pick 24 distinct knights from 216 pool
+// different pubs get different knights
+function selectPubTemplates(seed) {
+var picked = [];
+var usedFirst = {};
+var usedTitles = {};
+
+for (var c = 0; c < 6; c++) {
+// pick 4 distinct helmets for color c
+var helms = [0, 1, 2, 3, 4, 5];
+for (var k = 0; k < 4; k++) {
+var hPos = Math.floor(
+seededHash(seed, c * 41 + k * 13 + 7) *
+helms.length
+);
+var h = helms[hPos];
+helms.splice(hPos, 1);
+
+var baseS = Math.floor(
+seededHash(seed, c * 59 + h * 19 + k * 5) * 6
+);
+var chosen = null;
+
+for (var step = 0; step < 6; step++) {
+var s = (baseS + step) % 6;
+var cand =
+MASTER_KNIGHTS[c * 36 + h * 6 + s];
+if (
+!usedFirst[cand.first] &&
+!usedTitles[cand.secretTitle]
+) {
+chosen = cand;
+break;
+}
+}
+if (!chosen) {
+chosen =
+MASTER_KNIGHTS[c * 36 + h * 6 + baseS];
+}
+
+usedFirst[chosen.first] = true;
+usedTitles[chosen.secretTitle] = true;
+picked.push(chosen);
+}
+}
+return picked;
+}
+
 // build initial 24 knight pub roster
 // we mix 70 percent base and 30 pub seed
 function createPubData(customSeed) {
 var seed =
 customSeed ||
 Math.floor(100 + Math.random() * 899);
+var templates = selectPubTemplates(seed);
 var roster = [];
 
 for (
 var i = 0;
-i < KNIGHT_TEMPLATES.length;
+i < templates.length;
 i++
 ) {
-var tpl = KNIGHT_TEMPLATES[i];
+var tpl = templates[i];
 var hBias =
 Math.floor(
 seededHash(seed, i * 7 + 1) * 24
@@ -494,15 +391,17 @@ var favHorse =
 Math.floor(
 seededHash(seed, i * 31 + 9) * 10
 ) % 10;
+var shIdx = tpl.shieldIdx % SHIELDS.length;
 
 roster.push({
 id: 'K' + (i + 1),
-name: 'Сир ' + tpl.first + ' ' + tpl.epithet,
+poolIndex: tpl.poolIndex,
+name: tpl.name,
 secretTitle: tpl.secretTitle,
 colorIdx: tpl.colorIdx,
 helmIdx: tpl.helmIdx,
-shieldIdx: tpl.shieldIdx,
-shieldName: SHIELDS[tpl.shieldIdx].name,
+shieldIdx: shIdx,
+shieldName: SHIELDS[shIdx].name,
 favWeaponIdx: favWeapon,
 favHorseIdx: favHorse,
 joustSkill: 78 + hBias,
@@ -557,7 +456,7 @@ cost: 2500
 }
 
 // load persistent pub roster from disk
-// we keep stats and sync noble titles
+// syncs 24 knights from 216 master pool
 function loadPubData() {
 try {
 if (fs.existsSync(ROSTER_FILE)) {
@@ -565,16 +464,33 @@ var raw =
 fs.readFileSync(ROSTER_FILE, 'utf8');
 var parsed = JSON.parse(raw);
 if (parsed && parsed.roster) {
+var templates = selectPubTemplates(
+parsed.pubSeed || 257
+);
 for (
 var i = 0;
 i < parsed.roster.length;
 i++
 ) {
-if (SECRET_TITLES[i]) {
+var tpl = templates[i];
+if (tpl) {
+var shIdx =
+tpl.shieldIdx % SHIELDS.length;
+parsed.roster[i].poolIndex =
+tpl.poolIndex;
+parsed.roster[i].name = tpl.name;
 parsed.roster[i].secretTitle =
-SECRET_TITLES[i];
+tpl.secretTitle;
+parsed.roster[i].colorIdx =
+tpl.colorIdx;
+parsed.roster[i].helmIdx =
+tpl.helmIdx;
+parsed.roster[i].shieldIdx = shIdx;
+parsed.roster[i].shieldName =
+SHIELDS[shIdx].name;
 }
 }
+savePubData(parsed);
 }
 return parsed;
 }

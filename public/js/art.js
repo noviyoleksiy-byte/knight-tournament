@@ -294,11 +294,12 @@ ctx.stroke();
 ctx.restore();
 }
 
-// trace shield path helper for double border
-// we reuse exact silhouette for clip and rim
+// trace 12 distinct shield silhouettes
+// we reuse exact path for clip and rim
 function traceShieldPath(ctx, r, sType) {
 ctx.beginPath();
-if (sType === 0) {
+if (sType === 0 || sType === 8) {
+// kite shield (каплевидный)
 ctx.moveTo(-r, -r * 0.85);
 ctx.lineTo(r, -r * 0.85);
 ctx.lineTo(r, r * 0.15);
@@ -314,35 +315,78 @@ r * 0.85,
 -r,
 r * 0.15
 );
-} else if (sType === 1) {
+} else if (sType === 1 || sType === 10) {
+// classic heater shield (треугольный)
 ctx.moveTo(-r, -r * 0.82);
 ctx.lineTo(r, -r * 0.82);
-ctx.lineTo(r * 0.88, r * 0.25);
-ctx.lineTo(0, r * 1.15);
-ctx.lineTo(-r * 0.88, r * 0.25);
+ctx.lineTo(r * 0.9, r * 0.25);
+ctx.lineTo(0, r * 1.18);
+ctx.lineTo(-r * 0.9, r * 0.25);
 } else if (sType === 2) {
+// round targe shield (круглый)
 ctx.arc(0, 0, r * 0.98, 0, Math.PI * 2);
 } else if (sType === 3) {
+// tall tower pavise (башенный)
 ctx.moveTo(-r * 0.88, -r * 1.02);
 ctx.lineTo(r * 0.88, -r * 1.02);
 ctx.lineTo(r * 0.88, r * 1.02);
 ctx.lineTo(-r * 0.88, r * 1.02);
 } else if (sType === 4) {
+// heraldic lozenge (ромбовидный)
 ctx.moveTo(0, -r * 1.18);
 ctx.lineTo(r * 0.98, 0);
 ctx.lineTo(0, r * 1.18);
 ctx.lineTo(-r * 0.98, 0);
-} else {
+} else if (sType === 5) {
+// bouched jousting targe with lance notch
 ctx.moveTo(-r * 0.92, -r * 0.88);
-ctx.lineTo(r * 0.92, -r * 0.88);
-ctx.lineTo(r * 0.96, r * 0.55);
+ctx.lineTo(r * 0.35, -r * 0.88);
+ctx.quadraticCurveTo(
+r * 0.35,
+-r * 0.35,
+r * 0.92,
+-r * 0.35
+);
+ctx.lineTo(r * 0.95, r * 0.55);
 ctx.lineTo(0, r * 1.12);
-ctx.lineTo(-r * 0.96, r * 0.55);
+ctx.lineTo(-r * 0.95, r * 0.55);
+} else if (sType === 6) {
+// round-bottomed half-circle shield
+ctx.moveTo(-r * 0.92, -r * 0.85);
+ctx.lineTo(r * 0.92, -r * 0.85);
+ctx.lineTo(r * 0.92, r * 0.15);
+ctx.arc(0, r * 0.15, r * 0.92, 0, Math.PI);
+} else if (sType === 7) {
+// winged flared knight shield
+ctx.moveTo(-r * 1.06, -r * 0.88);
+ctx.lineTo(r * 1.06, -r * 0.88);
+ctx.lineTo(r * 0.82, r * 0.35);
+ctx.lineTo(0, r * 1.16);
+ctx.lineTo(-r * 0.82, r * 0.35);
+} else if (sType === 9) {
+// oval cavalry shield
+ctx.ellipse(
+0,
+0,
+r * 0.86,
+r * 1.12,
+0,
+0,
+Math.PI * 2
+);
+} else {
+// hexagonal coffin shield (sType 11)
+ctx.moveTo(-r * 0.58, -r * 1.06);
+ctx.lineTo(r * 0.58, -r * 1.06);
+ctx.lineTo(r * 0.96, 0);
+ctx.lineTo(r * 0.58, r * 1.06);
+ctx.lineTo(-r * 0.58, r * 1.06);
+ctx.lineTo(-r * 0.96, 0);
 }
 ctx.closePath();
 }
 
-// draw applique shield with bold double rim
+// draw applique shield with 12 blazons
 // we add dark outer and silver inner outline
 function drawShield(
 ctx,
@@ -357,7 +401,7 @@ if (damageState >= 2) {
 return;
 }
 var col = getArmor(colorIdx);
-var sType = Math.abs(shieldIdx || 0) % 6;
+var sType = Math.abs(shieldIdx || 0) % 12;
 
 ctx.save();
 ctx.translate(x, y);
@@ -372,6 +416,7 @@ ctx.clip();
 ctx.fillStyle = '#F8FAFC';
 ctx.strokeStyle = '#F8FAFC';
 if (sType === 0) {
+// 1. straight heraldic cross
 ctx.fillRect(
 -r * 0.22,
 -r * 1.2,
@@ -385,6 +430,7 @@ r * 2.2,
 r * 0.42
 );
 } else if (sType === 1) {
+// 2. bold upward chevron
 ctx.lineWidth = r * 0.36;
 ctx.beginPath();
 ctx.moveTo(-r * 0.95, r * 0.35);
@@ -392,6 +438,7 @@ ctx.lineTo(0, -r * 0.45);
 ctx.lineTo(r * 0.95, r * 0.35);
 ctx.stroke();
 } else if (sType === 2) {
+// 3. steel boss umbo and rivets
 ctx.beginPath();
 ctx.arc(0, 0, r * 0.52, 0, Math.PI * 2);
 ctx.fill();
@@ -400,6 +447,7 @@ ctx.beginPath();
 ctx.arc(0, 0, r * 0.24, 0, Math.PI * 2);
 ctx.fill();
 } else if (sType === 3) {
+// 4. twin vertical pales (столбы)
 ctx.fillRect(
 -r * 0.52,
 -r * 1.2,
@@ -413,20 +461,119 @@ r * 0.28,
 2.4 * r
 );
 } else if (sType === 4) {
+// 5. central heraldic lozenge
 ctx.beginPath();
-ctx.moveTo(0, -r * 0.58);
-ctx.lineTo(r * 0.5, 0);
-ctx.lineTo(0, r * 0.58);
-ctx.lineTo(-r * 0.5, 0);
+ctx.moveTo(0, -r * 0.62);
+ctx.lineTo(r * 0.54, 0);
+ctx.lineTo(0, r * 0.62);
+ctx.lineTo(-r * 0.54, 0);
+ctx.closePath();
+ctx.fill();
+} else if (sType === 5) {
+// 6. split field with boss on bouched targe
+ctx.fillStyle = col.dark;
+ctx.fillRect(0, -r * 1.2, r * 1.2, r * 2.4);
+ctx.fillStyle = '#F8FAFC';
+ctx.beginPath();
+ctx.arc(0, r * 0.05, r * 0.36, 0, Math.PI * 2);
+ctx.fill();
+} else if (sType === 6) {
+// 7. diagonal saltire cross (косой крест)
+ctx.lineWidth = r * 0.32;
+ctx.beginPath();
+ctx.moveTo(-r, -r);
+ctx.lineTo(r, r);
+ctx.moveTo(r, -r);
+ctx.lineTo(-r, r);
+ctx.stroke();
+} else if (sType === 7) {
+// 8. horizontal fess band (пояс)
+ctx.fillRect(
+-r * 1.2,
+-r * 0.26,
+r * 2.4,
+r * 0.52
+);
+ctx.fillStyle = col.dark;
+ctx.fillRect(
+-r * 1.2,
+-r * 0.08,
+r * 2.4,
+r * 0.16
+);
+} else if (sType === 8) {
+// 9. crenellated castle chief (зубцы)
+ctx.fillRect(
+-r * 1.1,
+-r * 1.0,
+r * 2.2,
+r * 0.55
+);
+ctx.fillRect(
+-r * 0.85,
+-r * 0.46,
+r * 0.36,
+r * 0.28
+);
+ctx.fillRect(
+-r * 0.18,
+-r * 0.46,
+r * 0.36,
+r * 0.28
+);
+ctx.fillRect(
+r * 0.49,
+-r * 0.46,
+r * 0.36,
+r * 0.28
+);
+} else if (sType === 9) {
+// 10. three silver heraldic rings
+ctx.lineWidth = Math.max(2, r * 0.16);
+ctx.beginPath();
+ctx.arc(
+-r * 0.32,
+-r * 0.28,
+r * 0.24,
+0,
+Math.PI * 2
+);
+ctx.stroke();
+ctx.beginPath();
+ctx.arc(
+r * 0.32,
+-r * 0.28,
+r * 0.24,
+0,
+Math.PI * 2
+);
+ctx.stroke();
+ctx.beginPath();
+ctx.arc(
+0,
+r * 0.34,
+r * 0.24,
+0,
+Math.PI * 2
+);
+ctx.stroke();
+} else if (sType === 10) {
+// 11. eight-pointed heraldic star
+ctx.beginPath();
+for (var st = 0; st < 16; st++) {
+var sa = (st * Math.PI) / 8;
+var sr = st % 2 === 0 ? r * 0.68 : r * 0.26;
+var sx = Math.cos(sa) * sr;
+var sy = Math.sin(sa) * sr;
+if (st === 0) ctx.moveTo(sx, sy);
+else ctx.lineTo(sx, sy);
+}
 ctx.closePath();
 ctx.fill();
 } else {
-ctx.fillStyle = col.dark;
-ctx.fillRect(0, -r * 1.2, r * 1.2, r * 2.4);
-ctx.fillStyle = col.light;
-ctx.beginPath();
-ctx.arc(0, -r * 0.1, r * 0.38, 0, Math.PI * 2);
-ctx.fill();
+// 12. checkered quarters (шахматное поле)
+ctx.fillRect(-r * 1.1, -r * 1.2, r * 1.1, r * 1.2);
+ctx.fillRect(0, 0, r * 1.1, r * 1.2);
 }
 
 if (damageState === 1) {
