@@ -1,6 +1,6 @@
 {
   "pubSeed": 257,
-  "tournamentNumber": 2,
+  "tournamentNumber": 3,
   "lastChampionId": null,
   "lastFinalistId": null,
   "roster": [
@@ -198,7 +198,7 @@
       "meleeSkill": 82,
       "gritSkill": 81,
       "isRare": false,
-      "wins": 1,
+      "wins": 0,
       "losses": 0,
       "titles": 0
     },
@@ -289,7 +289,7 @@
       "gritSkill": 77,
       "isRare": false,
       "wins": 0,
-      "losses": 1,
+      "losses": 0,
       "titles": 0
     },
     {

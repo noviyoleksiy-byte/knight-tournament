@@ -165,91 +165,91 @@ durability: 89
 }
 ];
 
-// 12 melee weapons for foot combat
+// 12 one-handed melee weapons for shield
 // crush breaks shields speed hits fast
 var WEAPONS = [
 {
 id: 0,
-name: 'Двуручный меч',
+name: 'Рыцарский меч',
 power: 88,
-speed: 84,
+speed: 88,
 crush: 80
 },
 {
 id: 1,
 name: 'Боевой топор',
 power: 92,
-speed: 78,
-crush: 96
+speed: 80,
+crush: 95
 },
 {
 id: 2,
 name: 'Моргенштерн',
 power: 90,
-speed: 80,
+speed: 81,
 crush: 92
 },
 {
 id: 3,
-name: 'Алебарда',
-power: 86,
-speed: 90,
-crush: 84
+name: 'Кованая булава',
+power: 89,
+speed: 84,
+crush: 91
 },
 {
 id: 4,
-name: 'Тяжёлый клевец',
+name: 'Вороний клевец',
 power: 91,
-speed: 82,
+speed: 83,
 crush: 94
 },
 {
 id: 5,
-name: 'Парные клинки',
-power: 79,
-speed: 97,
-crush: 70
+name: 'Тяжёлый палаш',
+power: 87,
+speed: 89,
+crush: 82
 },
 {
 id: 6,
-name: 'Цеп с гирей',
+name: 'Кистень на цепи',
 power: 94,
-speed: 74,
-crush: 91
+speed: 75,
+crush: 92
 },
 {
 id: 7,
 name: 'Боевой молот',
 power: 95,
-speed: 75,
-crush: 95
+speed: 77,
+crush: 96
 },
 {
 id: 8,
 name: 'Шестопёр',
-power: 87,
+power: 88,
 speed: 85,
-crush: 89
+crush: 90
 },
 {
 id: 9,
-name: 'Глефа',
-power: 89,
-speed: 87,
-crush: 82
+name: 'Кривая сабля',
+power: 86,
+speed: 92,
+crush: 78
 },
 {
 id: 10,
-name: 'Эсток',
+name: 'Колющий кончар',
 power: 85,
-speed: 93,
+speed: 94,
 crush: 76
 },
 {
 id: 11,
-name: 'Двуручный секач',
+name: 'Широкий фальшион',
 power: 93,
-speed: 81,
+speed: 82,
 crush: 88
 }
 ];

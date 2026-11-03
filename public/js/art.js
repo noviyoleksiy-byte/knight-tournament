@@ -749,7 +749,7 @@ ctx.stroke();
 }
 }
 
-// draw simple 3-color melee weapon
+// draw simple 3-color one-handed weapon
 // iron #475569 steel #94A3B8 silver #F8FAFC
 function drawWeapon(
 ctx,
@@ -771,14 +771,14 @@ ctx.rotate(angleRad || 0);
 ctx.scale(scale * 1.28, scale * 1.28);
 
 if (wType === 0) {
-// 1. simple broad greatsword
+// 1. one-handed knight arming sword
 fillRoundBox(
 ctx,
--5,
+-4.5,
 0,
-10,
-24,
-4,
+9,
+16,
+3,
 IRON,
 INK,
 2.4
@@ -787,40 +787,40 @@ ctx.fillStyle = STEEL;
 ctx.strokeStyle = INK;
 ctx.lineWidth = 2.4;
 ctx.beginPath();
-ctx.arc(0, 26, 7.5, 0, Math.PI * 2);
+ctx.arc(0, 19, 6.5, 0, Math.PI * 2);
 ctx.fill();
 ctx.stroke();
 fillRoundBox(
 ctx,
--24,
--8,
-48,
-10,
-4,
+-18,
+-7,
+36,
+8,
+3,
 STEEL,
 INK,
 2.4
 );
 ctx.fillStyle = SILVER;
 ctx.beginPath();
-ctx.moveTo(-10, -8);
-ctx.lineTo(10, -8);
-ctx.lineTo(8, -76);
-ctx.lineTo(0, -96);
-ctx.lineTo(-8, -76);
+ctx.moveTo(-9, -7);
+ctx.lineTo(9, -7);
+ctx.lineTo(7, -64);
+ctx.lineTo(0, -82);
+ctx.lineTo(-7, -64);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
 ctx.fillStyle = STEEL;
-ctx.fillRect(-2.5, -72, 5, 62);
+ctx.fillRect(-2, -60, 4, 50);
 } else if (wType === 1) {
-// 2. heavy single-bit battle axe
+// 2. one-handed bearded battle axe
 fillRoundBox(
 ctx,
 -5,
--84,
+-68,
 10,
-106,
+86,
 4,
 IRON,
 INK,
@@ -829,9 +829,9 @@ INK,
 fillRoundBox(
 ctx,
 -7,
--76,
+-64,
 14,
-34,
+28,
 3,
 STEEL,
 INK,
@@ -841,20 +841,20 @@ ctx.fillStyle = SILVER;
 ctx.strokeStyle = INK;
 ctx.lineWidth = 2.5;
 ctx.beginPath();
-ctx.moveTo(6, -74);
-ctx.quadraticCurveTo(46, -86, 46, -50);
-ctx.quadraticCurveTo(46, -14, 6, -30);
+ctx.moveTo(6, -64);
+ctx.quadraticCurveTo(44, -76, 44, -42);
+ctx.quadraticCurveTo(44, -10, 6, -24);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
 } else if (wType === 2) {
-// 3. spiked iron morningstar
+// 3. one-handed spiked morningstar
 fillRoundBox(
 ctx,
 -5,
--60,
+-56,
 10,
-82,
+74,
 4,
 IRON,
 INK,
@@ -864,7 +864,7 @@ ctx.fillStyle = STEEL;
 ctx.strokeStyle = INK;
 ctx.lineWidth = 2.5;
 ctx.beginPath();
-ctx.arc(0, -68, 19, 0, Math.PI * 2);
+ctx.arc(0, -64, 18, 0, Math.PI * 2);
 ctx.fill();
 ctx.stroke();
 ctx.fillStyle = SILVER;
@@ -872,29 +872,29 @@ for (var i = 0; i < 8; i++) {
 var a = (i * Math.PI) / 4;
 ctx.beginPath();
 ctx.moveTo(
-Math.cos(a - 0.24) * 17,
--68 + Math.sin(a - 0.24) * 17
+Math.cos(a - 0.24) * 16,
+-64 + Math.sin(a - 0.24) * 16
 );
 ctx.lineTo(
-Math.cos(a) * 32,
--68 + Math.sin(a) * 32
+Math.cos(a) * 30,
+-64 + Math.sin(a) * 30
 );
 ctx.lineTo(
-Math.cos(a + 0.24) * 17,
--68 + Math.sin(a + 0.24) * 17
+Math.cos(a + 0.24) * 16,
+-64 + Math.sin(a + 0.24) * 16
 );
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
 }
 } else if (wType === 3) {
-// 4. tall halberd with spike and axe
+// 4. one-handed forged spherical mace
 fillRoundBox(
 ctx,
--4.5,
--90,
-9,
-112,
+-5,
+-54,
+10,
+72,
 4,
 IRON,
 INK,
@@ -902,10 +902,10 @@ INK,
 );
 fillRoundBox(
 ctx,
--7,
--82,
-14,
-32,
+-8,
+-50,
+16,
+10,
 3,
 STEEL,
 INK,
@@ -915,35 +915,39 @@ ctx.fillStyle = SILVER;
 ctx.strokeStyle = INK;
 ctx.lineWidth = 2.5;
 ctx.beginPath();
-ctx.moveTo(-6, -88);
-ctx.lineTo(6, -88);
-ctx.lineTo(0, -116);
-ctx.closePath();
+ctx.arc(0, -66, 18, 0, Math.PI * 2);
 ctx.fill();
 ctx.stroke();
-ctx.beginPath();
-ctx.moveTo(6, -80);
-ctx.lineTo(38, -68);
-ctx.lineTo(34, -36);
-ctx.lineTo(6, -48);
-ctx.closePath();
-ctx.fill();
-ctx.stroke();
-ctx.beginPath();
-ctx.moveTo(-6, -72);
-ctx.lineTo(-24, -60);
-ctx.lineTo(-6, -54);
-ctx.closePath();
-ctx.fill();
-ctx.stroke();
+fillRoundBox(
+ctx,
+-21,
+-70,
+42,
+8,
+3,
+STEEL,
+INK,
+2.2
+);
+fillRoundBox(
+ctx,
+-4,
+-87,
+8,
+38,
+3,
+STEEL,
+INK,
+2.2
+);
 } else if (wType === 4) {
-// 5. armor piercing war pick
+// 5. one-handed crow-beak war pick
 fillRoundBox(
 ctx,
 -5,
--76,
+-66,
 10,
-98,
+84,
 4,
 IRON,
 INK,
@@ -952,7 +956,7 @@ INK,
 fillRoundBox(
 ctx,
 -14,
--72,
+-64,
 22,
 18,
 4,
@@ -964,55 +968,57 @@ ctx.fillStyle = SILVER;
 ctx.strokeStyle = INK;
 ctx.lineWidth = 2.5;
 ctx.beginPath();
-ctx.moveTo(6, -72);
-ctx.lineTo(44, -56);
-ctx.lineTo(6, -54);
+ctx.moveTo(6, -64);
+ctx.quadraticCurveTo(30, -64, 42, -46);
+ctx.quadraticCurveTo(24, -52, 6, -48);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
 } else if (wType === 5) {
-// 6. twin steel duelist blades
+// 6. one-handed broad palash with D-guard
 fillRoundBox(
 ctx,
--22,
--7,
-44,
+-4.5,
+0,
 9,
+16,
 3,
 IRON,
 INK,
 2.4
 );
-fillRoundBox(
-ctx,
--16,
--76,
-11,
-70,
-4,
-SILVER,
-INK,
-2.4
-);
-fillRoundBox(
-ctx,
-5,
--64,
-11,
-58,
-4,
-STEEL,
-INK,
-2.4
-);
+ctx.strokeStyle = STEEL;
+ctx.lineWidth = 4.5;
+ctx.beginPath();
+ctx.moveTo(-14, -4);
+ctx.lineTo(14, -4);
+ctx.bezierCurveTo(22, 2, 20, 16, 4, 16);
+ctx.stroke();
+ctx.strokeStyle = INK;
+ctx.lineWidth = 1.8;
+ctx.stroke();
+ctx.fillStyle = SILVER;
+ctx.strokeStyle = INK;
+ctx.lineWidth = 2.5;
+ctx.beginPath();
+ctx.moveTo(-8, -6);
+ctx.lineTo(8, -6);
+ctx.lineTo(8, -68);
+ctx.lineTo(-2, -82);
+ctx.lineTo(-8, -68);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+ctx.fillStyle = STEEL;
+ctx.fillRect(-6, -68, 4, 60);
 } else if (wType === 6) {
-// 7. heavy chain flail
+// 7. one-handed chain flail (кистень)
 fillRoundBox(
 ctx,
 -5,
--52,
+-48,
 10,
-74,
+66,
 4,
 IRON,
 INK,
@@ -1021,14 +1027,14 @@ INK,
 ctx.strokeStyle = STEEL;
 ctx.lineWidth = 5;
 ctx.beginPath();
-ctx.moveTo(0, -52);
-ctx.lineTo(24, -76);
+ctx.moveTo(0, -48);
+ctx.lineTo(22, -70);
 ctx.stroke();
 ctx.fillStyle = IRON;
 ctx.strokeStyle = INK;
 ctx.lineWidth = 2.5;
 ctx.beginPath();
-ctx.arc(26, -80, 16, 0, Math.PI * 2);
+ctx.arc(24, -74, 15, 0, Math.PI * 2);
 ctx.fill();
 ctx.stroke();
 ctx.fillStyle = SILVER;
@@ -1036,9 +1042,9 @@ for (var f = 0; f < 6; f++) {
 var fa = (f * Math.PI) / 3;
 ctx.beginPath();
 ctx.arc(
-26 + Math.cos(fa) * 16,
--80 + Math.sin(fa) * 16,
-4.5,
+24 + Math.cos(fa) * 15,
+-74 + Math.sin(fa) * 15,
+4.2,
 0,
 Math.PI * 2
 );
@@ -1046,13 +1052,13 @@ ctx.fill();
 ctx.stroke();
 }
 } else if (wType === 7) {
-// 8. heavy two-handed warhammer
+// 8. one-handed knight warhammer
 fillRoundBox(
 ctx,
 -5,
--74,
+-64,
 10,
-96,
+82,
 4,
 IRON,
 INK,
@@ -1060,34 +1066,34 @@ INK,
 );
 fillRoundBox(
 ctx,
--28,
--88,
-56,
-28,
-6,
+-24,
+-76,
+48,
+24,
+5,
 SILVER,
 INK,
 2.5
 );
 fillRoundBox(
 ctx,
--10,
--88,
-20,
-28,
+-9,
+-76,
+18,
+24,
 2,
 STEEL,
 INK,
 2.2
 );
 } else if (wType === 8) {
-// 9. flanged steel mace
+// 9. one-handed six-flanged mace
 fillRoundBox(
 ctx,
 -5,
--62,
+-56,
 10,
-84,
+74,
 4,
 IRON,
 INK,
@@ -1097,102 +1103,34 @@ ctx.fillStyle = SILVER;
 ctx.strokeStyle = INK;
 ctx.lineWidth = 2.5;
 ctx.beginPath();
-ctx.moveTo(-22, -60);
-ctx.lineTo(0, -90);
-ctx.lineTo(22, -60);
-ctx.lineTo(14, -38);
-ctx.lineTo(-14, -38);
+ctx.moveTo(-20, -56);
+ctx.lineTo(0, -84);
+ctx.lineTo(20, -56);
+ctx.lineTo(13, -36);
+ctx.lineTo(-13, -36);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
 fillRoundBox(
 ctx,
--5,
--84,
-10,
-44,
+-4.5,
+-78,
+9,
+40,
 3,
 STEEL,
 INK,
 2
 );
 } else if (wType === 9) {
-// 10. wide polearm glaive
+// 10. one-handed curved cavalry sabre
 fillRoundBox(
 ctx,
--5,
--56,
-10,
-78,
-4,
-IRON,
-INK,
-2.4
-);
-fillRoundBox(
-ctx,
--8,
--62,
+-4.5,
+0,
+9,
 16,
-14,
 3,
-STEEL,
-INK,
-2.2
-);
-ctx.fillStyle = SILVER;
-ctx.strokeStyle = INK;
-ctx.lineWidth = 2.5;
-ctx.beginPath();
-ctx.moveTo(-5, -58);
-ctx.quadraticCurveTo(36, -84, 10, -114);
-ctx.quadraticCurveTo(-6, -86, -5, -58);
-ctx.closePath();
-ctx.fill();
-ctx.stroke();
-} else if (wType === 10) {
-// 11. needle-pointed estoc sword
-fillRoundBox(
-ctx,
--5,
-0,
-10,
-22,
-4,
-IRON,
-INK,
-2.4
-);
-fillRoundBox(
-ctx,
--22,
--7,
-44,
-8,
-3,
-STEEL,
-INK,
-2.4
-);
-ctx.fillStyle = SILVER;
-ctx.strokeStyle = INK;
-ctx.lineWidth = 2.4;
-ctx.beginPath();
-ctx.moveTo(-7, -7);
-ctx.lineTo(7, -7);
-ctx.lineTo(0, -104);
-ctx.closePath();
-ctx.fill();
-ctx.stroke();
-} else {
-// 12. heavy broad cleaver falchion
-fillRoundBox(
-ctx,
--5,
-0,
-10,
-22,
-4,
 IRON,
 INK,
 2.4
@@ -1200,9 +1138,9 @@ INK,
 fillRoundBox(
 ctx,
 -16,
--7,
+-6,
 32,
-8,
+7,
 3,
 STEEL,
 INK,
@@ -1212,10 +1150,85 @@ ctx.fillStyle = SILVER;
 ctx.strokeStyle = INK;
 ctx.lineWidth = 2.5;
 ctx.beginPath();
-ctx.moveTo(-5, -7);
-ctx.lineTo(-5, -88);
-ctx.lineTo(30, -68);
-ctx.lineTo(18, -7);
+ctx.moveTo(-6, -6);
+ctx.quadraticCurveTo(-8, -48, 18, -82);
+ctx.quadraticCurveTo(28, -68, 12, -38);
+ctx.quadraticCurveTo(4, -20, 6, -6);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+} else if (wType === 10) {
+// 11. one-handed cup-hilt konchar sword
+fillRoundBox(
+ctx,
+-4.5,
+0,
+9,
+16,
+3,
+IRON,
+INK,
+2.4
+);
+ctx.fillStyle = STEEL;
+ctx.strokeStyle = INK;
+ctx.lineWidth = 2.4;
+ctx.beginPath();
+ctx.arc(0, -4, 12, Math.PI, 0);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+fillRoundBox(
+ctx,
+-18,
+-6,
+36,
+5,
+2,
+STEEL,
+INK,
+2
+);
+ctx.fillStyle = SILVER;
+ctx.beginPath();
+ctx.moveTo(-6, -10);
+ctx.lineTo(6, -10);
+ctx.lineTo(0, -86);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+} else {
+// 12. one-handed heavy broad falchion
+fillRoundBox(
+ctx,
+-4.5,
+0,
+9,
+16,
+3,
+IRON,
+INK,
+2.4
+);
+fillRoundBox(
+ctx,
+-15,
+-6,
+30,
+7,
+3,
+STEEL,
+INK,
+2.2
+);
+ctx.fillStyle = SILVER;
+ctx.strokeStyle = INK;
+ctx.lineWidth = 2.5;
+ctx.beginPath();
+ctx.moveTo(-5, -6);
+ctx.lineTo(-5, -78);
+ctx.lineTo(26, -60);
+ctx.lineTo(14, -6);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
