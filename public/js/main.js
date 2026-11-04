@@ -276,7 +276,7 @@ paradeLineupRow.innerHTML = html;
 }
 
 // draw parade canvas animation every frame
-// knight rides to rack picks weapon lines up
+// shows only champion banner & flower rain
 function drawParadeFrame() {
 if (
 !currentState ||
@@ -292,12 +292,23 @@ var h = paradeCanvas.height;
 ctx.clearRect(0, 0, w, h);
 
 var p = currentState.parade || {};
-var pm =
-currentState.matches &&
-currentState.matches[
-currentState.currentMatchIndex
-];
-// draw castle wall spectators and meadow
+var list = currentState.aliveKnights || [];
+var curIdx = p.currentIndex || 0;
+var champId = currentState.lastChampionId;
+var champK = null;
+
+for (var c = 0; c < list.length; c++) {
+if (champId && list[c].id === champId) {
+champK = list[c];
+}
+}
+
+var curK = !p.finished ? list[curIdx] : null;
+var isChampRiding = Boolean(
+curK && champId && curK.id === champId
+);
+
+// draw castle wall with only champion banner
 window.KnightArt.drawCastleScene(
 ctx,
 w,
@@ -305,15 +316,20 @@ h,
 185,
 false,
 animClock,
-p.finished ? 'CHEER' : 'IDLE',
-pm ? pm.k1 : null,
-pm ? pm.k2 : null,
-currentState.lastChampionId
+p.finished || isChampRiding
+? 'CHEER'
+: 'IDLE',
+champK,
+null,
+champId
 );
-var list = currentState.aliveKnights || [];
-var curIdx = p.currentIndex || 0;
-var takenMap = {};
 
+// light rain of flowers when champion rides
+if (isChampRiding && Math.random() < 0.16) {
+spawnCrowdFlower(w);
+}
+
+var takenMap = {};
 for (var t = 0; t < list.length; t++) {
 var tk = list[t];
 if (
@@ -402,6 +418,9 @@ lk.weaponIdx,
 }
 }
 }
+
+// draw falling crowd flowers on parade
+updateAndDrawParticles(ctx);
 }
 
 // build single bracket match box html
@@ -706,6 +725,7 @@ shieldDamage: Math.max(
 }
 
 // update top hud on combat arena screen
+// hides result text until blow/fall lands
 function renderCombatHud(s) {
 var m =
 s.matches &&
@@ -717,19 +737,18 @@ var elapsed =
 (Date.now() - stepStartTime) / 1000;
 var k1WinsMelee =
 c.mode === 'MELEE' &&
-c.finished &&
 c.winnerSide === 1;
-var hitT1 = k1WinsMelee ? 1.75 : 3.75;
-var hitT2 = k1WinsMelee ? 3.75 : 1.75;
+var hitT1 = k1WinsMelee ? 2.9 : 4.25;
+var hitT2 = k1WinsMelee ? 4.25 : 2.9;
 var hide1 =
 c.shieldHit1 &&
 (c.mode === 'JOUST'
-? elapsed < 2.85
+? elapsed < 2.9
 : elapsed < hitT1);
 var hide2 =
 c.shieldHit2 &&
 (c.mode === 'JOUST'
-? elapsed < 2.85
+? elapsed < 2.9
 : elapsed < hitT2);
 
 document.getElementById(
@@ -760,13 +779,40 @@ m.k2,
 hide2
 );
 
+// reveal outcome text only after visual hit
+var revealTime =
+c.mode === 'JOUST' ? 4.05 : 4.75;
+var showOutcome = elapsed >= revealTime;
+
+var badgeText = c.phaseTitle || 'ПОЕДИНОК';
+if (c.mode === 'JOUST' && !showOutcome) {
+badgeText =
+'КОННАЯ СШИБКА ' +
+(c.pass || 1) +
+' ИЗ 3';
+}
 document.getElementById(
 'combatPassBadge'
-).innerHTML = c.phaseTitle || 'ПОЕДИНОК';
+).innerHTML = badgeText;
+
+var subNote = 'Бой в разгаре...';
+if (showOutcome) {
+subNote = c.note || '';
+} else if (c.mode === 'JOUST') {
+subNote =
+elapsed < 1.15
+? 'Всадники на изготовке...'
+: elapsed < 2.9
+? 'Разгон по ристалищу...'
+: 'Сшибка копий!';
+} else {
+subNote =
+'Тяжёлый обмен ударами со щитами...';
+}
 document.getElementById(
 'combatSubNote'
-).innerHTML =
-elapsed >= 2.85 ? c.note || '' : 'Бой в разгаре...';
+).innerHTML = subNote;
+
 document.getElementById(
 'cLeftLiveOdds'
 ).innerHTML =
@@ -780,11 +826,9 @@ var banner =
 document.getElementById(
 'combatOverlayBanner'
 );
-var bannerDelay =
-c.mode === 'JOUST' ? 4.35 : 4.65;
 if (
 (c.pausedForBets || c.finished) &&
-elapsed >= bannerDelay
+showOutcome
 ) {
 banner.className = 'arenaBanner';
 document.getElementById(
@@ -798,11 +842,20 @@ banner.className = 'arenaBanner hidden';
 }
 }
 
+var soundDoneClash = false;
+var soundDoneResult = false;
+var lastScreenSeen = '';
+
 // apply received server state to dom
 // we switch between parade bracket combat
 function applyState(s) {
 if (!s) return;
 currentState = s;
+
+if (s.tvScreen !== lastScreenSeen) {
+lastScreenSeen = s.tvScreen;
+particles = [];
+}
 
 if (
 s.combat &&
@@ -812,6 +865,15 @@ animStepId = s.combat.stepId;
 stepStartTime = Date.now();
 impactDone1 = false;
 impactDone2 = false;
+soundDoneClash = false;
+soundDoneResult = false;
+if (s.tvScreen === 'COMBAT') {
+triggerSound(
+s.combat.mode === 'JOUST'
+? 'hoof'
+: 'sword'
+);
+}
 }
 
 pubSeedBadge.innerHTML =
@@ -866,10 +928,25 @@ s.currentMatchIndex
 }
 }
 renderPreviewCard(s);
+
+var c = s.combat || {};
+var elapsed =
+(Date.now() - stepStartTime) / 1000;
+var revT =
+c.mode === 'JOUST' ? 4.05 : 4.75;
+if (
+s.tvScreen !== 'COMBAT' ||
+!c.finished ||
+elapsed >= revT
+) {
 renderBottomBar(s);
+}
 
 if (s.version > lastVersion) {
-if (s.soundToPlay) {
+if (
+s.soundToPlay &&
+s.tvScreen !== 'COMBAT'
+) {
 triggerSound(s.soundToPlay);
 }
 lastVersion = s.version;
@@ -939,6 +1016,65 @@ pRow.innerHTML = pHtml;
 }
 }
 
+// update and draw active debris and flowers
+// shared by both parade and combat canvases
+function updateAndDrawParticles(ctx) {
+for (
+var pIdx = particles.length - 1;
+pIdx >= 0;
+pIdx--
+) {
+var pt = particles[pIdx];
+pt.x += pt.vx;
+pt.y += pt.vy;
+pt.rot = (pt.rot || 0) + (pt.vrot || 0);
+if (pt.kind === 'FLOWER') {
+pt.vy += 0.08;
+} else {
+pt.vy += 0.35;
+}
+pt.life -= 1;
+
+ctx.save();
+ctx.translate(pt.x, pt.y);
+ctx.rotate(pt.rot || 0);
+
+if (pt.kind === 'FLOWER') {
+// 5-petal flower from circus-tiger-runner
+ctx.fillStyle = pt.color;
+for (var fl = 0; fl < 5; fl++) {
+var fa = (fl * Math.PI * 2) / 5;
+ctx.beginPath();
+ctx.arc(
+Math.cos(fa) * pt.size * 0.6,
+Math.sin(fa) * pt.size * 0.6,
+pt.size * 0.5,
+0,
+Math.PI * 2
+);
+ctx.fill();
+}
+ctx.fillStyle = '#F8FAFC';
+ctx.beginPath();
+ctx.arc(0, 0, pt.size * 0.38, 0, Math.PI * 2);
+ctx.fill();
+} else {
+ctx.fillStyle = pt.color;
+ctx.fillRect(
+-pt.size * 0.5,
+-pt.size * 0.5,
+pt.size,
+pt.size
+);
+}
+ctx.restore();
+
+if (pt.life <= 0) {
+particles.splice(pIdx, 1);
+}
+}
+}
+
 // draw parade or combat canvas every frame
 function drawArenaFrame() {
 animClock += 0.035;
@@ -977,17 +1113,26 @@ currentState.currentMatchIndex
 var c = currentState.combat || {};
 var elapsed =
 (Date.now() - stepStartTime) / 1000;
+var revealTime =
+c.mode === 'JOUST' ? 4.05 : 4.75;
 
 // refresh hud as impact/banner timers pass
 renderCombatHud(currentState);
+if (c.finished && elapsed >= revealTime) {
+renderBottomBar(currentState);
+if (!soundDoneResult) {
+soundDoneResult = true;
+triggerSound('fanfare');
+}
+}
 
 // determine spectator crowd mood
 var crowdMood = 'IDLE';
-if (c.finished && elapsed >= 2.85) {
+if (c.finished && elapsed >= revealTime) {
 crowdMood = 'VICTORY';
 } else if (
 c.mode === 'MELEE' ||
-(c.mode === 'JOUST' && elapsed >= 2.85)
+(c.mode === 'JOUST' && elapsed >= 2.9)
 ) {
 crowdMood = 'CHEER';
 }
@@ -1011,10 +1156,10 @@ requestNextFrame();
 return;
 }
 
-// toss flowers from spectators on final/pass3 win
+// toss flowers from spectators after win
 if (
 c.throwFlowers &&
-elapsed >= 2.9 &&
+elapsed >= revealTime &&
 Math.random() < 0.42
 ) {
 spawnCrowdFlower(w);
@@ -1054,6 +1199,14 @@ c.shieldHit2 && preImpact
 );
 
 if (!preImpact) {
+if (!soundDoneClash) {
+soundDoneClash = true;
+triggerSound(
+c.shieldHit1 || c.shieldHit2
+? 'shatter'
+: 'clash'
+);
+}
 if (c.shieldHit1 && !impactDone1) {
 impactDone1 = true;
 spawnDebris(
@@ -1206,20 +1359,18 @@ ctx.closePath();
 ctx.fill();
 }
 } else {
-// slow turn-by-turn melee with shield block
-var fx1 = 800;
-var fx2 = 1000;
+// 3-strike melee: winner -> loser -> winner
+// loser kneels strictly after winner's blow
+var fx1 = 805;
+var fx2 = 995;
 var mState1 = 'guard';
 var mState2 = 'guard';
 var sparkX = 0;
 var sparkY = 0;
 
-// when k1 wins bout k2 strikes first then k1
-var swapOrder = Boolean(
-c.finished && c.winnerSide === 1
-);
-var hitTime1 = swapOrder ? 1.75 : 3.75;
-var hitTime2 = swapOrder ? 3.75 : 1.75;
+var k1Wins = c.winnerSide === 1;
+var hitTime1 = k1Wins ? 2.9 : 4.25;
+var hitTime2 = k1Wins ? 4.25 : 2.9;
 
 // delay shield crack until weapon strike lands
 var visM1 = getVisualKnight(
@@ -1237,6 +1388,7 @@ elapsed >= hitTime2 &&
 !impactDone2
 ) {
 impactDone2 = true;
+triggerSound('shatter');
 spawnDebris(
 940,
 345,
@@ -1251,6 +1403,7 @@ elapsed >= hitTime1 &&
 !impactDone1
 ) {
 impactDone1 = true;
+triggerSound('shatter');
 spawnDebris(
 860,
 345,
@@ -1260,113 +1413,130 @@ window.KnightArt.getArmor(m.k1.colorIdx)
 );
 }
 
-if (c.finished && elapsed >= 4.4) {
-if (c.winnerSide === 1) {
-fx1 = 830;
-fx2 = 990;
-mState1 = 'guard';
-mState2 = 'kneel';
-} else if (c.winnerSide === 2) {
-fx1 = 810;
-fx2 = 970;
-mState1 = 'kneel';
-mState2 = 'guard';
-}
-} else if (c.pausedForBets && elapsed >= 4.6) {
-mState1 = 'guard';
-mState2 = 'guard';
-} else {
-if (elapsed < 0.9) {
+if (elapsed < 0.85) {
 // step forward into guard stance
-var p0 = elapsed / 0.9;
+var p0 = elapsed / 0.85;
 fx1 = 755 + p0 * 50;
 fx2 = 1045 - p0 * 50;
 mState1 = 'guard';
 mState2 = 'guard';
-} else if (elapsed < 1.65) {
-// first attacker winds up heavy blow
-if (swapOrder) {
-fx1 = 805;
-fx2 = 985;
-mState1 = 'block';
-mState2 = 'windup';
-} else {
+} else if (elapsed < 1.4) {
+// exchange 1 windup: winner attacks first
+if (k1Wins) {
 fx1 = 815;
 fx2 = 995;
 mState1 = 'windup';
 mState2 = 'block';
+} else {
+fx1 = 805;
+fx2 = 985;
+mState1 = 'block';
+mState2 = 'windup';
 }
-} else if (elapsed < 2.35) {
-// first attacker strikes defender shield
-if (swapOrder) {
-fx1 = 818;
+} else if (elapsed < 2.05) {
+// exchange 1 strike: winner hits loser shield
+if (k1Wins) {
+fx1 = 850;
+fx2 = 985;
+mState1 = 'strike';
+mState2 = 'block';
+sparkX = 940;
+sparkY = 345;
+} else {
+fx1 = 815;
 fx2 = 950;
 mState1 = 'block';
 mState2 = 'strike';
-sparkX = 865;
-sparkY = 345;
-} else {
-fx1 = 850;
-fx2 = 982;
-mState1 = 'strike';
-mState2 = 'block';
-sparkX = 935;
+sparkX = 860;
 sparkY = 345;
 }
-} else if (elapsed < 2.95) {
-// reset to guard after first exchange
+} else if (elapsed < 2.35) {
+// brief guard reset between blows
 fx1 = 805;
 fx2 = 995;
 mState1 = 'guard';
 mState2 = 'guard';
-} else if (elapsed < 3.7) {
-// second attacker winds up decisive blow
-if (swapOrder) {
-fx1 = 815;
-fx2 = 995;
-mState1 = 'windup';
-mState2 = 'block';
-} else {
+} else if (elapsed < 2.85) {
+// exchange 2 windup: loser counter-attacks
+if (k1Wins) {
 fx1 = 805;
 fx2 = 985;
 mState1 = 'block';
 mState2 = 'windup';
-}
-} else if (elapsed < 4.4) {
-// second attacker strikes defender shield
-if (swapOrder) {
-fx1 = 850;
-fx2 = 982;
-mState1 = 'strike';
-mState2 = 'block';
-sparkX = 935;
-sparkY = 345;
 } else {
-fx1 = 818;
+fx1 = 815;
+fx2 = 995;
+mState1 = 'windup';
+mState2 = 'block';
+}
+} else if (elapsed < 3.45) {
+// exchange 2 strike: winner blocks loser blow
+if (k1Wins) {
+fx1 = 815;
 fx2 = 950;
 mState1 = 'block';
 mState2 = 'strike';
-sparkX = 865;
-sparkY = 345;
-}
-} else if (elapsed < 5.1) {
-// third windup when round continues
-fx1 = 818;
-fx2 = 990;
-mState1 = 'windup';
-mState2 = 'block';
-} else if (elapsed < 5.75) {
-// third strike onto right shield
-fx1 = 852;
-fx2 = 980;
-mState1 = 'strike';
-mState2 = 'block';
-sparkX = 935;
+sparkX = 860;
 sparkY = 345;
 } else {
+fx1 = 850;
+fx2 = 985;
+mState1 = 'strike';
+mState2 = 'block';
+sparkX = 940;
+sparkY = 345;
+}
+} else if (elapsed < 3.75) {
+// reset before final decisive blow
 fx1 = 805;
 fx2 = 995;
 mState1 = 'guard';
+mState2 = 'guard';
+} else if (elapsed < 4.2) {
+// exchange 3 windup: winner prepares finish
+if (k1Wins) {
+fx1 = 820;
+fx2 = 990;
+mState1 = 'windup';
+mState2 = 'block';
+} else {
+fx1 = 810;
+fx2 = 980;
+mState1 = 'block';
+mState2 = 'windup';
+}
+} else if (elapsed < 4.75) {
+// exchange 3 strike: winner delivers final blow
+if (!soundDoneClash) {
+soundDoneClash = true;
+triggerSound('clash');
+}
+if (k1Wins) {
+fx1 = 856;
+fx2 = 984;
+mState1 = 'strike';
+mState2 = 'block';
+sparkX = 942;
+sparkY = 345;
+} else {
+fx1 = 816;
+fx2 = 944;
+mState1 = 'block';
+mState2 = 'strike';
+sparkX = 858;
+sparkY = 345;
+}
+} else {
+// loser drops to knee from winner's strike
+if (k1Wins) {
+fx1 = 835;
+fx2 = 990;
+mState1 = 'guard';
+mState2 = 'kneel';
+} else {
+fx1 = 810;
+fx2 = 965;
+mState1 = 'kneel';
 mState2 = 'guard';
 }
 }
@@ -1436,60 +1606,7 @@ ctx.stroke();
 }
 
 // render splinters and crowd flowers
-for (
-var pIdx = particles.length - 1;
-pIdx >= 0;
-pIdx--
-) {
-var pt = particles[pIdx];
-pt.x += pt.vx;
-pt.y += pt.vy;
-pt.rot = (pt.rot || 0) + (pt.vrot || 0);
-if (pt.kind === 'FLOWER') {
-pt.vy += 0.08;
-} else {
-pt.vy += 0.35;
-}
-pt.life -= 1;
-
-ctx.save();
-ctx.translate(pt.x, pt.y);
-ctx.rotate(pt.rot || 0);
-
-if (pt.kind === 'FLOWER') {
-// 5-petal flower from circus-tiger-runner
-ctx.fillStyle = pt.color;
-for (var fl = 0; fl < 5; fl++) {
-var fa = (fl * Math.PI * 2) / 5;
-ctx.beginPath();
-ctx.arc(
-Math.cos(fa) * pt.size * 0.6,
-Math.sin(fa) * pt.size * 0.6,
-pt.size * 0.5,
-0,
-Math.PI * 2
-);
-ctx.fill();
-}
-ctx.fillStyle = '#F8FAFC';
-ctx.beginPath();
-ctx.arc(0, 0, pt.size * 0.38, 0, Math.PI * 2);
-ctx.fill();
-} else {
-ctx.fillStyle = pt.color;
-ctx.fillRect(
--pt.size * 0.5,
--pt.size * 0.5,
-pt.size,
-pt.size
-);
-}
-ctx.restore();
-
-if (pt.life <= 0) {
-particles.splice(pIdx, 1);
-}
-}
+updateAndDrawParticles(ctx);
 
 requestNextFrame();
 }

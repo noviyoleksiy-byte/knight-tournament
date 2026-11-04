@@ -420,11 +420,19 @@ titles: 0
 });
 }
 
+// seed defending champion for tour 1
+// gives silver banner on first parade
+if (roster.length >= 2) {
+roster[0].wins = 3;
+roster[0].titles = 1;
+roster[1].wins = 2;
+}
+
 return {
 pubSeed: seed,
 tournamentNumber: 0,
-lastChampionId: null,
-lastFinalistId: null,
+lastChampionId: 'K1',
+lastFinalistId: 'K2',
 roster: roster,
 tables: [
 { id: 1, name: 'Стол №1', balance: 500 },
@@ -470,6 +478,20 @@ var raw =
 fs.readFileSync(ROSTER_FILE, 'utf8');
 var parsed = JSON.parse(raw);
 if (parsed && parsed.roster) {
+if (!parsed.lastChampionId) {
+parsed.lastChampionId = 'K1';
+parsed.lastFinalistId = 'K2';
+if (parsed.roster[0]) {
+parsed.roster[0].titles = Math.max(
+1,
+parsed.roster[0].titles || 0
+);
+parsed.roster[0].wins = Math.max(
+3,
+parsed.roster[0].wins || 0
+);
+}
+}
 var templates = selectPubTemplates(
 parsed.pubSeed || 257
 );
@@ -1406,6 +1428,7 @@ return;
 }
 
 // foot melee combat resolution
+// single continuous 3-strike sword duel
 c.meleeRound += 1;
 c.phaseTitle =
 'ПЕШЕЕ СРАЖЕНИЕ: ' +
@@ -1436,22 +1459,6 @@ var score2 =
 calcPowerScore(m.k2, 'MELEE') +
 Math.random() * 32;
 
-if (c.meleeRound === 1) {
-if (score1 >= score2) {
-m.k2.isTired = true;
-} else {
-m.k1.isTired = true;
-}
-gameState.soundToPlay =
-c.shieldHit1 || c.shieldHit2
-? 'shatter'
-: 'sword';
-c.note =
-'Тяжёлый обмен ударами со щитами!';
-updateAllOdds(gameState);
-return;
-}
-
 var winSide = score1 >= score2 ? 1 : 2;
 var winK = winSide === 1 ? m.k1 : m.k2;
 var loseK = winSide === 1 ? m.k2 : m.k1;
@@ -1463,7 +1470,7 @@ c.throwFlowers =
 gameState.currentMatchIndex === 6;
 c.note =
 loseK.name +
-' преклоняет колено от изнеможения!';
+' преклоняет колено после удара!';
 c.bannerTitle =
 'ПОБЕДА В ПЕШЕМ БОЮ: ' + winK.name + '!';
 c.bannerSub =
@@ -1515,8 +1522,8 @@ var elapsed =
 Date.now() - (gameState.lastStepAt || 0);
 var stepDur =
 gameState.combat.mode === 'MELEE'
-? 6200
-: 5600;
+? 6800
+: 6600;
 if (elapsed >= stepDur) {
 gameState.lastStepAt = Date.now();
 gameState.version += 1;

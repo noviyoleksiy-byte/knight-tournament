@@ -1565,6 +1565,7 @@ var stepX = merlonW + gapW;
 var merlonH = Math.max(14, wallH * 0.34);
 
 // 2. heraldic banners on left & right of crowd
+// parade passes only reigning champion banner
 var towerW = Math.max(48, w * 0.08);
 var towerTop = 4;
 var bannerH = Math.max(
@@ -1581,6 +1582,7 @@ rightKnight &&
 lastChampId &&
 rightKnight.id === lastChampId
 );
+if (leftKnight) {
 drawFighterBanner(
 ctx,
 w * 0.05,
@@ -1590,6 +1592,8 @@ bannerH,
 leftKnight,
 isChampL
 );
+}
+if (rightKnight) {
 drawFighterBanner(
 ctx,
 w * 0.87,
@@ -1599,6 +1603,7 @@ bannerH,
 rightKnight,
 isChampR
 );
+}
 
 // 3. 5 tiered rows of larger spectators
 // fills upper stands without empty space

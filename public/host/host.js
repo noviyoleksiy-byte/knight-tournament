@@ -357,6 +357,22 @@ boutSub.innerHTML =
 }
 
 // update primary start or step button text
+// wait for hit animation before end label
+if (
+s.combat &&
+s.combat.stepId !== renderHost._stepId
+) {
+renderHost._stepId = s.combat.stepId;
+renderHost._stepAt = Date.now();
+}
+var cWait =
+(Date.now() - (renderHost._stepAt || 0)) /
+1000;
+var cReveal =
+s.combat && s.combat.mode === 'JOUST'
+? 4.05
+: 4.75;
+
 if (s.tvScreen === 'PARADE') {
 if (s.parade && s.parade.finished) {
 btnStartStep.innerHTML =
@@ -369,7 +385,10 @@ btnStartStep.innerHTML =
 s.tvScreen === 'COMBAT' &&
 s.combat
 ) {
-if (s.combat.finished) {
+if (cWait < cReveal) {
+btnStartStep.innerHTML =
+'ИДЁТ ФАЗА БОЯ...';
+} else if (s.combat.finished) {
 btnStartStep.innerHTML =
 'К СЕТКЕ (ЗАВЕРШИТЬ БОЙ)';
 } else if (s.combat.pausedForBets) {
