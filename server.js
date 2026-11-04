@@ -1034,6 +1034,8 @@ active: false,
 mode: 'JOUST',
 pass: 0,
 meleeRound: 0,
+windDir: 0,
+stepElapsedMs: 0,
 pausedForBets: false,
 finished: false,
 winnerSide: null,
@@ -1254,6 +1256,8 @@ c.pausedForBets = false;
 
 if (c.mode === 'JOUST') {
 c.pass += 1;
+c.windDir =
+[-1, 0, 1][Math.floor(Math.random() * 3)];
 c.phaseTitle =
 'КОННАЯ СШИБКА ' + c.pass + ' ИЗ 3';
 
@@ -1263,6 +1267,13 @@ var s1 = SHIELDS[m.k1.shieldIdx];
 var s2 = SHIELDS[m.k2.shieldIdx];
 
 // compute lance impact with horse fatigue
+// rider with wind in back gets +5 horse speed
+var evenP = c.pass % 2 === 0;
+var dir1 = evenP ? -1 : 1;
+var dir2 = evenP ? 1 : -1;
+var windSpd1 = c.windDir === dir1 ? 5 : 0;
+var windSpd2 = c.windDir === dir2 ? 5 : 0;
+
 var fat1 =
 (c.pass - 1) * (105 - h1.stamina) * 0.35;
 var fat2 =
@@ -1277,12 +1288,12 @@ m.k2.isTired = true;
 
 var hit1 =
 m.k1.joustSkill * 0.5 +
-h1.speed * 0.5 -
+(h1.speed + windSpd1) * 0.5 -
 fat1 +
 Math.random() * 28;
 var hit2 =
 m.k2.joustSkill * 0.5 +
-h2.speed * 0.5 -
+(h2.speed + windSpd2) * 0.5 -
 fat2 +
 Math.random() * 28;
 
@@ -1551,7 +1562,13 @@ return '127.0.0.1';
 }
 
 // return current state to tv and host
+// include elapsed step time for host button
 app.get('/api/state', function (req, res) {
+res.set('Cache-Control', 'no-store');
+if (gameState.combat) {
+gameState.combat.stepElapsedMs =
+Date.now() - (gameState.lastStepAt || 0);
+}
 res.json(gameState);
 });
 
@@ -1781,6 +1798,8 @@ mode: 'JOUST',
 pendingMelee: false,
 pass: 0,
 meleeRound: 0,
+windDir: 0,
+stepElapsedMs: 0,
 pausedForBets: false,
 finished: false,
 winnerSide: null,
@@ -1838,6 +1857,10 @@ gameState.gameMode
 );
 }
 
+if (gameState.combat) {
+gameState.combat.stepElapsedMs =
+Date.now() - (gameState.lastStepAt || 0);
+}
 res.json({ ok: true, state: gameState });
 });
 

@@ -295,20 +295,12 @@ var p = currentState.parade || {};
 var list = currentState.aliveKnights || [];
 var curIdx = p.currentIndex || 0;
 var champId = currentState.lastChampionId;
-var champK = null;
-
-for (var c = 0; c < list.length; c++) {
-if (champId && list[c].id === champId) {
-champK = list[c];
-}
-}
-
 var curK = !p.finished ? list[curIdx] : null;
 var isChampRiding = Boolean(
 curK && champId && curK.id === champId
 );
 
-// draw castle wall with only champion banner
+// draw castle wall with pub logo on both banners
 window.KnightArt.drawCastleScene(
 ctx,
 w,
@@ -319,9 +311,10 @@ animClock,
 p.finished || isChampRiding
 ? 'CHEER'
 : 'IDLE',
-champK,
 null,
-champId
+null,
+champId,
+0
 );
 
 // light rain of flowers when champion rides
@@ -781,7 +774,7 @@ hide2
 
 // reveal outcome text only after visual hit
 var revealTime =
-c.mode === 'JOUST' ? 4.05 : 4.75;
+c.mode === 'JOUST' ? 3.25 : 4.75;
 var showOutcome = elapsed >= revealTime;
 
 var badgeText = c.phaseTitle || 'ПОЕДИНОК';
@@ -799,12 +792,18 @@ var subNote = 'Бой в разгаре...';
 if (showOutcome) {
 subNote = c.note || '';
 } else if (c.mode === 'JOUST') {
+var wHint =
+c.windDir === 1
+? ' · Ветер вправо →'
+: c.windDir === -1
+? ' · Ветер влево ←'
+: ' · Штиль';
 subNote =
-elapsed < 1.15
+(elapsed < 1.15
 ? 'Всадники на изготовке...'
 : elapsed < 2.9
 ? 'Разгон по ристалищу...'
-: 'Сшибка копий!';
+: 'Сшибка копий!') + wHint;
 } else {
 subNote =
 'Тяжёлый обмен ударами со щитами...';
@@ -933,7 +932,7 @@ var c = s.combat || {};
 var elapsed =
 (Date.now() - stepStartTime) / 1000;
 var revT =
-c.mode === 'JOUST' ? 4.05 : 4.75;
+c.mode === 'JOUST' ? 3.25 : 4.75;
 if (
 s.tvScreen !== 'COMBAT' ||
 !c.finished ||
@@ -1114,7 +1113,7 @@ var c = currentState.combat || {};
 var elapsed =
 (Date.now() - stepStartTime) / 1000;
 var revealTime =
-c.mode === 'JOUST' ? 4.05 : 4.75;
+c.mode === 'JOUST' ? 3.25 : 4.75;
 
 // refresh hud as impact/banner timers pass
 renderCombatHud(currentState);
@@ -1148,7 +1147,8 @@ animClock,
 crowdMood,
 m ? m.k1 : null,
 m ? m.k2 : null,
-currentState.lastChampionId
+currentState.lastChampionId,
+c.windDir || 0
 );
 
 if (!m || !m.k1 || !m.k2) {

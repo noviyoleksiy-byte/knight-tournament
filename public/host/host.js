@@ -339,12 +339,37 @@ m.stageName +
 m.k1.name +
 ' vs ' +
 m.k2.name;
+var cWait0 =
+s.combat &&
+s.combat.stepElapsedMs !== undefined
+? s.combat.stepElapsedMs / 1000
+: 99;
+var cRev0 =
+s.combat && s.combat.mode === 'JOUST'
+? 3.25
+: 4.75;
+if (
+s.tvScreen === 'COMBAT' &&
+s.combat &&
+s.combat.finished &&
+cWait0 >= cRev0
+) {
+var winK =
+s.combat.winnerSide === 1
+? m.k1
+: m.k2;
+boutSub.innerHTML =
+'ПОБЕДИТЕЛЬ: ' +
+winK.name +
+' · Завершите бой для возврата к сетке';
+} else {
 boutSub.innerHTML =
 (s.statusText || '') +
 ' · К1: x' +
 Number(m.odds1).toFixed(2) +
 ' | К2: x' +
 Number(m.odds2).toFixed(2);
+}
 } else if (s.champion) {
 boutTitle.innerHTML =
 'ЧЕМПИОН: ' +
@@ -357,20 +382,15 @@ boutSub.innerHTML =
 }
 
 // update primary start or step button text
-// wait for hit animation before end label
-if (
-s.combat &&
-s.combat.stepId !== renderHost._stepId
-) {
-renderHost._stepId = s.combat.stepId;
-renderHost._stepAt = Date.now();
-}
+// uses server stepElapsedMs so tab wake works
 var cWait =
-(Date.now() - (renderHost._stepAt || 0)) /
-1000;
+s.combat &&
+s.combat.stepElapsedMs !== undefined
+? s.combat.stepElapsedMs / 1000
+: 99;
 var cReveal =
 s.combat && s.combat.mode === 'JOUST'
-? 4.05
+? 3.25
 : 4.75;
 
 if (s.tvScreen === 'PARADE') {

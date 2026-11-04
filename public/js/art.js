@@ -1534,6 +1534,82 @@ sIdx,
 );
 }
 
+// draw pub logo placeholder on parade banners
+// shows purple pub crest on left and right
+function drawPubLogoBanner(
+ctx,
+bx,
+by,
+bw,
+bh
+) {
+ctx.fillStyle = '#1E293B';
+ctx.fillRect(bx, by, bw, bh);
+
+var pad = 6;
+var cx = bx + pad;
+var cy = by + pad;
+var cw = bw - pad * 2;
+var ch = bh - pad * 2;
+
+// purple pub cloth background
+ctx.fillStyle = '#581C87';
+ctx.fillRect(cx, cy, cw, ch);
+ctx.fillStyle = '#7E22CE';
+ctx.fillRect(cx, cy, cw * 0.5, ch);
+
+// subtle diagonal fabric sheen
+ctx.fillStyle = 'rgba(255,255,255,0.08)';
+ctx.beginPath();
+ctx.moveTo(cx, cy);
+ctx.lineTo(cx + cw * 0.65, cy);
+ctx.lineTo(cx + cw * 0.25, cy + ch);
+ctx.lineTo(cx, cy + ch);
+ctx.closePath();
+ctx.fill();
+
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 3;
+ctx.strokeRect(cx, cy, cw, ch);
+
+ctx.strokeStyle = '#C084FC';
+ctx.lineWidth = 1.5;
+ctx.strokeRect(
+cx + 3,
+cy + 3,
+cw - 6,
+ch - 6
+);
+
+// center shield crest with pub mug & text
+var mx = bx + bw * 0.5;
+var my = by + bh * 0.5;
+var r = Math.max(12, Math.min(cw, ch) * 0.28);
+
+ctx.fillStyle = '#3B0764';
+ctx.strokeStyle = '#E9D5FF';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.arc(mx, my, r, 0, Math.PI * 2);
+ctx.fill();
+ctx.stroke();
+
+ctx.fillStyle = '#F8FAFC';
+ctx.font =
+'900 ' +
+Math.max(9, Math.round(r * 0.52)) +
+'px sans-serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('ПАБ', mx, my - r * 0.22);
+ctx.fillStyle = '#C084FC';
+ctx.font =
+'700 ' +
+Math.max(8, Math.round(r * 0.42)) +
+'px sans-serif';
+ctx.fillText('LOGO', mx, my + r * 0.32);
+}
+
 // draw castle wall spectators and meadow
 // crowd cheers in melee and on victory
 function drawCastleScene(
@@ -1546,7 +1622,8 @@ animPhase,
 crowdMood,
 leftKnight,
 rightKnight,
-lastChampId
+lastChampId,
+windDir
 ) {
 var t = animPhase || 0;
 var isVictory = crowdMood === 'VICTORY';
@@ -1564,8 +1641,9 @@ var gapW = Math.max(14, Math.floor(merlonW * 0.62));
 var stepX = merlonW + gapW;
 var merlonH = Math.max(14, wallH * 0.34);
 
-// 2. heraldic banners on left & right of crowd
-// parade passes only reigning champion banner
+// 2. banners on left and right of spectators
+// shows fighter shields or pub logo on parade
+if (w >= 600) {
 var towerW = Math.max(48, w * 0.08);
 var towerTop = 4;
 var bannerH = Math.max(
@@ -1592,6 +1670,14 @@ bannerH,
 leftKnight,
 isChampL
 );
+} else {
+drawPubLogoBanner(
+ctx,
+w * 0.05,
+towerTop,
+towerW,
+bannerH
+);
 }
 if (rightKnight) {
 drawFighterBanner(
@@ -1603,6 +1689,15 @@ bannerH,
 rightKnight,
 isChampR
 );
+} else {
+drawPubLogoBanner(
+ctx,
+w * 0.87,
+towerTop,
+towerW,
+bannerH
+);
+}
 }
 
 // 3. 5 tiered rows of larger spectators
@@ -1764,33 +1859,94 @@ w,
 lawnH * 0.16
 );
 
-// 5. optional tilt rail for jousting arena
+// 5. purple pub flags along jousting lists
+// hangs down or flutters left/right with wind
 if (showRail) {
-fillRoundBox(
-ctx,
-76,
-388,
-w - 152,
-24,
-4,
-'#64748B',
-'#090D16',
-2.5
-);
-ctx.fillStyle = '#94A3B8';
-ctx.fillRect(80, 390, w - 160, 7);
+var wDir = windDir || 0;
 for (var rx = 120; rx < w - 110; rx += 140) {
+// dark iron flagpole post in turf
 fillRoundBox(
 ctx,
-rx - 5,
-388,
-10,
-42,
+rx - 2.5,
+350,
+5,
+76,
 2,
 '#475569',
 '#090D16',
-2
+1.8
 );
+
+// silver finial ball atop pole
+ctx.fillStyle = '#E9D5FF';
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 1.5;
+ctx.beginPath();
+ctx.arc(rx, 348, 4.2, 0, Math.PI * 2);
+ctx.fill();
+ctx.stroke();
+
+if (wDir === 0) {
+// calm wind: purple flag hangs down pole
+ctx.fillStyle = '#9333EA';
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(rx - 3, 353);
+ctx.lineTo(rx + 12, 355);
+ctx.lineTo(rx + 9, 405);
+ctx.lineTo(rx + 1, 396);
+ctx.lineTo(rx - 6, 404);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+
+ctx.fillStyle = '#C084FC';
+ctx.fillRect(rx - 1, 355, 4, 38);
+} else {
+// blowing left (-1) or right (+1)
+var wave =
+Math.sin(t * 7.5 + rx * 0.04) * 4.5;
+var tipX = rx + wDir * 52;
+var midX = rx + wDir * 28;
+var notchX = rx + wDir * 39;
+
+ctx.fillStyle = '#9333EA';
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(rx + wDir * 2, 353);
+ctx.quadraticCurveTo(
+midX,
+351 + wave * 0.5,
+tipX,
+356 + wave
+);
+ctx.lineTo(notchX, 366 + wave * 0.7);
+ctx.lineTo(tipX, 376 + wave);
+ctx.quadraticCurveTo(
+midX,
+378 + wave * 0.5,
+rx + wDir * 2,
+376
+);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+
+// light purple pub stripe along pennant
+ctx.strokeStyle = '#C084FC';
+ctx.lineWidth = 2.5;
+ctx.beginPath();
+ctx.moveTo(rx + wDir * 4, 364.5);
+ctx.quadraticCurveTo(
+midX,
+364.5 + wave * 0.5,
+notchX - wDir * 3,
+366 + wave * 0.7
+);
+ctx.stroke();
+}
 }
 }
 }
