@@ -190,6 +190,77 @@ font-weight: 700;
 margin-bottom: 4px;
 }
 
+.customSelectWrap {
+position: relative;
+width: 100%;
+margin-bottom: 4px;
+}
+
+.inputRow .customSelectWrap {
+flex: 1;
+margin-bottom: 0;
+}
+
+.customSelectBtn {
+width: 100%;
+min-height: 46px;
+background: #090D16;
+color: #F8FAFC;
+border: 1px solid #334155;
+border-radius: 8px;
+padding: 8px 12px;
+font-size: 14px;
+font-weight: 700;
+text-align: left;
+display: flex;
+align-items: center;
+justify-content: space-between;
+cursor: pointer;
+}
+
+.customSelectBtn.open {
+border-color: #38BDF8;
+}
+
+.customSelectArrow {
+color: #38BDF8;
+font-size: 12px;
+margin-left: 8px;
+}
+
+.customSelectMenu {
+display: none;
+background: #0F172A;
+border: 1px solid #38BDF8;
+border-radius: 8px;
+margin-top: 4px;
+max-height: 240px;
+overflow-y: auto;
+z-index: 50;
+}
+
+.customSelectMenu.open {
+display: block;
+}
+
+.customSelectOpt {
+padding: 12px;
+font-size: 14px;
+font-weight: 700;
+color: #E2E8F0;
+border-bottom: 1px solid #1E293B;
+cursor: pointer;
+}
+
+.customSelectOpt:last-child {
+border-bottom: none;
+}
+
+.customSelectOpt.activeOpt {
+background: #1D4ED8;
+color: #FFFFFF;
+}
+
 .inputRow {
 display: flex;
 gap: 8px;

@@ -996,6 +996,8 @@ prizes: pubData.prizes,
 recentPayouts: [],
 prizeBannerText: null,
 champion: null,
+lastChampionId:
+pubData.lastChampionId || null,
 soundToPlay: 'horn',
 lastParadeAt: Date.now(),
 parade: {
@@ -1125,6 +1127,7 @@ gameState.matches[6].k2 = promoted;
 // grand final completed reveal secret title
 gameState.tournamentStatus = 'FINISHED';
 gameState.champion = winK;
+gameState.lastChampionId = winK.id;
 pubData.lastChampionId = winK.id;
 pubData.lastFinalistId = loseK.id;
 

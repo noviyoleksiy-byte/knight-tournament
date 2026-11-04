@@ -1444,6 +1444,96 @@ ctx,
 ctx.restore();
 }
 
+// draw heraldic banner with knight shield
+// adds silver border for reigning champion
+function drawFighterBanner(
+ctx,
+bx,
+by,
+bw,
+bh,
+knight,
+isChamp
+) {
+var cIdx = knight ? knight.colorIdx : 0;
+var sIdx = knight ? knight.shieldIdx : 0;
+var col = getArmor(cIdx);
+
+// dark stone backing behind banner cloth
+ctx.fillStyle = '#1E293B';
+ctx.fillRect(bx, by, bw, bh);
+
+var pad = 6;
+var cx = bx + pad;
+var cy = by + pad;
+var cw = bw - pad * 2;
+var ch = bh - pad * 2;
+
+// split heraldic cloth background
+ctx.fillStyle = col.dark;
+ctx.fillRect(cx, cy, cw, ch);
+ctx.fillStyle = col.main;
+ctx.fillRect(cx, cy, cw * 0.5, ch);
+
+// subtle diagonal fabric sheen
+ctx.fillStyle = 'rgba(255,255,255,0.07)';
+ctx.beginPath();
+ctx.moveTo(cx, cy);
+ctx.lineTo(cx + cw * 0.65, cy);
+ctx.lineTo(cx + cw * 0.25, cy + ch);
+ctx.lineTo(cx, cy + ch);
+ctx.closePath();
+ctx.fill();
+
+// border in gleaming silver for prev champ
+if (isChamp) {
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 6;
+ctx.strokeRect(cx, cy, cw, ch);
+
+ctx.strokeStyle = '#F8FAFC';
+ctx.lineWidth = 4.5;
+ctx.strokeRect(cx, cy, cw, ch);
+
+ctx.strokeStyle = '#CBD5E1';
+ctx.lineWidth = 2;
+ctx.strokeRect(
+cx + 5,
+cy + 5,
+cw - 10,
+ch - 10
+);
+} else {
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 3;
+ctx.strokeRect(cx, cy, cw, ch);
+
+ctx.strokeStyle = '#475569';
+ctx.lineWidth = 1.5;
+ctx.strokeRect(
+cx + 3,
+cy + 3,
+cw - 6,
+ch - 6
+);
+}
+
+// draw knight shield emblem in center
+var shR = Math.max(
+14,
+Math.min(cw, ch) * 0.34
+);
+drawShield(
+ctx,
+bx + bw * 0.5,
+by + bh * 0.5,
+shR,
+cIdx,
+sIdx,
+0
+);
+}
+
 // draw castle wall spectators and meadow
 // crowd cheers in melee and on victory
 function drawCastleScene(
@@ -1453,7 +1543,10 @@ h,
 wallBottomY,
 showRail,
 animPhase,
-crowdMood
+crowdMood,
+leftKnight,
+rightKnight,
+lastChampId
 ) {
 var t = animPhase || 0;
 var isVictory = crowdMood === 'VICTORY';
@@ -1464,43 +1557,48 @@ isVictory || crowdMood === 'CHEER';
 ctx.fillStyle = '#1E293B';
 ctx.fillRect(0, 0, w, wallBottomY);
 
-// 2. distant castle towers on left & right
-var towerW = Math.max(48, w * 0.08);
-var towerTop = 4;
-ctx.fillStyle = '#334155';
-ctx.strokeStyle = '#090D16';
-ctx.lineWidth = 2;
-ctx.fillRect(
-w * 0.05,
-towerTop,
-towerW,
-wallBottomY - towerTop
-);
-ctx.strokeRect(
-w * 0.05,
-towerTop,
-towerW,
-wallBottomY - towerTop
-);
-ctx.fillRect(
-w * 0.87,
-towerTop,
-towerW,
-wallBottomY - towerTop
-);
-ctx.strokeRect(
-w * 0.87,
-towerTop,
-towerW,
-wallBottomY - towerTop
-);
-
 var wallH = Math.max(42, wallBottomY * 0.34);
 var wallTop = wallBottomY - wallH;
 var merlonW = Math.max(22, Math.floor(w / 32));
 var gapW = Math.max(14, Math.floor(merlonW * 0.62));
 var stepX = merlonW + gapW;
 var merlonH = Math.max(14, wallH * 0.34);
+
+// 2. heraldic banners on left & right of crowd
+var towerW = Math.max(48, w * 0.08);
+var towerTop = 4;
+var bannerH = Math.max(
+36,
+wallTop - towerTop + 2
+);
+var isChampL = Boolean(
+leftKnight &&
+lastChampId &&
+leftKnight.id === lastChampId
+);
+var isChampR = Boolean(
+rightKnight &&
+lastChampId &&
+rightKnight.id === lastChampId
+);
+drawFighterBanner(
+ctx,
+w * 0.05,
+towerTop,
+towerW,
+bannerH,
+leftKnight,
+isChampL
+);
+drawFighterBanner(
+ctx,
+w * 0.87,
+towerTop,
+towerW,
+bannerH,
+rightKnight,
+isChampR
+);
 
 // 3. 5 tiered rows of larger spectators
 // fills upper stands without empty space
@@ -2252,15 +2350,6 @@ swingAng = 2.05;
 swingAng = 0.75;
 }
 
-drawWeapon(
-ctx,
-wepX,
-wepY,
-0.95,
-knight.weaponIdx,
-swingAng
-);
-
 var shX = 12;
 var shY = -14;
 var shR = 20;
@@ -2273,6 +2362,8 @@ shX = 6;
 shY = -12;
 }
 
+// draw striking weapon over shield
+if (isStrike || isWindup) {
 drawShield(
 ctx,
 shX,
@@ -2282,6 +2373,33 @@ knight.colorIdx,
 knight.shieldIdx,
 shDmg
 );
+drawWeapon(
+ctx,
+wepX,
+wepY,
+0.95,
+knight.weaponIdx,
+swingAng
+);
+} else {
+drawWeapon(
+ctx,
+wepX,
+wepY,
+0.95,
+knight.weaponIdx,
+swingAng
+);
+drawShield(
+ctx,
+shX,
+shY,
+shR,
+knight.colorIdx,
+knight.shieldIdx,
+shDmg
+);
+}
 
 ctx.restore();
 ctx.restore();

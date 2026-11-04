@@ -37,6 +37,216 @@ document.getElementById('betAmountInput');
 var newTableName =
 document.getElementById('newTableName');
 
+// build custom touch selector around select
+// avoids native mobile picker blinking on poll
+function initCustomSelect(selectEl) {
+if (!selectEl || selectEl._custom) return;
+selectEl.style.display = 'none';
+
+var wrap = document.createElement('div');
+wrap.className = 'customSelectWrap';
+
+var btn = document.createElement('button');
+btn.type = 'button';
+btn.className = 'customSelectBtn';
+
+var labelSpan =
+document.createElement('span');
+labelSpan.textContent = 'Выбор...';
+var arrowSpan =
+document.createElement('span');
+arrowSpan.className = 'customSelectArrow';
+arrowSpan.textContent = '▾';
+
+btn.appendChild(labelSpan);
+btn.appendChild(arrowSpan);
+
+var menu = document.createElement('div');
+menu.className = 'customSelectMenu';
+
+wrap.appendChild(btn);
+wrap.appendChild(menu);
+selectEl.parentNode.insertBefore(
+wrap,
+selectEl.nextSibling
+);
+
+selectEl._custom = {
+wrap: wrap,
+btn: btn,
+label: labelSpan,
+arrow: arrowSpan,
+menu: menu,
+isOpen: false,
+rows: []
+};
+
+btn.onclick = function (ev) {
+ev.stopPropagation();
+var c = selectEl._custom;
+var nextOpen = !c.isOpen;
+closeAllCustomSelects();
+c.isOpen = nextOpen;
+c.btn.className = nextOpen
+? 'customSelectBtn open'
+: 'customSelectBtn';
+c.menu.className = nextOpen
+? 'customSelectMenu open'
+: 'customSelectMenu';
+c.arrow.textContent = nextOpen ? '▴' : '▾';
+};
+}
+
+// close any open custom dropdown menus
+// called on outside tap or option pick
+function closeAllCustomSelects() {
+var list = [
+selectTable,
+selectKnight,
+selectPrize
+];
+for (var i = 0; i < list.length; i++) {
+var el = list[i];
+if (el && el._custom && el._custom.isOpen) {
+el._custom.isOpen = false;
+el._custom.btn.className =
+'customSelectBtn';
+el._custom.menu.className =
+'customSelectMenu';
+el._custom.arrow.textContent = '▾';
+}
+}
+}
+
+document.addEventListener(
+'click',
+function () {
+closeAllCustomSelects();
+}
+);
+
+initCustomSelect(selectTable);
+initCustomSelect(selectKnight);
+initCustomSelect(selectPrize);
+
+// update select options without dom rebuild
+// keeps custom mobile menu stable during poll
+function syncSelect(selectEl, items) {
+if (!selectEl) return;
+initCustomSelect(selectEl);
+
+var curVal = selectEl.value;
+var opts = selectEl.options;
+var sameValues =
+opts.length === items.length;
+
+if (sameValues) {
+for (var k = 0; k < items.length; k++) {
+if (
+String(opts[k].value) !==
+String(items[k].value)
+) {
+sameValues = false;
+break;
+}
+}
+}
+
+if (!sameValues) {
+while (selectEl.options.length > 0) {
+selectEl.remove(0);
+}
+for (var n = 0; n < items.length; n++) {
+var opt = document.createElement('option');
+opt.value = String(items[n].value);
+opt.text = items[n].text;
+selectEl.add(opt);
+}
+if (curVal) {
+for (var q = 0; q < items.length; q++) {
+if (
+String(items[q].value) === String(curVal)
+) {
+selectEl.value = String(curVal);
+break;
+}
+}
+}
+} else {
+for (var m = 0; m < items.length; m++) {
+if (opts[m].text !== items[m].text) {
+opts[m].text = items[m].text;
+}
+}
+}
+
+var c = selectEl._custom;
+var activeVal = String(selectEl.value || '');
+var activeText = '';
+
+if (c.rows.length !== items.length) {
+c.menu.innerHTML = '';
+c.rows = [];
+for (var r = 0; r < items.length; r++) {
+(function (idx) {
+var row = document.createElement('div');
+row.className = 'customSelectOpt';
+row.onclick = function (ev) {
+ev.stopPropagation();
+var chosen =
+String(row.getAttribute('data-val'));
+selectEl.value = chosen;
+for (
+var u = 0;
+u < c.rows.length;
+u++
+) {
+var uVal =
+c.rows[u].getAttribute('data-val');
+c.rows[u].className =
+uVal === chosen
+? 'customSelectOpt activeOpt'
+: 'customSelectOpt';
+}
+c.label.textContent = row.textContent;
+closeAllCustomSelects();
+};
+c.menu.appendChild(row);
+c.rows.push(row);
+})(r);
+}
+}
+
+for (var x = 0; x < items.length; x++) {
+var it = items[x];
+var vStr = String(it.value);
+var rowEl = c.rows[x];
+if (rowEl.getAttribute('data-val') !== vStr) {
+rowEl.setAttribute('data-val', vStr);
+}
+if (rowEl.textContent !== it.text) {
+rowEl.textContent = it.text;
+}
+var isSel = vStr === activeVal;
+var wantCls = isSel
+? 'customSelectOpt activeOpt'
+: 'customSelectOpt';
+if (rowEl.className !== wantCls) {
+rowEl.className = wantCls;
+}
+if (isSel) {
+activeText = it.text;
+}
+}
+
+if (!activeText && items.length > 0) {
+activeText = items[0].text;
+}
+if (c.label.textContent !== activeText) {
+c.label.textContent = activeText;
+}
+}
+
 // send action payload to server api
 // we post json and refresh ui from reply
 function sendAction(payload) {
@@ -208,96 +418,77 @@ document.getElementById(
 : 'block';
 
 // populate tables dropdown preserving value
-var curTable = selectTable.value;
-var tOpts = '';
+var tItems = [];
 var tables = s.tables || [];
 for (var i = 0; i < tables.length; i++) {
 var tb = tables[i];
-tOpts +=
-'<option value="' +
-tb.id +
-'">' +
+tItems.push({
+value: tb.id,
+text:
 tb.name +
 ' (' +
 fmtMoney(tb.balance, s.gameMode) +
-')</option>';
+')'
+});
 }
-selectTable.innerHTML = tOpts;
-if (curTable) {
-selectTable.value = curTable;
-}
+syncSelect(selectTable, tItems);
 
 // populate knights dropdown by bet mode
-var curKnight = selectKnight.value;
-var kOpts = '';
+var kItems = [];
 var bonusMult =
 s.tvScreen === 'PARADE' ? 1.2 : 1.0;
 var bonusLabel =
 s.tvScreen === 'PARADE' ? ' [БОНУС +20%]' : '';
 
 if (betMode === 'MATCH' && m && m.k1 && m.k2) {
-kOpts +=
-'<option value="' +
-m.k1.id +
-'">' +
+kItems.push({
+value: m.k1.id,
+text:
 m.k1.name +
 ' — Бой (x' +
 (Number(m.odds1) * bonusMult).toFixed(2) +
 ')' +
-bonusLabel +
-'</option>';
-kOpts +=
-'<option value="' +
-m.k2.id +
-'">' +
+bonusLabel
+});
+kItems.push({
+value: m.k2.id,
+text:
 m.k2.name +
 ' — Бой (x' +
 (Number(m.odds2) * bonusMult).toFixed(2) +
 ')' +
-bonusLabel +
-'</option>';
+bonusLabel
+});
 } else {
 var alive = s.aliveKnights || [];
 for (var j = 0; j < alive.length; j++) {
 var ak = alive[j];
-kOpts +=
-'<option value="' +
-ak.id +
-'">' +
+kItems.push({
+value: ak.id,
+text:
 ak.name +
 ' — Турнир (x' +
 (
 Number(ak.outrightOdds) * bonusMult
 ).toFixed(2) +
 ')' +
-bonusLabel +
-'</option>';
+bonusLabel
+});
 }
 }
-selectKnight.innerHTML = kOpts;
-if (curKnight) {
-selectKnight.value = curKnight;
-}
+syncSelect(selectKnight, kItems);
 
 // populate pub prizes dropdown
-var curPrize = selectPrize.value;
-var pOpts = '';
+var pItems = [];
 var prizes = s.prizes || [];
 for (var p = 0; p < prizes.length; p++) {
 var pr = prizes[p];
-pOpts +=
-'<option value="' +
-pr.id +
-'">' +
-pr.title +
-' (' +
-pr.cost +
-' КР)</option>';
+pItems.push({
+value: pr.id,
+text: pr.title + ' (' + pr.cost + ' КР)'
+});
 }
-selectPrize.innerHTML = pOpts;
-if (curPrize) {
-selectPrize.value = curPrize;
-}
+syncSelect(selectPrize, pItems);
 }
 
 // poll server state periodically

@@ -292,6 +292,11 @@ var h = paradeCanvas.height;
 ctx.clearRect(0, 0, w, h);
 
 var p = currentState.parade || {};
+var pm =
+currentState.matches &&
+currentState.matches[
+currentState.currentMatchIndex
+];
 // draw castle wall spectators and meadow
 window.KnightArt.drawCastleScene(
 ctx,
@@ -300,7 +305,10 @@ h,
 185,
 false,
 animClock,
-p.finished ? 'CHEER' : 'IDLE'
+p.finished ? 'CHEER' : 'IDLE',
+pm ? pm.k1 : null,
+pm ? pm.k2 : null,
+currentState.lastChampionId
 );
 var list = currentState.aliveKnights || [];
 var curIdx = p.currentIndex || 0;
@@ -707,16 +715,22 @@ if (!m || !m.k1 || !m.k2) return;
 var c = s.combat || {};
 var elapsed =
 (Date.now() - stepStartTime) / 1000;
+var k1WinsMelee =
+c.mode === 'MELEE' &&
+c.finished &&
+c.winnerSide === 1;
+var hitT1 = k1WinsMelee ? 1.75 : 3.75;
+var hitT2 = k1WinsMelee ? 3.75 : 1.75;
 var hide1 =
 c.shieldHit1 &&
 (c.mode === 'JOUST'
 ? elapsed < 2.85
-: elapsed < 3.75);
+: elapsed < hitT1);
 var hide2 =
 c.shieldHit2 &&
 (c.mode === 'JOUST'
 ? elapsed < 2.85
-: elapsed < 1.75);
+: elapsed < hitT2);
 
 document.getElementById(
 'cLeftName'
@@ -986,7 +1000,10 @@ h,
 240,
 c.mode === 'JOUST',
 animClock,
-crowdMood
+crowdMood,
+m ? m.k1 : null,
+m ? m.k2 : null,
+currentState.lastChampionId
 );
 
 if (!m || !m.k1 || !m.k2) {
@@ -1004,12 +1021,23 @@ spawnCrowdFlower(w);
 }
 
 if (c.mode === 'JOUST') {
-// 5.2s dramatic joust pass with full run
+// 5.2s joust pass from current field ends
 var prog = Math.min(1, elapsed / 5.2);
-var x1 = 160;
-var x2 = 1640;
-var facing1 = 1.45;
-var facing2 = -1.45;
+var evenPass = (c.pass || 1) % 2 === 0;
+var startX1 = evenPass ? 1620 : 180;
+var endX1 = evenPass ? 180 : 1620;
+var clashX1 = evenPass ? 940 : 860;
+var dir1 = evenPass ? -1 : 1;
+
+var startX2 = evenPass ? 180 : 1620;
+var endX2 = evenPass ? 1620 : 180;
+var clashX2 = evenPass ? 860 : 940;
+var dir2 = evenPass ? 1 : -1;
+
+var x1 = startX1;
+var x2 = startX2;
+var facing1 = dir1 * 1.45;
+var facing2 = dir2 * 1.45;
 var pose1 = 'ready';
 var pose2 = 'ready';
 var fallen1 = false;
@@ -1029,7 +1057,7 @@ if (!preImpact) {
 if (c.shieldHit1 && !impactDone1) {
 impactDone1 = true;
 spawnDebris(
-870,
+clashX1 + dir1 * 10,
 320,
 window.KnightArt.getArmor(m.k1.colorIdx)
 .main,
@@ -1039,7 +1067,7 @@ window.KnightArt.getArmor(m.k1.colorIdx)
 if (c.shieldHit2 && !impactDone2) {
 impactDone2 = true;
 spawnDebris(
-930,
+clashX2 + dir2 * 10,
 320,
 window.KnightArt.getArmor(m.k2.colorIdx)
 .main,
@@ -1049,26 +1077,38 @@ window.KnightArt.getArmor(m.k2.colorIdx)
 }
 
 if (prog < 0.22) {
-// pause at ends of tilt rail before charge
+// pause at current ends before charge
 var readyWave = prog / 0.22;
-x1 = 150 + readyWave * 30;
-x2 = 1650 - readyWave * 30;
+var stepIn =
+(c.pass || 1) === 1
+? (1 - readyWave) * 30
+: 0;
+x1 = startX1 - dir1 * stepIn;
+x2 = startX2 - dir2 * stepIn;
 pose1 = 'ready';
 pose2 = 'ready';
 } else if (prog < 0.56) {
 // accelerating gallop toward center clash
 var tCharge = (prog - 0.22) / 0.34;
 var easeIn = tCharge * tCharge;
-x1 = 180 + easeIn * 680;
-x2 = 1620 - easeIn * 680;
+x1 =
+startX1 +
+(clashX1 - startX1) * easeIn;
+x2 =
+startX2 +
+(clashX2 - startX2) * easeIn;
 pose1 = 'run';
 pose2 = 'run';
 } else {
-// horses run to ends turn to center and rear
+// horses run to opposite ends turn and rear
 var tAfter = (prog - 0.56) / 0.44;
 var tRun = Math.min(1, tAfter / 0.72);
-x1 = 860 + tRun * 760;
-x2 = 940 - tRun * 760;
+x1 =
+clashX1 +
+(endX1 - clashX1) * tRun;
+x2 =
+clashX2 +
+(endX2 - clashX2) * tRun;
 
 if (c.unseated1) {
 pose1 =
@@ -1079,8 +1119,8 @@ fallen1 = true;
 } else if (tRun < 1) {
 pose1 = 'run';
 } else {
-// turn left toward center and rear on hind legs
-facing1 = -1.45;
+// turn back toward center and rear up
+facing1 = -dir1 * 1.45;
 pose1 =
 c.winnerSide === 1 ? 'victory' : 'rear';
 }
@@ -1094,8 +1134,8 @@ fallen2 = true;
 } else if (tRun < 1) {
 pose2 = 'run';
 } else {
-// turn right toward center and rear on hind legs
-facing2 = 1.45;
+// turn back toward center and rear up
+facing2 = -dir2 * 1.45;
 pose2 =
 c.winnerSide === 2 ? 'victory' : 'rear';
 }
@@ -1129,9 +1169,9 @@ var fallProgress1 = Math.min(
 var dropY1 = 320 + fallProgress1 * 88;
 window.KnightArt.drawFallenKnightOnGround(
 ctx,
-850 - fallProgress1 * 45,
+clashX1 - dir1 * (10 + fallProgress1 * 45),
 dropY1,
-1.35,
+dir1 * 1.35,
 visK1
 );
 }
@@ -1143,9 +1183,9 @@ var fallProgress2 = Math.min(
 var dropY2 = 320 + fallProgress2 * 88;
 window.KnightArt.drawFallenKnightOnGround(
 ctx,
-950 + fallProgress2 * 45,
+clashX2 - dir2 * (10 + fallProgress2 * 45),
 dropY2,
--1.35,
+dir2 * 1.35,
 visK2
 );
 }
@@ -1174,19 +1214,26 @@ var mState2 = 'guard';
 var sparkX = 0;
 var sparkY = 0;
 
+// when k1 wins bout k2 strikes first then k1
+var swapOrder = Boolean(
+c.finished && c.winnerSide === 1
+);
+var hitTime1 = swapOrder ? 1.75 : 3.75;
+var hitTime2 = swapOrder ? 3.75 : 1.75;
+
 // delay shield crack until weapon strike lands
 var visM1 = getVisualKnight(
 m.k1,
-c.shieldHit1 && elapsed < 3.75
+c.shieldHit1 && elapsed < hitTime1
 );
 var visM2 = getVisualKnight(
 m.k2,
-c.shieldHit2 && elapsed < 1.75
+c.shieldHit2 && elapsed < hitTime2
 );
 
 if (
 c.shieldHit2 &&
-elapsed >= 1.75 &&
+elapsed >= hitTime2 &&
 !impactDone2
 ) {
 impactDone2 = true;
@@ -1200,7 +1247,7 @@ window.KnightArt.getArmor(m.k2.colorIdx)
 }
 if (
 c.shieldHit1 &&
-elapsed >= 3.75 &&
+elapsed >= hitTime1 &&
 !impactDone1
 ) {
 impactDone1 = true;
@@ -1237,19 +1284,35 @@ fx2 = 1045 - p0 * 50;
 mState1 = 'guard';
 mState2 = 'guard';
 } else if (elapsed < 1.65) {
-// left knight winds up heavy strike
+// first attacker winds up heavy blow
+if (swapOrder) {
+fx1 = 805;
+fx2 = 985;
+mState1 = 'block';
+mState2 = 'windup';
+} else {
 fx1 = 815;
 fx2 = 995;
 mState1 = 'windup';
 mState2 = 'block';
+}
 } else if (elapsed < 2.35) {
-// left strikes right blocks with shield
+// first attacker strikes defender shield
+if (swapOrder) {
+fx1 = 818;
+fx2 = 950;
+mState1 = 'block';
+mState2 = 'strike';
+sparkX = 865;
+sparkY = 345;
+} else {
 fx1 = 850;
 fx2 = 982;
 mState1 = 'strike';
 mState2 = 'block';
 sparkX = 935;
 sparkY = 345;
+}
 } else if (elapsed < 2.95) {
 // reset to guard after first exchange
 fx1 = 805;
@@ -1257,27 +1320,43 @@ fx2 = 995;
 mState1 = 'guard';
 mState2 = 'guard';
 } else if (elapsed < 3.7) {
-// right knight winds up counter blow
+// second attacker winds up decisive blow
+if (swapOrder) {
+fx1 = 815;
+fx2 = 995;
+mState1 = 'windup';
+mState2 = 'block';
+} else {
 fx1 = 805;
 fx2 = 985;
 mState1 = 'block';
 mState2 = 'windup';
+}
 } else if (elapsed < 4.4) {
-// right strikes left blocks with shield
+// second attacker strikes defender shield
+if (swapOrder) {
+fx1 = 850;
+fx2 = 982;
+mState1 = 'strike';
+mState2 = 'block';
+sparkX = 935;
+sparkY = 345;
+} else {
 fx1 = 818;
 fx2 = 950;
 mState1 = 'block';
 mState2 = 'strike';
 sparkX = 865;
 sparkY = 345;
+}
 } else if (elapsed < 5.1) {
-// second heavy windup by left knight
+// third windup when round continues
 fx1 = 818;
 fx2 = 990;
 mState1 = 'windup';
 mState2 = 'block';
 } else if (elapsed < 5.75) {
-// second heavy strike onto right shield
+// third strike onto right shield
 fx1 = 852;
 fx2 = 980;
 mState1 = 'strike';
@@ -1292,6 +1371,30 @@ mState2 = 'guard';
 }
 }
 
+// draw defender first so attacker weapon is on top
+var k1Attacking =
+mState1 === 'strike' ||
+mState1 === 'windup';
+if (k1Attacking) {
+window.KnightArt.drawFootKnight(
+ctx,
+fx2,
+385,
+-1.65,
+visM2,
+animClock + 1.5,
+mState2
+);
+window.KnightArt.drawFootKnight(
+ctx,
+fx1,
+385,
+1.65,
+visM1,
+animClock,
+mState1
+);
+} else {
 window.KnightArt.drawFootKnight(
 ctx,
 fx1,
@@ -1310,6 +1413,7 @@ visM2,
 animClock + 1.5,
 mState2
 );
+}
 
 // draw silver shield block impact flash
 if (sparkX > 0) {
