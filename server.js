@@ -46,78 +46,88 @@ console.log('dir err:', e);
 }
 }
 
-// 10 horse coats with base joust stats
-// speed is pass1 power stamina is pass3
+// 10 horse coats with 260 stat sum
+// each coat has its own joust trait
 var HORSES = [
 {
 id: 0,
 name: 'Вороной',
-speed: 88,
-stamina: 92,
-balance: 84
+speed: 90,
+stamina: 94,
+balance: 76,
+trait: 'relentless'
 },
 {
 id: 1,
 name: 'Белоснежный',
-speed: 80,
-stamina: 85,
-balance: 95
+speed: 76,
+stamina: 84,
+balance: 100,
+trait: 'steadfast'
 },
 {
 id: 2,
 name: 'Гнедой',
-speed: 85,
-stamina: 86,
-balance: 86
+speed: 87,
+stamina: 87,
+balance: 86,
+trait: 'harmony'
 },
 {
 id: 3,
 name: 'Медно-рыжий',
-speed: 96,
-stamina: 72,
-balance: 78
+speed: 102,
+stamina: 74,
+balance: 84,
+trait: 'burst'
 },
 {
 id: 4,
 name: 'Серый в яблоках',
 speed: 82,
-stamina: 88,
-balance: 91
+stamina: 92,
+balance: 86,
+trait: 'second_wind'
 },
 {
 id: 5,
 name: 'Буланый',
 speed: 84,
 stamina: 84,
-balance: 90
+balance: 92,
+trait: 'headwind'
 },
 {
 id: 6,
 name: 'Чубарый',
-speed: 92,
-stamina: 79,
-balance: 82
+speed: 96,
+stamina: 82,
+balance: 82,
+trait: 'windrunner'
 },
 {
 id: 7,
 name: 'Караковый',
-speed: 78,
-stamina: 98,
-balance: 88
+speed: 74,
+stamina: 102,
+balance: 84,
+trait: 'ironlung'
 },
 {
 id: 8,
 name: 'Пегий',
-speed: 86,
-stamina: 83,
-balance: 89
+speed: 92,
+stamina: 76,
+balance: 92,
+trait: 'agile'
 },
 {
 id: 9,
 name: 'Голубая чалая',
-speed: 81,
-stamina: 87,
-balance: 94
+speed: 80,
+stamina: 82,
+balance: 98,
+trait: 'brace'
 }
 ];
 
@@ -516,6 +526,16 @@ tpl.helmIdx;
 parsed.roster[i].shieldIdx = shIdx;
 parsed.roster[i].shieldName =
 SHIELDS[shIdx].name;
+if (
+parsed.roster[i].favHorseIdx ===
+undefined
+) {
+var pSeed = parsed.pubSeed || 257;
+parsed.roster[i].favHorseIdx =
+Math.floor(
+seededHash(pSeed, i * 31 + 9) * 10
+) % 10;
+}
 }
 }
 savePubData(parsed);
@@ -625,15 +645,42 @@ fighter.weaponName = WEAPONS[wPick].name;
 fighter.hasFavWeapon =
 wPick === fighter.favWeaponIdx;
 
-// draft unique horse from 10 coats
-var hPos = Math.floor(
-Math.random() * availHorses.length
-);
+// pick horse with 3x weight for favorite
+// gives 3/12 on first pick if horse free
+var totalHWeight = 0;
+for (
+var h = 0;
+h < availHorses.length;
+h++
+) {
+var isFavH =
+availHorses[h] === fighter.favHorseIdx;
+totalHWeight += isFavH ? 3 : 1;
+}
+var hRoll = Math.random() * totalHWeight;
+var hPos = 0;
+for (
+var h2 = 0;
+h2 < availHorses.length;
+h2++
+) {
+var wH =
+availHorses[h2] === fighter.favHorseIdx
+? 3
+: 1;
+hRoll -= wH;
+if (hRoll <= 0) {
+hPos = h2;
+break;
+}
+}
 var hPick = availHorses[hPos];
 availHorses.splice(hPos, 1);
 
 fighter.horseIdx = hPick;
 fighter.horseName = HORSES[hPick].name;
+fighter.hasFavHorse =
+hPick === fighter.favHorseIdx;
 fighter.shieldDamage = 0;
 fighter.isTired = false;
 fighter.stamina = 100;
@@ -651,6 +698,9 @@ var shield =
 SHIELDS[k.shieldIdx] || SHIELDS[0];
 var wep =
 WEAPONS[k.weaponIdx] || WEAPONS[0];
+var favHorse =
+k.hasFavHorse ||
+k.horseIdx === k.favHorseIdx;
 
 var score =
 k.wins * 4.5 -
@@ -668,17 +718,31 @@ if (k.hasFavWeapon) score += 14;
 } else {
 score +=
 k.joustSkill * 0.6 +
-horse.speed * 0.4 +
-horse.stamina * 0.35 +
+horse.speed * 0.42 +
+horse.stamina * 0.38 +
 horse.balance * 0.4 +
 shield.joustDef * 0.4 +
 k.meleeSkill * 0.25;
 if (k.hasFavWeapon) score += 6;
+if (favHorse) score += 9;
+if (horse.trait === 'harmony') {
+score += k.joustSkill * 0.025;
+}
 }
 
 // apply live shield damage and fatigue
-if (k.shieldDamage === 1) score -= 14;
-if (k.shieldDamage >= 2) score -= 32;
+// brace horse softens cracked shield loss
+var dmgMult =
+mode !== 'MELEE' &&
+horse.trait === 'brace'
+? 9
+: 14;
+if (k.shieldDamage === 1) {
+score -= dmgMult;
+}
+if (k.shieldDamage >= 2) {
+score -= dmgMult * 2.2;
+}
 if (k.isTired) score -= 18;
 
 return Math.max(30, score);
@@ -1230,6 +1294,138 @@ knight.shieldDamage = cur + 1;
 return true;
 }
 
+// compute rider hit and seat defense in pass
+// applies horse trait wind and pass fatigue
+function calcJoustRiderStats(
+k,
+oppK,
+pass,
+dir,
+windDir
+) {
+var h = HORSES[k.horseIdx] || HORSES[0];
+var oppH =
+HORSES[oppK.horseIdx] || HORSES[0];
+var s = SHIELDS[k.shieldIdx] || SHIELDS[0];
+var tr = h.trait || '';
+var favSyn =
+k.hasFavHorse ||
+k.horseIdx === k.favHorseIdx;
+
+// check wind speed bonus for horse coat
+// windrunner doubles tailwind headwind fights
+var windSpd = 0;
+if (windDir === dir) {
+windSpd = tr === 'windrunner' ? 10 : 5;
+} else if (
+windDir === -dir &&
+tr === 'headwind'
+) {
+windSpd = 5;
+} else if (
+windDir === 0 &&
+tr === 'windrunner'
+) {
+windSpd = 3;
+}
+
+// compute pass fatigue from horse stamina
+// sprinters tire fast stayers stay fresh
+var fat =
+(pass - 1) *
+Math.max(0, 96 - h.stamina) *
+0.45;
+if (tr === 'burst' && pass >= 2) {
+fat *= 1.15;
+}
+if (tr === 'agile' && pass === 3) {
+fat += 4;
+}
+if (tr === 'ironlung') {
+fat = 0;
+}
+if (favSyn) {
+fat *= 0.75;
+}
+if (
+pass >= 2 &&
+h.stamina < 83 &&
+tr !== 'ironlung'
+) {
+k.isTired = true;
+}
+
+var effSpd = h.speed + windSpd;
+var effBal = h.balance;
+var effJoust = k.joustSkill;
+
+if (tr === 'second_wind') {
+effSpd += (pass - 1) * 3;
+effBal += (pass - 1) * 3;
+}
+if (tr === 'harmony') {
+effJoust *= 1.05;
+}
+if (
+tr === 'headwind' &&
+windDir === -dir
+) {
+effBal += 5;
+}
+
+// pass 1 gives extra impulse to sprinters
+// traits add pass specific hit and defense
+var sprintImp =
+pass === 1
+? Math.max(0, effSpd - 85) * 0.35
+: 0;
+var trHit = 0;
+if (tr === 'burst' && pass === 1) {
+trHit += 6;
+}
+if (tr === 'relentless' && pass >= 2) {
+trHit += 4;
+}
+if (tr === 'ironlung' && pass === 3) {
+trHit += 6;
+}
+
+var trDef = 0;
+if (
+tr === 'steadfast' &&
+oppH.speed >= 90
+) {
+trDef += 6;
+}
+if (tr === 'ironlung' && pass === 3) {
+trDef += 6;
+}
+if (tr === 'agile' && pass === 1) {
+trDef += 4;
+}
+
+var synBonus = favSyn ? 4 : 0;
+var shPen = tr === 'brace' ? 9 : 14;
+
+var hit =
+effJoust * 0.5 +
+effSpd * 0.5 +
+sprintImp +
+trHit +
+synBonus -
+fat +
+Math.random() * 28;
+var def =
+s.joustDef * 0.5 +
+effBal * 0.5 +
+trDef +
+synBonus -
+fat * 0.35 -
+k.shieldDamage * shPen;
+
+return { hit: hit, def: def };
+}
+
 // run one joust pass or foot melee phase
 // we compute shield shatter and unseating
 function runNextCombatPhase() {
@@ -1261,50 +1457,34 @@ c.windDir =
 c.phaseTitle =
 'КОННАЯ СШИБКА ' + c.pass + ' ИЗ 3';
 
-var h1 = HORSES[m.k1.horseIdx];
-var h2 = HORSES[m.k2.horseIdx];
 var s1 = SHIELDS[m.k1.shieldIdx];
 var s2 = SHIELDS[m.k2.shieldIdx];
 
-// compute lance impact with horse fatigue
-// rider with wind in back gets +5 horse speed
+// compute lance impact with horse traits
+// rider with wind in back gets speed boost
 var evenP = c.pass % 2 === 0;
 var dir1 = evenP ? -1 : 1;
 var dir2 = evenP ? 1 : -1;
-var windSpd1 = c.windDir === dir1 ? 5 : 0;
-var windSpd2 = c.windDir === dir2 ? 5 : 0;
 
-var fat1 =
-(c.pass - 1) * (105 - h1.stamina) * 0.35;
-var fat2 =
-(c.pass - 1) * (105 - h2.stamina) * 0.35;
+var st1 = calcJoustRiderStats(
+m.k1,
+m.k2,
+c.pass,
+dir1,
+c.windDir
+);
+var st2 = calcJoustRiderStats(
+m.k2,
+m.k1,
+c.pass,
+dir2,
+c.windDir
+);
 
-if (c.pass >= 2 && h1.stamina < 83) {
-m.k1.isTired = true;
-}
-if (c.pass >= 2 && h2.stamina < 83) {
-m.k2.isTired = true;
-}
-
-var hit1 =
-m.k1.joustSkill * 0.5 +
-(h1.speed + windSpd1) * 0.5 -
-fat1 +
-Math.random() * 28;
-var hit2 =
-m.k2.joustSkill * 0.5 +
-(h2.speed + windSpd2) * 0.5 -
-fat2 +
-Math.random() * 28;
-
-var def1 =
-s1.joustDef * 0.5 +
-h1.balance * 0.5 -
-m.k1.shieldDamage * 14;
-var def2 =
-s2.joustDef * 0.5 +
-h2.balance * 0.5 -
-m.k2.shieldDamage * 14;
+var hit1 = st1.hit;
+var hit2 = st2.hit;
+var def1 = st1.def;
+var def2 = st2.def;
 
 var fall1 = hit2 - def1 > 16;
 var fall2 = hit1 - def2 > 16;
