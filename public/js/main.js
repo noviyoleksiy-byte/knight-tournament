@@ -330,11 +330,9 @@ k.horseName +
 '<br>' +
 wText +
 '</div>' +
-'<div class="pCardRec">' +
-d.winsLbl +
+'<div class="pCardRec">W: ' +
 (k.wins || 0) +
-' · ' +
-d.lossesLbl +
+' / L: ' +
 (k.losses || 0) +
 '</div>' +
 '</div>' +
@@ -585,10 +583,9 @@ slotCls += ' loserSlot';
 }
 
 var recStr =
-d.winsLbl +
+'W: ' +
 (k.wins || 0) +
-' · ' +
-d.lossesLbl +
+' / L: ' +
 (k.losses || 0);
 
 var boutBadge = odds
@@ -671,22 +668,22 @@ fillPreviewSide('Left', m.k1, m.odds1);
 fillPreviewSide('Right', m.k2, m.odds2);
 
 // draw large mounted knights on meadow
-// scaled to 1.04 inside 310x240 canvas
+// scaled to 1.06 inside wide 360x240 box
 if (pCanvasLeft && window.KnightArt) {
 var ctxL = pCanvasLeft.getContext('2d');
-ctxL.clearRect(0, 0, 310, 240);
+ctxL.clearRect(0, 0, 360, 240);
 window.KnightArt.drawCastleScene(
 ctxL,
-310,
+360,
 240,
 88,
 false
 );
 window.KnightArt.drawMountedKnight(
 ctxL,
-138,
-176,
-1.04,
+164,
+178,
+1.06,
 m.k1,
 animClock,
 'idle'
@@ -694,19 +691,19 @@ animClock,
 }
 if (pCanvasRight && window.KnightArt) {
 var ctxR = pCanvasRight.getContext('2d');
-ctxR.clearRect(0, 0, 310, 240);
+ctxR.clearRect(0, 0, 360, 240);
 window.KnightArt.drawCastleScene(
 ctxR,
-310,
+360,
 240,
 88,
 false
 );
 window.KnightArt.drawMountedKnight(
 ctxR,
-172,
-176,
--1.04,
+196,
+178,
+-1.06,
 m.k2,
 animClock + 1.2,
 'idle'
@@ -786,8 +783,8 @@ listEl.className = 'betsList hidden';
 }
 }
 
-// fill fighter name record and two badges
-// skips redundant horse weapon shield text
+// fill fighter name W/L record and badges
+// keeps W/L in english across all languages
 function fillPreviewSide(side, k, odds) {
 var d = getDict();
 var favTag = k.hasFavWeapon ? ' ★' : '';
@@ -797,10 +794,9 @@ document.getElementById(
 document.getElementById(
 'p' + side + 'Rec'
 ).innerHTML =
-d.winsLbl +
+'W: ' +
 (k.wins || 0) +
-' · ' +
-d.lossesLbl +
+' / L: ' +
 (k.losses || 0);
 document.getElementById(
 'p' + side + 'Odds'
