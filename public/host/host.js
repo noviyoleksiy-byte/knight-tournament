@@ -337,6 +337,7 @@ try {
 var resp =
 JSON.parse(xhr.responseText);
 if (resp.state) {
+saveHostBackup(resp.state);
 renderHost(resp.state);
 }
 } catch (e) {
@@ -624,8 +625,76 @@ d.curCaps +
 syncSelect(selectPrize, pItems);
 }
 
+var HOST_BACKUP_KEY = 'kt_active_backup_v2';
+var hostTriedRestore = false;
+
+// save latest state snapshot on host device
+// keeps mid-game backup on phone and android
+function saveHostBackup(s) {
+if (!s || !s.matches) return;
+try {
+window.localStorage.setItem(
+HOST_BACKUP_KEY,
+JSON.stringify(s)
+);
+} catch (e) {}
+}
+
+// load saved state snapshot from phone storage
+// hydrates host UI immediately on startup
+function loadHostBackup() {
+try {
+var raw = window.localStorage.getItem(
+HOST_BACKUP_KEY
+);
+if (!raw) return null;
+return JSON.parse(raw);
+} catch (e) {
+return null;
+}
+}
+
+// restore mid-game backup if server reset
+// syncs phone storage back to server state
+function checkHostRecovery(srvState) {
+if (hostTriedRestore || !srvState) {
+return false;
+}
+var cached = loadHostBackup();
+if (
+!cached ||
+!cached.matches ||
+cached.pubSeed !== srvState.pubSeed
+) {
+return false;
+}
+var srvFresh =
+srvState.tournamentNumber <= 1 &&
+srvState.version <= 2 &&
+srvState.tvScreen === 'PARADE' &&
+srvState.parade &&
+!srvState.parade.finished &&
+srvState.parade.currentIndex === 0 &&
+(srvState.activeBets || []).length === 0;
+var clientAhead =
+cached.tournamentNumber >
+srvState.tournamentNumber ||
+cached.version > srvState.version + 2 ||
+cached.tvScreen !== 'PARADE';
+
+if (srvFresh && clientAhead) {
+hostTriedRestore = true;
+sendAction({
+type: 'restore_snapshot',
+snapshot: cached
+});
+return true;
+}
+return false;
+}
+
 // poll server state periodically
-// we sync presenter phone every 700ms
+// syncs presenter phone and local backup
 function pollHost() {
 var xhr = new XMLHttpRequest();
 xhr.open('GET', '/api/state', true);
@@ -636,7 +705,10 @@ xhr.status === 200
 ) {
 try {
 var s = JSON.parse(xhr.responseText);
+if (!checkHostRecovery(s)) {
+saveHostBackup(s);
 renderHost(s);
+}
 } catch (e) {
 // skip json error
 // next poll will retry
@@ -794,14 +866,36 @@ sendAction({ type: 'toggle_mode' });
 document.getElementById(
 'btnNewTour'
 ).onclick = function () {
+hostTriedRestore = true;
 sendAction({ type: 'new_tournament' });
 };
 
 document.getElementById(
 'btnNewSeed'
 ).onclick = function () {
+hostTriedRestore = true;
 sendAction({ type: 'new_pub_seed' });
 };
+
+// hydrate host immediately from local backup
+var initCache = loadHostBackup();
+if (initCache && initCache.matches) {
+renderHost(initCache);
+}
+
+// poll immediately when android app resumes
+document.addEventListener(
+'visibilitychange',
+function () {
+if (!document.hidden) pollHost();
+}
+);
+document.addEventListener(
+'resume',
+function () {
+pollHost();
+}
+);
 
 pollHost();
 setInterval(pollHost, 700);

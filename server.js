@@ -517,7 +517,7 @@ parsed &&
 parsed.roster &&
 parsed.economyVersion === 2
 ) {
-parsed.lang = 'en';
+parsed.lang = parsed.lang || 'en';
 if (!parsed.lastChampionId) {
 parsed.lastChampionId = 'K1';
 parsed.lastFinalistId = 'K2';
@@ -621,15 +621,45 @@ return fresh;
 }
 
 // write pub roster and tables to disk
-// we save after every fight and bet
+// uses atomic tmp rename to prevent corruption
 function savePubData(data) {
 try {
+if (!fs.existsSync(DATA_DIR)) {
+fs.mkdirSync(DATA_DIR, {
+recursive: true
+});
+}
+var tmpFile = ROSTER_FILE + '.tmp';
 fs.writeFileSync(
-ROSTER_FILE,
+tmpFile,
 JSON.stringify(data, null, 2)
 );
+fs.renameSync(tmpFile, ROSTER_FILE);
 } catch (e) {
 console.log('save roster err:', e);
+}
+}
+
+// write active mid-game state to disk
+// allows instant resume after power loss
+function saveGameState(st) {
+if (!st) return;
+try {
+if (!fs.existsSync(DATA_DIR)) {
+fs.mkdirSync(DATA_DIR, {
+recursive: true
+});
+}
+st.stateSchema = 2;
+st.savedAt = Date.now();
+var tmpState = STATE_FILE + '.tmp';
+fs.writeFileSync(
+tmpState,
+JSON.stringify(st)
+);
+fs.renameSync(tmpState, STATE_FILE);
+} catch (e) {
+console.log('save state err:', e);
 }
 }
 
@@ -1209,10 +1239,50 @@ bannerSub: ''
 
 localizeCombatTexts(st);
 updateAllOdds(st);
+saveGameState(st);
 return st;
 }
 
-var gameState = buildNewTournament('PUB');
+// load ongoing tournament or build new one
+// resumes mid-game state after crash or reboot
+function loadOrBuildGameState() {
+try {
+if (fs.existsSync(STATE_FILE)) {
+var rawSt =
+fs.readFileSync(STATE_FILE, 'utf8');
+var saved = JSON.parse(rawSt);
+if (
+saved &&
+saved.stateSchema === 2 &&
+saved.pubSeed === pubData.pubSeed &&
+saved.matches &&
+saved.matches.length === 7
+) {
+saved.lang =
+pubData.lang || saved.lang || 'en';
+saved.tables = pubData.tables;
+saved.prizes = pubData.prizes;
+saved.soundToPlay = null;
+saved.prizeBannerText = null;
+saved.lastParadeAt = Date.now();
+saved.lastStepAt = Date.now();
+localizeAllState(
+saved,
+pubData,
+savePubData
+);
+updateAllOdds(saved);
+saveGameState(saved);
+return saved;
+}
+}
+} catch (e) {
+console.log('load state err:', e);
+}
+return buildNewTournament('PUB');
+}
+
+var gameState = loadOrBuildGameState();
 
 // settle bets and advance winner in bracket
 // we pay tables and update eternal roster
@@ -1367,6 +1437,7 @@ gameState.recentPayouts = payLogs.slice(0, 4);
 }
 savePubData(pubData);
 updateAllOdds(gameState);
+saveGameState(gameState);
 }
 
 // add balance to a table by id
@@ -1650,6 +1721,7 @@ c.pausedForBets = true;
 }
 c.outcomeKey = 'MUTUAL_FALL';
 localizeCombatTexts(gameState);
+saveGameState(gameState);
 return;
 }
 
@@ -1681,6 +1753,7 @@ c.pausedForBets = true;
 }
 c.outcomeKey = 'PASS_3_MELEE';
 localizeCombatTexts(gameState);
+saveGameState(gameState);
 return;
 }
 
@@ -1690,6 +1763,7 @@ c.pausedForBets = true;
 }
 c.outcomeKey = 'PASS_HOLD';
 localizeCombatTexts(gameState);
+saveGameState(gameState);
 return;
 }
 
@@ -1735,7 +1809,7 @@ finishCurrentMatch(winSide);
 }
 
 // step parade and combat timers on server
-// we advance parade riders and auto bouts
+// saves state on every step for crash recovery
 setInterval(function () {
 if (
 gameState.tvScreen === 'PARADE' &&
@@ -1767,6 +1841,7 @@ gameState.lang
 gameState.soundToPlay = 'horn';
 }
 }
+saveGameState(gameState);
 }
 } else if (
 gameState.tvScreen === 'COMBAT' &&
@@ -1785,6 +1860,7 @@ if (elapsed >= stepDur) {
 gameState.lastStepAt = Date.now();
 gameState.version += 1;
 runNextCombatPhase();
+saveGameState(gameState);
 }
 }
 }, 450);
@@ -1808,13 +1884,14 @@ return '127.0.0.1';
 }
 
 // return current state to tv and host
-// include elapsed step time for host button
+// includes roster backup for client storage
 app.get('/api/state', function (req, res) {
 res.set('Cache-Control', 'no-store');
 if (gameState.combat) {
 gameState.combat.stepElapsedMs =
 Date.now() - (gameState.lastStepAt || 0);
 }
+gameState.rosterBackup = pubData.roster;
 res.json(gameState);
 });
 
@@ -1834,7 +1911,46 @@ gameState.version += 1;
 gameState.soundToPlay = null;
 gameState.prizeBannerText = null;
 
-if (type === 'cycle_lang') {
+if (
+type === 'restore_snapshot' &&
+body.snapshot &&
+body.snapshot.matches
+) {
+var snap = body.snapshot;
+if (
+snap.rosterBackup &&
+snap.rosterBackup.length ===
+pubData.roster.length
+) {
+pubData.roster = snap.rosterBackup;
+}
+if (snap.tables) {
+pubData.tables = snap.tables;
+}
+if (snap.prizes) {
+pubData.prizes = snap.prizes;
+}
+if (snap.tournamentNumber) {
+pubData.tournamentNumber =
+snap.tournamentNumber;
+}
+if (snap.lastChampionId) {
+pubData.lastChampionId =
+snap.lastChampionId;
+}
+if (snap.lang) {
+pubData.lang = snap.lang;
+}
+savePubData(pubData);
+gameState = snap;
+gameState.tables = pubData.tables;
+gameState.prizes = pubData.prizes;
+gameState.lastParadeAt = Date.now();
+gameState.lastStepAt = Date.now();
+saveGameState(gameState);
+res.json({ ok: true, state: gameState });
+return;
+} else if (type === 'cycle_lang') {
 var curL = gameState.lang || 'en';
 var nextL =
 curL === 'en'
@@ -2065,6 +2181,7 @@ gameState.lang
 );
 gameState.soundToPlay = 'horn';
 }
+saveGameState(gameState);
 res.json({ ok: true, state: gameState });
 return;
 }
@@ -2079,6 +2196,7 @@ if (
 !curM.k2 ||
 gameState.tournamentStatus === 'FINISHED'
 ) {
+saveGameState(gameState);
 res.json({ ok: true, state: gameState });
 return;
 }
@@ -2171,10 +2289,12 @@ gameState.gameMode
 );
 }
 
+saveGameState(gameState);
 if (gameState.combat) {
 gameState.combat.stepElapsedMs =
 Date.now() - (gameState.lastStepAt || 0);
 }
+gameState.rosterBackup = pubData.roster;
 res.json({ ok: true, state: gameState });
 });
 

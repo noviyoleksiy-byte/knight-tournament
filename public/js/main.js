@@ -1774,8 +1774,73 @@ return setTimeout(cb, 33);
 raf(drawArenaFrame);
 }
 
+var BACKUP_KEY = 'kt_active_backup_v2';
+var triedRestore = false;
+
+// save latest state snapshot to localStorage
+// keeps mid-game backup on web and android
+function saveLocalBackup(s) {
+if (!s || !s.matches) return;
+try {
+window.localStorage.setItem(
+BACKUP_KEY,
+JSON.stringify(s)
+);
+} catch (e) {}
+}
+
+// read saved state snapshot from localStorage
+// used on boot or when server disk resets
+function loadLocalBackup() {
+try {
+var raw =
+window.localStorage.getItem(BACKUP_KEY);
+if (!raw) return null;
+return JSON.parse(raw);
+} catch (e) {
+return null;
+}
+}
+
+// check if server lost disk state after crash
+// restores client backup if server is fresh
+function checkServerRecovery(srvState) {
+if (triedRestore || !srvState) return false;
+var cached = loadLocalBackup();
+if (
+!cached ||
+!cached.matches ||
+cached.pubSeed !== srvState.pubSeed
+) {
+return false;
+}
+var srvFresh =
+srvState.tournamentNumber <= 1 &&
+srvState.version <= 2 &&
+srvState.tvScreen === 'PARADE' &&
+srvState.parade &&
+!srvState.parade.finished &&
+srvState.parade.currentIndex === 0 &&
+(srvState.activeBets || []).length === 0;
+var clientAhead =
+cached.tournamentNumber >
+srvState.tournamentNumber ||
+cached.version > srvState.version + 2 ||
+cached.tvScreen !== 'PARADE';
+
+if (srvFresh && clientAhead) {
+triedRestore = true;
+postTvAction({
+type: 'restore_snapshot',
+snapshot: cached
+});
+return true;
+}
+return false;
+}
+
 // poll server state periodically via xhr
-// updates tv screen every 500ms
+// updates tv screen and local backup
 function pollState() {
 if (isPolling) return;
 isPolling = true;
@@ -1789,7 +1854,10 @@ if (xhr.status === 200) {
 try {
 var data =
 JSON.parse(xhr.responseText);
+if (!checkServerRecovery(data)) {
+saveLocalBackup(data);
 applyState(data);
+}
 } catch (e) {
 // skip json parse error
 // next poll will retry
@@ -1807,7 +1875,7 @@ xhr.send();
 }
 
 // send post action from tv header button
-// used for language cycle and parade replay
+// saves updated state to local backup
 function postTvAction(payload) {
 var xhr = new XMLHttpRequest();
 xhr.open('POST', '/api/action', true);
@@ -1822,7 +1890,10 @@ xhr.status === 200
 ) {
 try {
 var r = JSON.parse(xhr.responseText);
-if (r.state) applyState(r.state);
+if (r.state) {
+saveLocalBackup(r.state);
+applyState(r.state);
+}
 } catch (e) {}
 }
 };
@@ -1856,6 +1927,28 @@ btnRestartParade.onclick = function () {
 postTvAction({ type: 'restart_parade' });
 };
 }
+
+// hydrate immediately from local backup on boot
+// avoids blank screen on android capacitor
+var bootCache = loadLocalBackup();
+if (bootCache && bootCache.matches) {
+applyState(bootCache);
+}
+
+// sync immediately when android app wakes up
+// handles capacitor resume and tab visibility
+document.addEventListener(
+'visibilitychange',
+function () {
+if (!document.hidden) pollState();
+}
+);
+document.addEventListener(
+'resume',
+function () {
+pollState();
+}
+);
 
 pollState();
 setInterval(pollState, 500);
