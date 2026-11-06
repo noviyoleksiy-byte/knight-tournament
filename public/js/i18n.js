@@ -69,6 +69,8 @@ waitHostBets:
 'Host is taking table bets...',
 tagTour: '[TOURNEY]',
 tagBout: '[BOUT]',
+badgeBout: 'BOUT x',
+badgeTour: 'TOUR x',
 champKicker:
 'THE CHAMPION REMOVES HIS HELM! TRUE TITLE REVEALED:',
 champLore:
@@ -248,6 +250,8 @@ waitHostBets:
 'Ведучий приймає ставки столів...',
 tagTour: '[ТУРНІР]',
 tagBout: '[БІЙ]',
+badgeBout: 'БІЙ x',
+badgeTour: 'ТУР x',
 champKicker:
 'ЧЕМПІОН ЗНІМАЄ ШОЛОМ! СПРАВЖНІЙ ТИТУЛ РОЗКРИТО:',
 champLore:
@@ -430,6 +434,8 @@ waitHostBets:
 'Ведущий принимает ставки столов...',
 tagTour: '[ТУРНИР]',
 tagBout: '[БОЙ]',
+badgeBout: 'БОЙ x',
+badgeTour: 'ТУР x',
 champKicker:
 'ЧЕМПИОН СНИМАЕТ ШЛЕМ! ИСТИННЫЙ ТИТУЛ РАСКРЫТ:',
 champLore:
