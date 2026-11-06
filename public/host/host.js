@@ -5,6 +5,7 @@
 
 var betMode = 'MATCH';
 var lastState = null;
+var lastLangSeen = '';
 
 var tourBadge =
 document.getElementById('hostTourBadge');
@@ -21,6 +22,8 @@ var btnStartStep =
 document.getElementById('btnStartStep');
 var btnLiveToggle =
 document.getElementById('btnLiveToggle');
+var btnHostLang =
+document.getElementById('btnHostLang');
 var tabBetMatch =
 document.getElementById('tabBetMatch');
 var tabBetOutright =
@@ -37,6 +40,75 @@ document.getElementById('betAmountInput');
 var newTableName =
 document.getElementById('newTableName');
 
+// get dictionary for active state language
+// defaults to english when lang is unset
+function getDict() {
+var lang =
+(lastState && lastState.lang) || 'en';
+if (window.GameI18n) {
+return window.GameI18n.getDict(lang);
+}
+return {};
+}
+
+// format language button label by code
+// shows active code in upper case
+function getLangBtnLabel(lang) {
+if (lang === 'uk') return 'МОВА: УКР';
+if (lang === 'ru') return 'ЯЗЫК: РУС';
+return 'LANG: EN';
+}
+
+// apply static host labels when lang changes
+// updates section headers and buttons
+function applyHostTranslations(lang) {
+var d = getDict();
+document.documentElement.lang = lang;
+document.title = d.hostTitle || '';
+
+var setTxt = function (id, val) {
+var el = document.getElementById(id);
+if (el && val) el.innerHTML = val;
+};
+
+setTxt('hostHeaderTitle', d.hostHeader);
+setTxt('hostTvScreenLbl', d.tvScreenLbl);
+setTxt('hostModeLbl', d.modeLbl);
+setTxt('secCtrlTitle', d.ctrlSection);
+setTxt('btnNextMatch', d.btnNextMatch);
+setTxt('btnReplayParade', d.btnReplayParade);
+setTxt('btnSwitchScreen', d.btnSwitchScreen);
+setTxt('secBetTitle', d.betSection);
+setTxt('tabBetMatch', d.tabMatch);
+setTxt('tabBetOutright', d.tabOutright);
+setTxt('lblWhoBets', d.whoBetsLbl);
+setTxt('lblWhichKnight', d.whichKnightLbl);
+setTxt('lblBetAmt', d.betAmtLbl);
+setTxt('btnPlaceBet', d.btnPlaceBet);
+setTxt('lblRedeemPrize', d.redeemLbl);
+setTxt('btnClaimPrize', d.btnClaimPrize);
+setTxt('lblAddTable', d.addTableLbl);
+setTxt('btnAddTable', d.btnAddTable);
+setTxt('secSettingsTitle', d.settingsSection);
+setTxt('btnToggleMode', d.btnToggleMode);
+setTxt('btnNewTour', d.btnNewTour);
+setTxt('btnNewSeed', d.btnNewSeed);
+setTxt('btnOpenTv', d.btnOpenTv);
+
+if (betAmountInput && d.betAmtPlaceholder) {
+betAmountInput.placeholder =
+d.betAmtPlaceholder;
+}
+if (newTableName && d.newTablePlaceholder) {
+newTableName.placeholder =
+d.newTablePlaceholder;
+}
+if (btnHostLang) {
+btnHostLang.innerHTML =
+getLangBtnLabel(lang);
+}
+}
+
 // build custom touch selector around select
 // avoids native mobile picker blinking on poll
 function initCustomSelect(selectEl) {
@@ -52,7 +124,7 @@ btn.className = 'customSelectBtn';
 
 var labelSpan =
 document.createElement('span');
-labelSpan.textContent = 'Выбор...';
+labelSpan.textContent = 'Select...';
 var arrowSpan =
 document.createElement('span');
 arrowSpan.className = 'customSelectArrow';
@@ -269,6 +341,7 @@ renderHost(resp.state);
 }
 } catch (e) {
 // skip json error
+// next poll will sync
 }
 }
 };
@@ -278,10 +351,11 @@ xhr.send(JSON.stringify(payload));
 // format balance label for host selects
 // we show caps or cash currency
 function fmtMoney(val, mode) {
+var d = getDict();
 var v = Math.round(val || 0);
 return mode === 'CASH'
-? v + ' ₽'
-: v + ' КР';
+? v + (d.curCash || ' $')
+: v + (d.curCaps || ' CAPS');
 }
 
 // update host controller dom from state
@@ -290,47 +364,53 @@ function renderHost(s) {
 if (!s) return;
 lastState = s;
 
+var lang = s.lang || 'en';
+if (lang !== lastLangSeen) {
+lastLangSeen = lang;
+applyHostTranslations(lang);
+}
+
+var d = getDict();
+
 tourBadge.innerHTML =
-'ТУРНИР №' +
+d.tourNo +
 s.tournamentNumber +
-' (ПАБ #' +
+' (' +
+d.pubBadge +
 s.pubSeed +
 ')';
 screenText.innerHTML =
 s.tvScreen === 'PARADE'
-? 'ПАРАД РЫЦАРЕЙ'
+? d.scrParade
 : s.tvScreen === 'COMBAT'
-? 'АРЕНА БОЯ'
-: 'СЕТКА ТУРНИРА';
+? d.scrCombat
+: d.scrBracket;
 modeText.innerHTML =
 s.gameMode === 'CASH'
-? 'НА ДЕНЬГИ'
-: 'ПАБ (КРЫШКИ)';
+? d.modeCashShort
+: d.modePubShort;
 
 btnLiveToggle.innerHTML = s.allowLiveBets
-? 'LIVE В БОЮ: ВКЛ'
-: 'LIVE В БОЮ: ВЫКЛ';
+? d.liveBtnOn
+: d.liveBtnOff;
 
 var m =
 s.matches &&
 s.matches[s.currentMatchIndex];
 if (s.tvScreen === 'PARADE' && s.parade) {
 if (s.parade.finished) {
-boutTitle.innerHTML =
-'ПАРАД ЗАВЕРШЁН: РАУНД БОНУС-СТАВОК (+20% К КОЭФАМ!)';
-boutSub.innerHTML =
-'Примите первые ставки с бонусом и откройте Турнирную Сетку';
+boutTitle.innerHTML = d.paradeDoneHostTitle;
+boutSub.innerHTML = d.paradeDoneHostSub;
 } else {
 var pk =
 s.aliveKnights &&
 s.aliveKnights[s.parade.currentIndex];
 boutTitle.innerHTML =
-'ПАРАД (' +
+d.paradeHostTitle +
 (s.parade.currentIndex + 1) +
 '/8): ' +
 (pk ? pk.name : '');
-boutSub.innerHTML =
-'Рыцари по очереди выбирают оружие со стойки...';
+boutSub.innerHTML = d.paradeHostSub;
 }
 } else if (m && m.k1 && m.k2) {
 boutTitle.innerHTML =
@@ -359,26 +439,27 @@ s.combat.winnerSide === 1
 ? m.k1
 : m.k2;
 boutSub.innerHTML =
-'ПОБЕДИТЕЛЬ: ' +
+d.winnerHost +
 winK.name +
-' · Завершите бой для возврата к сетке';
+d.finishToBracket;
 } else {
 boutSub.innerHTML =
 (s.statusText || '') +
-' · К1: x' +
+' · ' +
+d.k1Short +
 Number(m.odds1).toFixed(2) +
-' | К2: x' +
+' | ' +
+d.k2Short +
 Number(m.odds2).toFixed(2);
 }
 } else if (s.champion) {
 boutTitle.innerHTML =
-'ЧЕМПИОН: ' +
+d.champHost +
 s.champion.secretTitle +
 ' (' +
 s.champion.name +
 ')';
-boutSub.innerHTML =
-'Турнир завершён! Начните новый.';
+boutSub.innerHTML = d.tourDoneHost;
 }
 
 // update primary start or step button text
@@ -395,11 +476,9 @@ s.combat && s.combat.mode === 'JOUST'
 
 if (s.tvScreen === 'PARADE') {
 if (s.parade && s.parade.finished) {
-btnStartStep.innerHTML =
-'ЗАКРЫТЬ БОНУС-СТАВКИ -> К СЕТКЕ';
+btnStartStep.innerHTML = d.btnCloseBonus;
 } else {
-btnStartStep.innerHTML =
-'УСКОРИТЬ ПАРАД -> БОНУС-СТАВКИ';
+btnStartStep.innerHTML = d.btnSkipParade;
 }
 } else if (
 s.tvScreen === 'COMBAT' &&
@@ -407,49 +486,48 @@ s.combat
 ) {
 if (cWait < cReveal) {
 btnStartStep.innerHTML =
-'ИДЁТ ФАЗА БОЯ...';
+d.btnPhaseRunning;
 } else if (s.combat.finished) {
-btnStartStep.innerHTML =
-'К СЕТКЕ (ЗАВЕРШИТЬ БОЙ)';
+btnStartStep.innerHTML = d.btnToBracket;
 } else if (s.combat.pausedForBets) {
-btnStartStep.innerHTML =
-'ПРОДОЛЖИТЬ БОЙ (СЛЕД. ФАЗА)';
+btnStartStep.innerHTML = d.btnNextPhase;
 } else {
 btnStartStep.innerHTML =
-'ИДЁТ ФАЗА БОЯ...';
+d.btnPhaseRunning;
 }
 } else {
-btnStartStep.innerHTML =
-'ЗАКРЫТЬ СТАВКИ И НАЧАТЬ БОЙ';
+btnStartStep.innerHTML = d.btnStartBout;
 }
 
 // update economy labels by mode
+// switches between pub caps and cash bank
 var isCash = s.gameMode === 'CASH';
+var curSym = d.curCash || ' $';
 document.getElementById(
 'economySectionTitle'
 ).innerHTML = isCash
-? 'КАССА ТОТАЛИЗАТОРА: ДЕПОЗИТЫ'
-: 'КАССА ПАБА: ЗАКАЗЫ И ПРИЗЫ';
+? d.econCashTitle
+: d.econPubTitle;
 document.getElementById(
 'creditLabel'
 ).innerHTML = isCash
-? 'ПОПОЛНИТЬ БАНК ИГРОКА / СТОЛА:'
-: 'НАЧИСЛИТЬ КРЫШКИ ЗА ЗАКАЗ НА БАРЕ:';
+? d.creditCashLbl
+: d.creditPubLbl;
 document.getElementById(
 'btnAddDrink'
 ).innerHTML = isCash
-? '+100 ₽'
-: '+БОКАЛ (+100)';
+? '+100' + curSym
+: d.addDrinkPub;
 document.getElementById(
 'btnAddFood'
 ).innerHTML = isCash
-? '+200 ₽'
-: '+ЕДА (+200)';
+? '+200' + curSym
+: d.addFoodPub;
 document.getElementById(
 'btnAddSet'
 ).innerHTML = isCash
-? '+500 ₽'
-: '+СЕТ (+500)';
+? '+500' + curSym
+: d.addSetPub;
 document.getElementById(
 'prizeRedeemBlock'
 ).style.display = isCash
@@ -457,6 +535,7 @@ document.getElementById(
 : 'block';
 
 // populate tables dropdown preserving value
+// formats each table with current balance
 var tItems = [];
 var tables = s.tables || [];
 for (var i = 0; i < tables.length; i++) {
@@ -473,18 +552,21 @@ fmtMoney(tb.balance, s.gameMode) +
 syncSelect(selectTable, tItems);
 
 // populate knights dropdown by bet mode
+// adds +20% bonus tag during parade
 var kItems = [];
 var bonusMult =
 s.tvScreen === 'PARADE' ? 1.2 : 1.0;
 var bonusLabel =
-s.tvScreen === 'PARADE' ? ' [БОНУС +20%]' : '';
+s.tvScreen === 'PARADE'
+? d.bonusTag20
+: '';
 
 if (betMode === 'MATCH' && m && m.k1 && m.k2) {
 kItems.push({
 value: m.k1.id,
 text:
 m.k1.name +
-' — Бой (x' +
+d.boutOpt +
 (Number(m.odds1) * bonusMult).toFixed(2) +
 ')' +
 bonusLabel
@@ -493,7 +575,7 @@ kItems.push({
 value: m.k2.id,
 text:
 m.k2.name +
-' — Бой (x' +
+d.boutOpt +
 (Number(m.odds2) * bonusMult).toFixed(2) +
 ')' +
 bonusLabel
@@ -506,7 +588,7 @@ kItems.push({
 value: ak.id,
 text:
 ak.name +
-' — Турнир (x' +
+d.tourOpt +
 (
 Number(ak.outrightOdds) * bonusMult
 ).toFixed(2) +
@@ -518,13 +600,19 @@ bonusLabel
 syncSelect(selectKnight, kItems);
 
 // populate pub prizes dropdown
+// lists localized prizes and caps cost
 var pItems = [];
 var prizes = s.prizes || [];
 for (var p = 0; p < prizes.length; p++) {
 var pr = prizes[p];
 pItems.push({
 value: pr.id,
-text: pr.title + ' (' + pr.cost + ' КР)'
+text:
+pr.title +
+' (' +
+pr.cost +
+d.curCaps +
+')'
 });
 }
 syncSelect(selectPrize, pItems);
@@ -545,6 +633,7 @@ var s = JSON.parse(xhr.responseText);
 renderHost(s);
 } catch (e) {
 // skip json error
+// next poll will retry
 }
 }
 };
@@ -552,9 +641,16 @@ xhr.send();
 }
 
 // bind button click listeners on phone
+// sends presenter commands to server
 btnStartStep.onclick = function () {
 sendAction({ type: 'combat_step' });
 };
+
+if (btnHostLang) {
+btnHostLang.onclick = function () {
+sendAction({ type: 'cycle_lang' });
+};
+}
 
 document.getElementById(
 'btnNextMatch'
@@ -598,6 +694,7 @@ renderHost(lastState);
 };
 
 // bind quick bet amount buttons
+// fills amount input with chip value
 var chips =
 document.querySelectorAll('.btnChip');
 for (var c = 0; c < chips.length; c++) {
@@ -629,6 +726,7 @@ betType: betMode
 };
 
 // bind drink and deposit credit buttons
+// awards 100 200 or 500 to selected table
 document.getElementById(
 'btnAddDrink'
 ).onclick = function () {

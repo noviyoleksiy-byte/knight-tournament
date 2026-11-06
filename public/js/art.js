@@ -1601,7 +1601,12 @@ Math.max(9, Math.round(r * 0.52)) +
 'px sans-serif';
 ctx.textAlign = 'center';
 ctx.textBaseline = 'middle';
-ctx.fillText('ПАБ', mx, my - r * 0.22);
+var pubWord =
+global.currentLang === 'uk' ||
+global.currentLang === 'ru'
+? 'ПАБ'
+: 'PUB';
+ctx.fillText(pubWord, mx, my - r * 0.22);
 ctx.fillStyle = '#C084FC';
 ctx.font =
 '700 ' +

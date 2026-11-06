@@ -9,6 +9,18 @@ import {
 SECRET_TITLES,
 MASTER_KNIGHTS
 } from './titles.js';
+import {
+PRIZE_NAMES,
+getStatusStr,
+getHorseName,
+getShieldName,
+getWeaponName,
+getStageName,
+localizeKnight,
+localizeTableName,
+localizeCombatTexts,
+localizeAllState
+} from './server_i18n.js';
 
 var __filename =
 fileURLToPath(import.meta.url);
@@ -372,8 +384,9 @@ return picked;
 }
 
 // build initial 24 knight pub roster
-// we mix 70 percent base and 30 pub seed
-function createPubData(customSeed) {
+// defaults to english language
+function createPubData(customSeed, lang) {
+var l = lang || 'en';
 var seed =
 customSeed ||
 Math.floor(100 + Math.random() * 899);
@@ -409,7 +422,7 @@ seededHash(seed, i * 31 + 9) * 10
 ) % 10;
 var shIdx = tpl.shieldIdx % SHIELDS.length;
 
-roster.push({
+var kObj = {
 id: 'K' + (i + 1),
 poolIndex: tpl.poolIndex,
 name: tpl.name,
@@ -417,7 +430,7 @@ secretTitle: tpl.secretTitle,
 colorIdx: tpl.colorIdx,
 helmIdx: tpl.helmIdx,
 shieldIdx: shIdx,
-shieldName: SHIELDS[shIdx].name,
+shieldName: getShieldName(shIdx, l),
 favWeaponIdx: favWeapon,
 favHorseIdx: favHorse,
 joustSkill: 78 + hBias,
@@ -427,7 +440,9 @@ isRare: i >= 18,
 wins: 0,
 losses: 0,
 titles: 0
-});
+};
+localizeKnight(kObj, l);
+roster.push(kObj);
 }
 
 // seed defending champion for tour 1
@@ -438,49 +453,54 @@ roster[0].titles = 1;
 roster[1].wins = 2;
 }
 
-return {
+var data = {
+lang: l,
 pubSeed: seed,
 tournamentNumber: 0,
 lastChampionId: 'K1',
 lastFinalistId: 'K2',
 roster: roster,
 tables: [
-{ id: 1, name: 'Стол №1', balance: 500 },
-{ id: 2, name: 'Стол №2', balance: 500 },
-{ id: 3, name: 'Стол №3', balance: 500 },
+{ id: 1, name: 'Table #1', balance: 500 },
+{ id: 2, name: 'Table #2', balance: 500 },
+{ id: 3, name: 'Table #3', balance: 500 },
 {
 id: 4,
-name: 'Барная стойка',
+name: 'Bar Counter',
 balance: 500
 }
 ],
 prizes: [
 {
 id: 1,
-title: 'Чесночные гренки',
+title: PRIZE_NAMES[1][l],
 cost: 300
 },
 {
 id: 2,
-title: 'Бокал пенного',
+title: PRIZE_NAMES[2][l],
 cost: 600
 },
 {
 id: 3,
-title: 'Сет из 4 шотов',
+title: PRIZE_NAMES[3][l],
 cost: 1200
 },
 {
 id: 4,
-title: 'Пивная башня',
+title: PRIZE_NAMES[4][l],
 cost: 2500
 }
 ]
 };
+for (var t = 0; t < data.tables.length; t++) {
+localizeTableName(data.tables[t], l);
+}
+return data;
 }
 
 // load persistent pub roster from disk
-// syncs 24 knights from 216 master pool
+// defaults language to english on startup
 function loadPubData() {
 try {
 if (fs.existsSync(ROSTER_FILE)) {
@@ -488,6 +508,7 @@ var raw =
 fs.readFileSync(ROSTER_FILE, 'utf8');
 var parsed = JSON.parse(raw);
 if (parsed && parsed.roster) {
+parsed.lang = 'en';
 if (!parsed.lastChampionId) {
 parsed.lastChampionId = 'K1';
 parsed.lastFinalistId = 'K2';
@@ -516,16 +537,15 @@ var shIdx =
 tpl.shieldIdx % SHIELDS.length;
 parsed.roster[i].poolIndex =
 tpl.poolIndex;
-parsed.roster[i].name = tpl.name;
-parsed.roster[i].secretTitle =
-tpl.secretTitle;
 parsed.roster[i].colorIdx =
 tpl.colorIdx;
 parsed.roster[i].helmIdx =
 tpl.helmIdx;
 parsed.roster[i].shieldIdx = shIdx;
-parsed.roster[i].shieldName =
-SHIELDS[shIdx].name;
+localizeKnight(
+parsed.roster[i],
+parsed.lang
+);
 if (
 parsed.roster[i].favHorseIdx ===
 undefined
@@ -538,6 +558,31 @@ seededHash(pSeed, i * 31 + 9) * 10
 }
 }
 }
+if (parsed.tables) {
+for (
+var tb = 0;
+tb < parsed.tables.length;
+tb++
+) {
+localizeTableName(
+parsed.tables[tb],
+parsed.lang
+);
+}
+}
+if (parsed.prizes) {
+for (
+var pr = 0;
+pr < parsed.prizes.length;
+pr++
+) {
+var pObj = parsed.prizes[pr];
+if (PRIZE_NAMES[pObj.id]) {
+pObj.title =
+PRIZE_NAMES[pObj.id][parsed.lang];
+}
+}
+}
 savePubData(parsed);
 }
 return parsed;
@@ -545,7 +590,7 @@ return parsed;
 } catch (e) {
 console.log('read roster err:', e);
 }
-var fresh = createPubData();
+var fresh = createPubData(null, 'en');
 savePubData(fresh);
 return fresh;
 }
@@ -568,6 +613,7 @@ var pubData = loadPubData();
 // select 8 fighters from 24 pub roster
 // champion and finalist stay to defend
 function pickEightKnights() {
+var l = pubData.lang || 'en';
 var chosen = [];
 var usedIds = {};
 
@@ -641,7 +687,7 @@ availWeapons.splice(rPos, 1);
 }
 
 fighter.weaponIdx = wPick;
-fighter.weaponName = WEAPONS[wPick].name;
+fighter.weaponName = getWeaponName(wPick, l);
 fighter.hasFavWeapon =
 wPick === fighter.favWeaponIdx;
 
@@ -678,12 +724,13 @@ var hPick = availHorses[hPos];
 availHorses.splice(hPos, 1);
 
 fighter.horseIdx = hPick;
-fighter.horseName = HORSES[hPick].name;
+fighter.horseName = getHorseName(hPick, l);
 fighter.hasFavHorse =
 hPick === fighter.favHorseIdx;
 fighter.shieldDamage = 0;
 fighter.isTired = false;
 fighter.stamina = 100;
+localizeKnight(fighter, l);
 }
 
 return chosen;
@@ -987,6 +1034,7 @@ mx.k2.outrightOdds = alive[y].outrightOdds;
 // create new 8 knight tournament state
 // we set up quarterfinals semis and final
 function buildNewTournament(existingMode) {
+var l = pubData.lang || 'en';
 pubData.tournamentNumber += 1;
 savePubData(pubData);
 
@@ -994,7 +1042,7 @@ var eight = pickEightKnights();
 var matches = [
 {
 id: 0,
-stageName: '1/4 ФИНАЛА (МАТЧ 1)',
+stageName: getStageName(0, l),
 k1: eight[0],
 k2: eight[1],
 odds1: 1.9,
@@ -1004,7 +1052,7 @@ winnerId: null
 },
 {
 id: 1,
-stageName: '1/4 ФИНАЛА (МАТЧ 2)',
+stageName: getStageName(1, l),
 k1: eight[2],
 k2: eight[3],
 odds1: 1.9,
@@ -1014,7 +1062,7 @@ winnerId: null
 },
 {
 id: 2,
-stageName: '1/4 ФИНАЛА (МАТЧ 3)',
+stageName: getStageName(2, l),
 k1: eight[4],
 k2: eight[5],
 odds1: 1.9,
@@ -1024,7 +1072,7 @@ winnerId: null
 },
 {
 id: 3,
-stageName: '1/4 ФИНАЛА (МАТЧ 4)',
+stageName: getStageName(3, l),
 k1: eight[6],
 k2: eight[7],
 odds1: 1.9,
@@ -1034,7 +1082,7 @@ winnerId: null
 },
 {
 id: 4,
-stageName: '1/2 ФИНАЛА (ЗАПАД)',
+stageName: getStageName(4, l),
 k1: null,
 k2: null,
 odds1: null,
@@ -1044,7 +1092,7 @@ winnerId: null
 },
 {
 id: 5,
-stageName: '1/2 ФИНАЛА (ВОСТОК)',
+stageName: getStageName(5, l),
 k1: null,
 k2: null,
 odds1: null,
@@ -1054,7 +1102,7 @@ winnerId: null
 },
 {
 id: 6,
-stageName: 'ГРАНД-ФИНАЛ ТУРНИРА',
+stageName: getStageName(6, l),
 k1: null,
 k2: null,
 odds1: null,
@@ -1066,13 +1114,15 @@ winnerId: null
 
 var st = {
 version: 1,
+lang: l,
 pubSeed: pubData.pubSeed,
 tournamentNumber: pubData.tournamentNumber,
 gameMode: existingMode || 'PUB',
 allowLiveBets: true,
 tvScreen: 'PARADE',
 tournamentStatus: 'ACTIVE',
-statusText: 'ПАРАД РЫЦАРЕЙ И ВЫБОР ОРУЖИЯ',
+statusKey: 'PARADE_START',
+statusText: getStatusStr('PARADE_START', l),
 currentMatchIndex: 0,
 matches: matches,
 aliveKnights: eight,
@@ -1107,13 +1157,15 @@ unseated1: false,
 unseated2: false,
 shatterSide: 0,
 stepId: 1,
-phaseTitle: 'ПОДГОТОВКА К БОЮ',
-note: 'Ставки открыты',
+outcomeKey: 'PREP',
+phaseTitle: '',
+note: '',
 bannerTitle: '',
 bannerSub: ''
 }
 };
 
+localizeCombatTexts(st);
 updateAllOdds(st);
 return st;
 }
@@ -1230,6 +1282,13 @@ winK.titles = pubData.roster[t].titles;
 }
 }
 
+var l = gameState.lang || 'en';
+var tTag =
+l === 'uk'
+? ' [ТУРНІР]: +'
+: l === 'ru'
+? ' [ТУРНИР]: +'
+: ' [TOURNEY]: +';
 // settle outright tournament champion bets
 for (
 var o = 0;
@@ -1246,7 +1305,7 @@ ob.amount * ob.odds
 );
 creditTableById(ob.tableId, outWin);
 payLogs.push(
-ob.tableName + ' [ТУРНИР]: +' + outWin
+ob.tableName + tTag + outWin
 );
 }
 }
@@ -1449,13 +1508,13 @@ c.shieldHit1 = false;
 c.shieldHit2 = false;
 c.throwFlowers = false;
 c.pausedForBets = false;
+c.bannerTitle = '';
+c.bannerSub = '';
 
 if (c.mode === 'JOUST') {
 c.pass += 1;
 c.windDir =
 [-1, 0, 1][Math.floor(Math.random() * 3)];
-c.phaseTitle =
-'КОННАЯ СШИБКА ' + c.pass + ' ИЗ 3';
 
 var s1 = SHIELDS[m.k1.shieldIdx];
 var s2 = SHIELDS[m.k2.shieldIdx];
@@ -1497,13 +1556,8 @@ c.winnerSide = 2;
 c.throwFlowers =
 c.pass === 3 ||
 gameState.currentMatchIndex === 6;
-c.note = m.k1.name + ' выбит из седла!';
-c.bannerTitle =
-'ПОБЕДА СШИБКОЙ: ' + m.k2.name + '!';
-c.bannerSub =
-m.k1.name +
-' повержен с коня в сшибке #' +
-c.pass;
+c.outcomeKey = 'JOUST_WIN_2';
+localizeCombatTexts(gameState);
 gameState.soundToPlay = 'fanfare';
 finishCurrentMatch(2);
 return;
@@ -1516,13 +1570,8 @@ c.winnerSide = 1;
 c.throwFlowers =
 c.pass === 3 ||
 gameState.currentMatchIndex === 6;
-c.note = m.k2.name + ' выбит из седла!';
-c.bannerTitle =
-'ПОБЕДА СШИБКОЙ: ' + m.k1.name + '!';
-c.bannerSub =
-m.k2.name +
-' повержен с коня в сшибке #' +
-c.pass;
+c.outcomeKey = 'JOUST_WIN_1';
+localizeCombatTexts(gameState);
 gameState.soundToPlay = 'fanfare';
 finishCurrentMatch(1);
 return;
@@ -1543,25 +1592,14 @@ if (tryDamageShield(m.k2, 0.38)) {
 c.shieldHit2 = true;
 }
 
-c.phaseTitle =
-'СШИБКА #' +
-c.pass +
-' — ОБОЮДНОЕ ПАДЕНИЕ!';
-c.note =
-'Оба выбиты из седла! Далее пеший бой!';
 gameState.soundToPlay = 'shatter';
 updateAllOdds(gameState);
 
 if (gameState.allowLiveBets) {
 c.pausedForBets = true;
-c.bannerTitle =
-'ОБОЮДНОЕ ПАДЕНИЕ! ПАУЗА СТАВОК ПЕРЕД ПЕШИМ БОЕМ';
-c.bannerSub =
-'В ход идёт оружие: ' +
-m.k1.weaponName +
-' vs ' +
-m.k2.weaponName;
 }
+c.outcomeKey = 'MUTUAL_FALL';
+localizeCombatTexts(gameState);
 return;
 }
 
@@ -1587,45 +1625,27 @@ c.shieldHit1 || c.shieldHit2
 if (c.pass >= 3) {
 // keep JOUST so 3rd pass animates fully
 c.pendingMelee = true;
-c.phaseTitle =
-'КОННАЯ СШИБКА 3 ИЗ 3 -> ПЕШИЙ БОЙ!';
-c.note =
-'Никто не уступил в седле! Далее пеший бой!';
 updateAllOdds(gameState);
-
 if (gameState.allowLiveBets) {
 c.pausedForBets = true;
-c.bannerTitle =
-'3 СШИБКИ ПРОЙДЕНЫ! LIVE-СТАВКИ ПЕРЕД ПЕШИМ БОЕМ';
-c.bannerSub =
-'Оружие ближнего боя решает исход!';
 }
+c.outcomeKey = 'PASS_3_MELEE';
+localizeCombatTexts(gameState);
 return;
 }
 
 updateAllOdds(gameState);
-c.note =
-'Оба устояли в сшибке #' + c.pass + '!';
 if (gameState.allowLiveBets) {
 c.pausedForBets = true;
-c.bannerTitle =
-'СШИБКА #' +
-c.pass +
-' ЗАВЕРШЕНА — ПРИЁМ LIVE-СТАВОК!';
-c.bannerSub =
-'Оцените щиты и усталость коней перед следующим заходом';
 }
+c.outcomeKey = 'PASS_HOLD';
+localizeCombatTexts(gameState);
 return;
 }
 
 // foot melee combat resolution
 // single continuous 3-strike sword duel
 c.meleeRound += 1;
-c.phaseTitle =
-'ПЕШЕЕ СРАЖЕНИЕ: ' +
-m.k1.weaponName +
-' VS ' +
-m.k2.weaponName;
 
 var w1 = WEAPONS[m.k1.weaponIdx];
 var w2 = WEAPONS[m.k2.weaponIdx];
@@ -1651,7 +1671,6 @@ calcPowerScore(m.k2, 'MELEE') +
 Math.random() * 32;
 
 var winSide = score1 >= score2 ? 1 : 2;
-var winK = winSide === 1 ? m.k1 : m.k2;
 var loseK = winSide === 1 ? m.k2 : m.k1;
 loseK.isTired = true;
 
@@ -1659,14 +1678,8 @@ c.finished = true;
 c.winnerSide = winSide;
 c.throwFlowers =
 gameState.currentMatchIndex === 6;
-c.note =
-loseK.name +
-' преклоняет колено после удара!';
-c.bannerTitle =
-'ПОБЕДА В ПЕШЕМ БОЮ: ' + winK.name + '!';
-c.bannerSub =
-'Решающий удар оружием: ' +
-winK.weaponName;
+c.outcomeKey = 'MELEE_WIN';
+localizeCombatTexts(gameState);
 gameState.soundToPlay = 'fanfare';
 finishCurrentMatch(winSide);
 }
@@ -1696,8 +1709,11 @@ pr.subStep = 'RIDE_TO_RACK';
 gameState.soundToPlay = 'hoof';
 } else {
 pr.finished = true;
-gameState.statusText =
-'ПЕРВЫЙ РАУНД СТАВОК (БОНУС +20%)';
+gameState.statusKey = 'BONUS_BETS';
+gameState.statusText = getStatusStr(
+'BONUS_BETS',
+gameState.lang
+);
 gameState.soundToPlay = 'horn';
 }
 }
@@ -1768,7 +1784,35 @@ gameState.version += 1;
 gameState.soundToPlay = null;
 gameState.prizeBannerText = null;
 
-if (type === 'toggle_mode') {
+if (type === 'cycle_lang') {
+var curL = gameState.lang || 'en';
+var nextL =
+curL === 'en'
+? 'uk'
+: curL === 'uk'
+? 'ru'
+: 'en';
+gameState.lang = nextL;
+localizeAllState(
+gameState,
+pubData,
+savePubData
+);
+} else if (type === 'set_lang') {
+var reqL = body.lang;
+if (
+reqL === 'en' ||
+reqL === 'uk' ||
+reqL === 'ru'
+) {
+gameState.lang = reqL;
+localizeAllState(
+gameState,
+pubData,
+savePubData
+);
+}
+} else if (type === 'toggle_mode') {
 gameState.gameMode =
 gameState.gameMode === 'PUB'
 ? 'CASH'
@@ -1778,8 +1822,11 @@ gameState.allowLiveBets =
 !gameState.allowLiveBets;
 } else if (type === 'restart_parade') {
 gameState.tvScreen = 'PARADE';
-gameState.statusText =
-'ПАРАД РЫЦАРЕЙ И ВЫБОР ОРУЖИЯ';
+gameState.statusKey = 'PARADE_START';
+gameState.statusText = getStatusStr(
+'PARADE_START',
+gameState.lang
+);
 gameState.lastParadeAt = Date.now();
 gameState.parade = {
 active: true,
@@ -1792,8 +1839,11 @@ gameState.soundToPlay = 'horn';
 } else if (type === 'toggle_screen') {
 if (gameState.tvScreen === 'PARADE') {
 gameState.tvScreen = 'BRACKET';
-gameState.statusText =
-'ПРИЁМ СТАВОК ОТКРЫТ';
+gameState.statusKey = 'BETS_OPEN';
+gameState.statusText = getStatusStr(
+'BETS_OPEN',
+gameState.lang
+);
 } else if (gameState.tvScreen === 'BRACKET') {
 gameState.tvScreen = 'COMBAT';
 } else {
@@ -1910,9 +1960,15 @@ pTarget &&
 tTarget.balance >= pTarget.cost
 ) {
 tTarget.balance -= pTarget.cost;
+var claimVerb =
+gameState.lang === 'uk'
+? ' ЗАБИРАЄ ПРИЗ: '
+: gameState.lang === 'ru'
+? ' ЗАБИРАЕТ ПРИЗ: '
+: ' CLAIMS PRIZE: ';
 gameState.prizeBannerText =
 tTarget.name.toUpperCase() +
-' ЗАБИРАЕТ ПРИЗ: ' +
+claimVerb +
 pTarget.title.toUpperCase() +
 '!';
 gameState.soundToPlay = 'prize';
@@ -1920,9 +1976,15 @@ savePubData(pubData);
 }
 } else if (type === 'add_table') {
 var newId = pubData.tables.length + 1;
+var defPref =
+gameState.lang === 'uk'
+? 'Стіл №'
+: gameState.lang === 'ru'
+? 'Стол №'
+: 'Table #';
 pubData.tables.push({
 id: newId,
-name: body.name || 'Стол №' + newId,
+name: body.name || defPref + newId,
 balance: 300
 });
 gameState.tables = pubData.tables;
@@ -1937,14 +1999,20 @@ gameState.parade &&
 gameState.parade.currentIndex = 7;
 gameState.parade.subStep = 'PICKED';
 gameState.parade.finished = true;
-gameState.statusText =
-'ПЕРВЫЙ РАУНД СТАВОК (БОНУС +20%)';
+gameState.statusKey = 'BONUS_BETS';
+gameState.statusText = getStatusStr(
+'BONUS_BETS',
+gameState.lang
+);
 gameState.soundToPlay = 'horn';
 } else {
 // finish bonus betting and show bracket
 gameState.tvScreen = 'BRACKET';
-gameState.statusText =
-'ПРИЁМ СТАВОК ОТКРЫТ';
+gameState.statusKey = 'BETS_OPEN';
+gameState.statusText = getStatusStr(
+'BETS_OPEN',
+gameState.lang
+);
 gameState.soundToPlay = 'horn';
 }
 res.json({ ok: true, state: gameState });
@@ -1967,7 +2035,11 @@ return;
 
 if (gameState.tvScreen !== 'COMBAT') {
 gameState.tvScreen = 'COMBAT';
-gameState.statusText = 'ИДЁТ ПОЕДИНОК!';
+gameState.statusKey = 'BOUT_ACTIVE';
+gameState.statusText = getStatusStr(
+'BOUT_ACTIVE',
+gameState.lang
+);
 curM.k1.matchStartShield =
 curM.k1.shieldDamage || 0;
 curM.k2.matchStartShield =
@@ -1990,20 +2062,26 @@ shieldHit2: false,
 throwFlowers: false,
 shatterSide: 0,
 stepId: gameState.combat.stepId + 1,
-phaseTitle: 'ВЫХОД НА РИСТАЛИЩЕ',
-note: 'Всадники занимают позиции',
+outcomeKey: 'ENTER',
+phaseTitle: '',
+note: '',
 bannerTitle: '',
 bannerSub: ''
 };
+localizeCombatTexts(gameState);
 gameState.lastStepAt = Date.now();
 gameState.soundToPlay = 'horn';
 runNextCombatPhase();
 } else if (gameState.combat.finished) {
 gameState.tvScreen = 'BRACKET';
-gameState.statusText =
+gameState.statusKey =
 gameState.tournamentStatus === 'FINISHED'
-? 'ЧЕМПИОН ОПРЕДЕЛЁН!'
-: 'СТАВКИ НА СЛЕДУЮЩИЙ БОЙ';
+? 'CHAMP_DONE'
+: 'NEXT_BETS';
+gameState.statusText = getStatusStr(
+gameState.statusKey,
+gameState.lang
+);
 if (gameState.currentMatchIndex < 6) {
 gameState.currentMatchIndex += 1;
 }
@@ -2021,8 +2099,11 @@ gameState.currentMatchIndex
 ].status === 'DONE'
 ) {
 gameState.currentMatchIndex += 1;
-gameState.statusText =
-'СТАВКИ НА СЛЕДУЮЩИЙ БОЙ';
+gameState.statusKey = 'NEXT_BETS';
+gameState.statusText = getStatusStr(
+'NEXT_BETS',
+gameState.lang
+);
 updateAllOdds(gameState);
 }
 } else if (type === 'new_tournament') {
@@ -2030,7 +2111,10 @@ gameState = buildNewTournament(
 gameState.gameMode
 );
 } else if (type === 'new_pub_seed') {
-pubData = createPubData();
+pubData = createPubData(
+null,
+gameState.lang || 'en'
+);
 savePubData(pubData);
 gameState = buildNewTournament(
 gameState.gameMode

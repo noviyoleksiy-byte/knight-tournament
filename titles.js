@@ -1,9 +1,127 @@
-// 216 unique knights and noble titles
-// 216 real given names and 216 titles
+// 216 unique knights in en uk and ru
+// builds localized names and secret titles
 
-// 216 distinct knight personal names
+// 216 distinct knight personal names in en
 // zero titles or nouns in given names
-var FIRST_NAMES = [
+var FIRST_EN = [
+'Ragnar', 'Corvus', 'Dante', 'Tormund',
+'Magnus', 'Ulf', 'Dragan', 'Morgan',
+'Halfdan', 'Lazar', 'Mordred', 'Cassian',
+'Valtor', 'Roland', 'Gawain', 'Percival',
+'Tristan', 'Gareth', 'Yvain', 'Geraint',
+'Bedivere', 'Lionel', 'Palamedes', 'Lamorak',
+'Pelleas', 'Uther', 'Gorlois', 'Conrad',
+'Siegfried', 'Gunther', 'Hagen', 'Volker',
+'Dietrich', 'Hildebrand', 'Alberich', 'Cedric',
+'Ivanhoe', 'Brian', 'Reginald', 'Godfrey',
+'Baldwin', 'Tancred', 'Raymond', 'Bohemond',
+'Alaric', 'Theodoric', 'Clovis', 'Otto',
+'Frederick', 'Rudolf', 'Leopold', 'Sigismund',
+'Vladislav', 'Casimir', 'Bertram', 'Gilbert',
+'Malcolm', 'Duncan', 'Kenneth', 'Archibald',
+'Oswald', 'Edmund', 'Lancelot', 'Galahad',
+'Bors', 'Kay', 'Erec', 'Agravain',
+'Gaheris', 'Dinadan', 'Brunor', 'Lucan',
+'Griflet', 'Sagramore', 'Caradoc', 'Urien',
+'Lot', 'Bademagus', 'Meleagant', 'Accolon',
+'Pellinore', 'Balan', 'Balin', 'Mark',
+'Hoel', 'Cador', 'Vortigern', 'Ambrosius',
+'Constantine', 'Gwydion', 'Taliesin', 'Mabon',
+'Culhwch', 'Owain', 'Peredur', 'Llywelyn',
+'Cadwaladr', 'Rhodri', 'Gruffydd', 'Madog',
+'Iorwerth', 'David', 'Harold', 'Leofric',
+'Aethelred', 'Aethelstan', 'Alfred', 'Edgar',
+'Edward', 'Godwin', 'Tostig', 'Waltheof',
+'Siward', 'Morcar', 'Edwin', 'Hereward',
+'Olaf', 'Harald', 'Sweyn', 'Canute',
+'Haakon', 'Erik', 'Sigurd', 'Bjorn',
+'Ivar', 'Ubba', 'Guthrum', 'Rollo',
+'Thorfinn', 'Leif', 'Egil', 'Gunnar',
+'Njal', 'Snorri', 'Kjartan', 'Bolli',
+'Grettir', 'Hrolf', 'Starkad', 'Hjalmar',
+'Orvar', 'Angantyr', 'Hervard', 'Sverre',
+'Birger', 'Valdemar', 'Folke', 'Sten',
+'Axel', 'Torkel', 'William', 'Robert',
+'Richard', 'Henry', 'Geoffrey', 'Fulk',
+'Guy', 'Amaury', 'Reynald', 'Balian',
+'Hugh', 'Eustace', 'Anselm', 'Roger',
+'Drogo', 'Humphrey', 'Joscelin', 'Pons',
+'Gaston', 'Enguerrand', 'Raoul', 'Walter',
+'Thibault', 'Odo', 'Louis', 'Philip',
+'Charles', 'Lothair', 'Pepin', 'Arnulf',
+'Werner', 'Bruno', 'Herman', 'Ludolf',
+'Widukind', 'Gero', 'Ekkehard', 'Thietmar',
+'Bernhard', 'Adalbert', 'Meinhard', 'Wolfram',
+'Walther', 'Gottfried', 'Hartmann', 'Ulrich',
+'Reinmar', 'Berthold', 'Eberhard', 'Ruprecht',
+'Dieter', 'Gerhard', 'Burkhard', 'Winfried',
+'Boleslav', 'Mieszko', 'Sviatopolk', 'Jaromir',
+'Oldrich', 'Bretislav', 'Vratislav', 'Premysl',
+'Sobeslav', 'Bela', 'Coloman', 'Laszlo'
+];
+
+// 216 distinct knight personal names in uk
+// matches english and russian indices
+var FIRST_UK = [
+'Рагнар', 'Корвус', 'Данте', 'Тормунд',
+'Магнус', 'Ульф', 'Драган', 'Морган',
+'Хальфдан', 'Лазар', 'Мордред', 'Кассіан',
+'Валтор', 'Роланд', 'Гавейн', 'Персіваль',
+'Трістан', 'Гарет', 'Івейн', 'Герайнт',
+'Бедівер', 'Ліонель', 'Паламед', 'Ламорак',
+'Пеллеас', 'Утер', 'Горлуа', 'Конрад',
+'Зігфрід', 'Гунтер', 'Хаген', 'Фолькер',
+'Дітріх', 'Хільдебранд', 'Альберіх', 'Седрік',
+'Айвенго', 'Бріан', 'Реджинальд', 'Годфрі',
+'Балдуїн', 'Танкред', 'Раймунд', 'Боемунд',
+'Аларіх', 'Теодеріх', 'Хлодвіг', 'Оттон',
+'Фрідріх', 'Рудольф', 'Леопольд', 'Сигізмунд',
+'Владислав', 'Казимир', 'Бертрам', 'Гілберт',
+'Малькольм', 'Дункан', 'Кеннет', 'Арчибальд',
+'Освальд', 'Едмунд', 'Ланселот', 'Галахад',
+'Борс', 'Кей', 'Ерек', 'Агравейн',
+'Гахеріс', 'Дінадан', 'Брунор', 'Лукан',
+'Гріфлет', 'Саграмор', 'Карадок', 'Урієн',
+'Лот', 'Бодемаг', 'Мелеагант', 'Акколон',
+'Пеллінор', 'Балан', 'Балін', 'Марк',
+'Хоель', 'Кадор', 'Вортігерн', 'Амвросій',
+'Костянтин', 'Гвідіон', 'Талієсін', 'Мабон',
+'Кілух', 'Оуен', 'Передур', 'Ллівелін',
+'Кадвалладр', 'Родрі', 'Гріффід', 'Мадог',
+'Іорверт', 'Давид', 'Гарольд', 'Леофрік',
+'Етельред', 'Етельстан', 'Альфред', 'Едгар',
+'Едвард', 'Гудвін', 'Тостіг', 'Вальтеоф',
+'Сівард', 'Моркар', 'Едвін', 'Херевард',
+'Олаф', 'Харальд', 'Свейн', 'Кнут',
+'Хокон', 'Ерік', 'Сігурд', 'Бйорн',
+'Івар', 'Убба', 'Гутрум', 'Ролло',
+'Торфінн', 'Лейф', 'Егіль', 'Гуннар',
+'Ньял', 'Сноррі', 'Кьяртан', 'Боллі',
+'Греттір', 'Хрольф', 'Старкад', 'Хьяльмар',
+'Орвар', 'Ангрім', 'Хервард', 'Сверрір',
+'Біргер', 'Вальдемар', 'Фольке', 'Стен',
+'Аксель', 'Торкель', 'Вільгельм', 'Роберт',
+'Річард', 'Генріх', 'Жоффруа', 'Фульк',
+'Гі', 'Аморі', 'Рено', 'Баліан',
+'Гуго', 'Есташ', 'Ансельм', 'Рожер',
+'Дрого', 'Онфруа', 'Жосслен', 'Понс',
+'Гастон', 'Ангерран', 'Рауль', 'Готьє',
+'Тібо', 'Ед', 'Людовік', 'Філіпп',
+'Карл', 'Лотар', 'Піпін', 'Арнульф',
+'Вернер', 'Бруно', 'Герман', 'Людольф',
+'Відукінд', 'Геро', 'Еккехард', 'Тітмар',
+'Бернхард', 'Адальберт', 'Мейнхард', 'Вольфрам',
+'Вальтер', 'Готфрід', 'Хартман', 'Ульріх',
+'Рейнмар', 'Бертольд', 'Еберхард', 'Рупрехт',
+'Дітер', 'Герхард', 'Буркхард', 'Вінфрід',
+'Болеслав', 'Мешко', 'Святополк', 'Яромир',
+'Ольдржих', 'Бржетіслав', 'Вратіслав', 'Пржемисл',
+'Собеслав', 'Бела', 'Кальман', 'Ласло'
+];
+
+// 216 distinct knight personal names in ru
+// zero titles or nouns in given names
+var FIRST_RU = [
 'Рагнар', 'Корвус', 'Данте', 'Тормунд',
 'Магнус', 'Ульф', 'Драган', 'Морган',
 'Хальфдан', 'Лазарь', 'Мордред', 'Кассиан',
@@ -60,32 +178,126 @@ var FIRST_NAMES = [
 'Собеслав', 'Бела', 'Кальман', 'Ласло'
 ];
 
-// 36 epithet adjectives by 6 color themes
+// 36 epithet adjectives in en uk and ru
 // 6 per armor color for visual harmony
-var EPITHET_ADJ = [
-// 0: crimson armor
+var ADJ_EN = [
+'Bloody', 'Scarlet', 'Crimson',
+'Flaming', 'Ruby', 'Fierce',
+'Icy', 'Cobalt', 'Northern',
+'Cold', 'Azure', 'Frost',
+'Forest', 'Green', 'Emerald',
+'Wild', 'Thorn', 'Marsh',
+'Twilight', 'Night', 'Dark',
+'Secret', 'Dusk', 'Phantom',
+'Steel', 'Black', 'Ashen',
+'Obsidian', 'Iron', 'Stone',
+'Copper', 'Bronze', 'Forged',
+'Tempered', 'Fiery', 'Heavy'
+];
+
+var ADJ_UK = [
+'Кривавий', 'Багряний', 'Пурпуровий',
+'Полум’яний', 'Рубіновий', 'Лютий',
+'Крижаний', 'Кобальтовий', 'Північний',
+'Холодний', 'Лазуровий', 'Морозний',
+'Лісовий', 'Зелений', 'Смарагдовий',
+'Дикий', 'Терновий', 'Болотний',
+'Сутінковий', 'Нічний', 'Темний',
+'Таємний', 'Західний', 'Примарний',
+'Сталевий', 'Чорний', 'Попільний',
+'Обсидіановий', 'Залізний', 'Кам’яний',
+'Мідний', 'Бронзовий', 'Кований',
+'Гартований', 'Вогняний', 'Важкий'
+];
+
+var ADJ_RU = [
 'Кровавый', 'Алый', 'Багровый',
 'Пламенный', 'Рубиновый', 'Яростный',
-// 1: cobalt armor
 'Ледяной', 'Кобальтовый', 'Северный',
 'Холодный', 'Лазурный', 'Морозный',
-// 2: emerald armor
 'Лесной', 'Зелёный', 'Изумрудный',
 'Дикий', 'Терновый', 'Болотный',
-// 3: royal purple armor
 'Сумеречный', 'Ночной', 'Тёмный',
 'Тайный', 'Закатный', 'Призрачный',
-// 4: dark iron armor
 'Стальной', 'Чёрный', 'Пепельный',
 'Обсидиановый', 'Железный', 'Каменный',
-// 5: copper bronze armor
 'Медный', 'Бронзовый', 'Кованый',
 'Каленый', 'Огненный', 'Тяжёлый'
 ];
 
-// 108 epithet nouns for rich variety
+// 108 epithet nouns in en uk and ru
 // beasts weapons heraldry and forts
-var EPITHET_NOUN = [
+var NOUN_EN = [
+'Lion', 'Wolf', 'Boar', 'Bear',
+'Falcon', 'Raven', 'Kite', 'Hawk',
+'Eagle', 'Golden Eagle', 'Peregrine', 'Gyrfalcon',
+'Owl', 'Snow Leopard', 'Leopard', 'Griffin',
+'Dragon', 'Basilisk', 'Phoenix',
+'Unicorn', 'Bison', 'Aurochs', 'Stag',
+'Elk', 'Tusk', 'Ermine',
+'Scorpion', 'Serpent', 'Tiger',
+'Wolfhound', 'Blade', 'Hammer',
+'Axe', 'Broadsword', 'Falchion',
+'War Pick', 'Flanged Mace', 'Flail',
+'War Axe', 'Javelin', 'Quiver',
+'Crossbow', 'Dagger', 'Stiletto',
+'Sword', 'Estoc', 'Bardiche', 'Harpoon',
+'Trident', 'Shield', 'Targe', 'Helm',
+'Cuirass', 'Armor', 'Breastplate',
+'Pauldron', 'Chevron', 'Cross',
+'Standard', 'Pennant', 'Banner',
+'Torch', 'Cloak', 'Crown', 'Belt',
+'Chalice', 'Bell', 'Horn', 'Beak',
+'Crest', 'Fang', 'Claw', 'Fist',
+'Scar', 'Bastion', 'Watch', 'Redoubt',
+'Castle', 'Keep', 'Outpost',
+'Frontier', 'Pass', 'Ridge', 'Cliff',
+'Barrow', 'Whirlwind', 'Storm', 'Tempest',
+'Blizzard', 'Thunder', 'Tornado', 'Torrent',
+'Champion', 'Rider', 'Wanderer',
+'Hunter', 'Ranger', 'Warrior',
+'Fighter', 'Avenger', 'Defender',
+'Vindicator', 'Crusader', 'Paladin',
+'Giant', 'Titan', 'Colossus',
+'Sovereign'
+];
+
+var NOUN_UK = [
+'Лев', 'Вовк', 'Вепр', 'Ведмідь',
+'Сокіл', 'Ворон', 'Шуліка', 'Яструб',
+'Орел', 'Беркут', 'Сапсан', 'Кречет',
+'Пугач', 'Барс', 'Леопард', 'Грифон',
+'Дракон', 'Василіск', 'Фенікс',
+'Єдиноріг', 'Зубр', 'Тур', 'Олень',
+'Лось', 'Кабан', 'Горностай',
+'Скорпіон', 'Змій', 'Тигр',
+'Вовкодав', 'Клинок', 'Молот',
+'Сокира', 'Палаш', 'Фальшіон',
+'Клевець', 'Пернач', 'Кістень',
+'Чекан', 'Дротик', 'Сагайдак',
+'Арбалет', 'Кинджал', 'Стилет',
+'Меч', 'Кончар', 'Бердиш', 'Гарпун',
+'Тризуб', 'Щит', 'Тарч', 'Шолом',
+'Панцир', 'Обладунок', 'Нагрудник',
+'Наплічник', 'Шеврон', 'Хрест',
+'Штандарт', 'Вимпел', 'Стяг',
+'Факел', 'Плащ', 'Вінець', 'Пояс',
+'Кубок', 'Дзвін', 'Ріг', 'Дзьоб',
+'Гребінь', 'Ікло', 'Кіготь', 'Кулак',
+'Шрам', 'Бастіон', 'Дозор', 'Редут',
+'Замок', 'Донжон', 'Форпост',
+'Рубіж', 'Перевал', 'Хребет', 'Скеля',
+'Курган', 'Вихор', 'Шторм', 'Буревій',
+'Буран', 'Грім', 'Смерч', 'Потік',
+'Витязь', 'Вершник', 'Мандрівник',
+'Мисливець', 'Слідопит', 'Ратник',
+'Воїн', 'Месник', 'Захисник',
+'Поборник', 'Хрестоносець', 'Паладин',
+'Велетень', 'Титан', 'Колос',
+'Володар'
+];
+
+var NOUN_RU = [
 'Лев', 'Волк', 'Вепрь', 'Медведь',
 'Сокол', 'Ворон', 'Коршун', 'Ястреб',
 'Орёл', 'Беркут', 'Сапсан', 'Кречет',
@@ -120,9 +332,87 @@ var EPITHET_NOUN = [
 'Властелин'
 ];
 
-// 36 noble and chivalric ranks
-// strictly titles and order ranks
-var NOBLE_RANKS = [
+// 36 noble and chivalric ranks in en uk ru
+// combined with feudal domains for titles
+var RANKS_EN = [
+'His Highness Crown Prince',
+'Grand Prince',
+'Most Serene Prince',
+'Appanage Prince',
+'His Grace the Prince',
+'Hereditary Prince',
+'Archduke',
+'Grand Duke',
+'His Grace the Duke',
+'Exiled Duke',
+'Duke',
+'Elector Prince',
+'Margrave',
+'Count Palatine',
+'Landgrave',
+'Burgrave',
+'Most Serene Count',
+'Count',
+'Most Serene Marquess',
+'Marquess',
+'Viscount',
+'High Baron',
+'Free Baron',
+'Baron',
+'Grand Master',
+'Archmaster',
+'Master',
+'Grand Inquisitor',
+'Inquisitor',
+'Grand Commander',
+'Lord Commander',
+'Lord Protector',
+'Grand Marshal',
+'High Constable',
+'Iron Chancellor',
+'High Seneschal'
+];
+
+var RANKS_UK = [
+'Його Високість Кронпринц',
+'Великий Князь',
+'Ясновельможний Князь',
+'Удільний Князь',
+'Його Світлість Князь',
+'Спадковий Принц',
+'Ерцгерцог',
+'Великий Герцог',
+'Його Світлість Герцог',
+'Опальний Герцог',
+'Герцог',
+'Курфюрст',
+'Маркграф',
+'Граф-Палатин',
+'Ландграф',
+'Бургграф',
+'Ясновельможний Граф',
+'Граф',
+'Ясновельможний Маркіз',
+'Маркіз',
+'Віконт',
+'Верховний Барон',
+'Вільний Барон',
+'Барон',
+'Великий Магістр',
+'Архімагістр',
+'Магістр',
+'Верховний Інквізитор',
+'Інквізитор',
+'Великий Командор',
+'Лорд-Командор',
+'Лорд-Протектор',
+'Великий Маршал',
+'Великий Конетабль',
+'Залізний Канцлер',
+'Верховний Сенешаль'
+];
+
+var RANKS_RU = [
 'Его Высочество Кронпринц',
 'Великий Князь',
 'Светлейший Князь',
@@ -161,9 +451,472 @@ var NOBLE_RANKS = [
 'Верховный Сенешаль'
 ];
 
-// 216 unique feudal domains and orders
-// 6 groups of 36 without real geography
-var DOMAINS_A = [
+// 216 feudal domains in en uk and ru
+// 6 sets of 36 fantasy domains and orders
+var DOM_EN = [
+[
+'the Northern Throne',
+'the White-Stone Throne',
+'the Silver Reach',
+'the Riverbank Lands',
+'the Lake Country',
+'the Southern Marches',
+'the Cloud Citadel',
+'the Stone Belt',
+'White Harbor',
+'the Storm Fjord',
+'the Rocky Coast',
+'the Azure Throne',
+'the Emerald March',
+'the Border Rampart',
+'the Upper Valley',
+'the Old Fortress',
+'the Ruby Valley',
+'the Eagle Aerie',
+'Windy Cape',
+'the Ashen Frontiers',
+'the Misty Isles',
+'Crimson Crag',
+'the Heather Wastes',
+'the Black Castle',
+'the Frozen Order',
+'the Order of the Silent Watch',
+'the Shadow Tribunal',
+'the Secret Seal',
+'the High Synod',
+'the Temple Order',
+'the Night Watch',
+'the Royal Crown',
+'the Royal Host',
+'the Forest Kingdom',
+'the Northern Empire',
+'the Old Court'
+],
+[
+'the Sunset Throne',
+'the Starry Throne',
+'the Crystal Reach',
+'the High Lands',
+'the Dark Woods',
+'the Eastern Marches',
+'the Eagle Citadel',
+'the Iron Belt',
+'Quiet Harbor',
+'the Icy Fjord',
+'the Thunder Coast',
+'the Midnight Throne',
+'the Frontier March',
+'the Western Rampart',
+'the Deep Valley',
+'the High Fortress',
+'the Windy Valley',
+'the Falcon Nest',
+'Stone Cape',
+'the Far Frontiers',
+'the Rocky Isles',
+'Raven Crag',
+'the Stony Wastes',
+'Thunder Pass',
+'the Order of the Silver Cross',
+'the Order of the Iron Gauntlet',
+'the Supreme Tribunal',
+'the Scarlet Seal',
+'the Secret Synod',
+'the Order of the Scarlet Lance',
+'the Mountain Watch',
+'the Ancient Crown',
+'the Inner Host',
+'the Mountain Kingdom',
+'the Western Empire',
+'the High Court'
+],
+[
+'the Eastern Throne',
+'the Granite Throne',
+'the Deep Reach',
+'the Free Lands',
+'the Wolf Country',
+'the Western Marches',
+'the Stone Citadel',
+'the Northern Belt',
+'Cold Harbor',
+'the Misty Fjord',
+'the Flint Coast',
+'the Twilight Throne',
+'the Free March',
+'the Northern Rampart',
+'the Pine Valley',
+'the Granite Fortress',
+'the Silent Valley',
+'the Raven Nest',
+'Eagle Cape',
+'the Frozen Frontiers',
+'the Cold Isles',
+'Sharp Crag',
+'the Wormwood Wastes',
+'Raven Cliff',
+'the Order of the Stone Shield',
+'the Order of the Raven Wing',
+'the Night Tribunal',
+'the Black Seal',
+'the Sacred Synod',
+'the Midnight Order',
+'the Coast Watch',
+'the Steel Crown',
+'the Heavy Host',
+'the Island Kingdom',
+'the Highland Empire',
+'the Princely Court'
+],
+[
+'the Southern Throne',
+'the Forged Throne',
+'the Quiet Reach',
+'the Highland Lands',
+'the Bear Country',
+'the Far Marches',
+'the Northern Citadel',
+'the Southern Belt',
+'South Harbor',
+'the Deep Fjord',
+'the Steep Coast',
+'the Stone Throne',
+'the Northern March',
+'the Stone Rampart',
+'the Green Valley',
+'the Black Fortress',
+'the Misty Valley',
+'the Wolf Den',
+'Storm Cape',
+'the Wild Frontiers',
+'the Far Isles',
+'Gray Crag',
+'the Peat Wastes',
+'the Iron Hollow',
+'the Order of the Steel Horn',
+'the Order of the White Wolf',
+'the Iron Tribunal',
+'the Silver Seal',
+'the Ancient Synod',
+'the Order of the Thorn Crown',
+'the Forest Watch',
+'the Northern Crown',
+'the Mounted Host',
+'the Steppe Kingdom',
+'the Southern Empire',
+'the Near Court'
+],
+[
+'the Supreme Throne',
+'the Obsidian Throne',
+'the Swift Reach',
+'the Border Lands',
+'the Stag Country',
+'the Mountain Marches',
+'the Crimson Citadel',
+'the Eastern Belt',
+'Old Harbor',
+'the Northern Fjord',
+'the Forest Coast',
+'the Iron Throne',
+'the Southern March',
+'the Ancient Rampart',
+'the Stone Valley',
+'the Northern Fortress',
+'the Cold Valley',
+'the Bear Ravine',
+'Misty Cape',
+'the Stone Frontiers',
+'the Northern Isles',
+'Black Crag',
+'the Mossy Wastes',
+'the Wolf Outpost',
+'the Order of the Black Bastion',
+'the Order of the Falcon Eye',
+'the Blind Tribunal',
+'the Iron Seal',
+'the Northern Synod',
+'the Order of the Flaming Sword',
+'the Marsh Watch',
+'the Princely Crown',
+'the Ambush Host',
+'the River Kingdom',
+'the Sea Empire',
+'the Crown Court'
+],
+[
+'the Ancient Throne',
+'the Copper Throne',
+'the Cold Reach',
+'the Forest Lands',
+'the Falcon Country',
+'the Sea Marches',
+'the Iron Citadel',
+'the Western Belt',
+'Deep Harbor',
+'the Rocky Fjord',
+'the High Coast',
+'the Bronze Throne',
+'the Eastern March',
+'the High Rampart',
+'the Dark Valley',
+'the Southern Fortress',
+'the Forest Valley',
+'Cold Springs',
+'High Cape',
+'the Forest Frontiers',
+'the Southern Isles',
+'Copper Crag',
+'the Sandy Wastes',
+'the Stone Bridge',
+'the Order of the Copper Crown',
+'the Order of the Thunder Hammer',
+'the War Tribunal',
+'the Crown Seal',
+'the Cathedral Synod',
+'the Order of the Emerald Branch',
+'the Border Watch',
+'the Imperial Crown',
+'the Guard Host',
+'the Lake Kingdom',
+'the Ancient Empire',
+'the Marshal Court'
+]
+];
+
+var DOM_UK = [
+[
+'Північного Престолу',
+'Білокам’яного Престолу',
+'Срібного Плеса',
+'Зарічних Земель',
+'Озерного Краю',
+'Південних Меж',
+'Захмарної Цитаделі',
+'Кам’яного Поясу',
+'Білої Гавані',
+'Штормового Фіорду',
+'Скелястого Берега',
+'Лазурового Престолу',
+'Смарагдової Марки',
+'Прикордонного Валу',
+'Верхньої Долини',
+'Старої Фортеці',
+'Рубінової Долини',
+'Орлиного Гнізда',
+'Вітряного Мису',
+'Попільних Рубежів',
+'Туманних Островів',
+'Багряної Скелі',
+'Вересових Пусток',
+'Чорного Замку',
+'Крижаного Ордену',
+'Ордену Безмовної Варти',
+'Тіньового Трибуналу',
+'Таємної Печатки',
+'Вищого Синоду',
+'Ордену Храму',
+'Нічного Дозору',
+'Королівської Корони',
+'Королівської Раті',
+'Лісового Королівства',
+'Північної Імперії',
+'Старого Двору'
+],
+[
+'Західного Престолу',
+'Зоряного Престолу',
+'Кришталевого Плеса',
+'Верховних Земель',
+'Темного Бору',
+'Східних Меж',
+'Орлиної Цитаделі',
+'Залізного Поясу',
+'Тихої Гавані',
+'Крижаного Фіорду',
+'Грозового Берега',
+'Опівнічного Престолу',
+'Прикордонної Марки',
+'Західного Валу',
+'Глибокої Долини',
+'Вищої Фортеці',
+'Вітряної Долини',
+'Соколиного Гнізда',
+'Кам’яного Мису',
+'Дальніх Рубежів',
+'Скелястих Островів',
+'Воронячої Скелі',
+'Кам’яних Пусток',
+'Грозового Перевалу',
+'Ордену Срібного Хреста',
+'Ордену Залізної Рукавиці',
+'Верховного Трибуналу',
+'Багряної Печатки',
+'Таємного Синоду',
+'Ордену Багряного Списа',
+'Гірського Дозору',
+'Давньої Корони',
+'Ближньої Раті',
+'Гірського Королівства',
+'Західної Імперії',
+'Верховного Двору'
+],
+[
+'Східного Престолу',
+'Гранітного Престолу',
+'Глибокого Плеса',
+'Вільних Земель',
+'Вовчого Краю',
+'Західних Меж',
+'Кам’яної Цитаделі',
+'Північного Поясу',
+'Холодної Гавані',
+'Туманного Фіорду',
+'Кремінного Берега',
+'Сутінкового Престолу',
+'Вільної Марки',
+'Північного Валу',
+'Соснової Долини',
+'Гранітної Фортеці',
+'Глухої Долини',
+'Воронячого Гнізда',
+'Орлиного Мису',
+'Мерзлих Рубежів',
+'Холодних Островів',
+'Гострої Скелі',
+'Полинових Пусток',
+'Воронячої Кручі',
+'Ордену Кам’яного Щита',
+'Ордену Воронячого Крила',
+'Нічного Трибуналу',
+'Чорної Печатки',
+'Священного Синоду',
+'Ордену Опівночі',
+'Берегового Дозору',
+'Сталевої Корони',
+'Важкої Раті',
+'Острівного Королівства',
+'Гірської Імперії',
+'Княжого Двору'
+],
+[
+'Південного Престолу',
+'Кованого Престолу',
+'Тихого Плеса',
+'Нагірних Земель',
+'Ведмежого Краю',
+'Дальніх Меж',
+'Північної Цитаделі',
+'Південного Поясу',
+'Південної Гавані',
+'Глибокого Фіорду',
+'Крутого Берега',
+'Кам’яного Престолу',
+'Північної Марки',
+'Кам’яного Валу',
+'Зеленої Долини',
+'Чорної Фортеці',
+'Туманної Долини',
+'Вовчого Лігва',
+'Штормового Мису',
+'Диких Рубежів',
+'Дальніх Островів',
+'Сивої Скелі',
+'Торф’яних Пусток',
+'Залізної Паді',
+'Ордену Сталевого Рогу',
+'Ордену Білого Вовка',
+'Залізного Трибуналу',
+'Срібної Печатки',
+'Давнього Синоду',
+'Ордену Тернового Вінця',
+'Лісового Дозору',
+'Північної Корони',
+'Кінної Раті',
+'Степового Королівства',
+'Південної Імперії',
+'Ближнього Двору'
+],
+[
+'Верховного Престолу',
+'Обсидіанового Престолу',
+'Швидкого Плеса',
+'Прикордонних Земель',
+'Оленячого Краю',
+'Гірських Меж',
+'Багряної Цитаделі',
+'Східного Поясу',
+'Старої Гавані',
+'Північного Фіорду',
+'Лісового Берега',
+'Залізного Престолу',
+'Південної Марки',
+'Давнього Валу',
+'Кам’яної Долини',
+'Північної Фортеці',
+'Холодної Долини',
+'Ведмежого Яру',
+'Туманного Мису',
+'Кам’яних Рубежів',
+'Північних Островів',
+'Чорної Скелі',
+'Мохових Пусток',
+'Вовчої Застави',
+'Ордену Чорного Бастіону',
+'Ордену Соколиного Ока',
+'Сліпого Трибуналу',
+'Залізної Печатки',
+'Північного Синоду',
+'Ордену Полум’яного Меча',
+'Болотного Дозору',
+'Княжої Корони',
+'Засадної Раті',
+'Річкового Королівства',
+'Морської Імперії',
+'Коронного Двору'
+],
+[
+'Давнього Престолу',
+'Мідного Престолу',
+'Холодного Плеса',
+'Лісових Земель',
+'Соколиного Краю',
+'Морських Меж',
+'Залізної Цитаделі',
+'Західного Поясу',
+'Глибокої Гавані',
+'Скелястого Фіорду',
+'Високого Берега',
+'Бронзового Престолу',
+'Східної Марки',
+'Високого Валу',
+'Темної Долини',
+'Південної Фортеці',
+'Лісової Долини',
+'Холодних Джерел',
+'Високого Мису',
+'Лісових Рубежів',
+'Південних Островів',
+'Мідної Скелі',
+'Піщаних Пусток',
+'Кам’яного Мосту',
+'Ордену Мідної Корони',
+'Ордену Грозового Молота',
+'Військового Трибуналу',
+'Коронної Печатки',
+'Соборного Синоду',
+'Ордену Смарагдової Гілки',
+'Прикордонного Дозору',
+'Імперської Корони',
+'Гвардійської Раті',
+'Озерного Королівства',
+'Давньої Імперії',
+'Маршальського Двору'
+]
+];
+
+var DOM_RU = [
+[
 'Северного Престола',
 'Белокаменного Престола',
 'Серебряного Плёса',
@@ -200,9 +953,8 @@ var DOMAINS_A = [
 'Лесного Королевства',
 'Северной Империи',
 'Старого Двора'
-];
-
-var DOMAINS_B = [
+],
+[
 'Закатного Престола',
 'Звёздного Престола',
 'Хрустального Плёса',
@@ -239,9 +991,8 @@ var DOMAINS_B = [
 'Горного Королевства',
 'Западной Империи',
 'Верховного Двора'
-];
-
-var DOMAINS_C = [
+],
+[
 'Восточного Престола',
 'Гранитного Престола',
 'Глубокого Плёса',
@@ -278,9 +1029,8 @@ var DOMAINS_C = [
 'Островного Королевства',
 'Горной Империи',
 'Княжеского Двора'
-];
-
-var DOMAINS_D = [
+],
+[
 'Южного Престола',
 'Кованого Престола',
 'Тихого Плёса',
@@ -317,9 +1067,8 @@ var DOMAINS_D = [
 'Степного Королевства',
 'Южной Империи',
 'Ближнего Двора'
-];
-
-var DOMAINS_E = [
+],
+[
 'Верховного Престола',
 'Обсидианового Престола',
 'Быстрого Плёса',
@@ -356,9 +1105,8 @@ var DOMAINS_E = [
 'Речного Королевства',
 'Морской Империи',
 'Коронного Двора'
-];
-
-var DOMAINS_F = [
+],
+[
 'Древнего Престола',
 'Медного Престола',
 'Холодного Плёса',
@@ -395,19 +1143,11 @@ var DOMAINS_F = [
 'Озёрного Королевства',
 'Древней Империи',
 'Маршальского Двора'
-];
-
-var DOMAIN_SETS = [
-DOMAINS_A,
-DOMAINS_B,
-DOMAINS_C,
-DOMAINS_D,
-DOMAINS_E,
-DOMAINS_F
+]
 ];
 
 // build all 216 knights and 216 titles
-// every knight has unique name and title
+// defaults to english with uk and ru maps
 export var SECRET_TITLES = [];
 export var MASTER_KNIGHTS = [];
 
@@ -415,37 +1155,67 @@ for (var c = 0; c < 6; c++) {
 for (var h = 0; h < 6; h++) {
 for (var s = 0; s < 6; s++) {
 var idx = c * 36 + h * 6 + s;
-var firstName = FIRST_NAMES[idx];
-var adj = EPITHET_ADJ[c * 6 + s];
+var adjIdx = c * 6 + s;
 var nounIdx =
-(h * 36 + s * 6 + c) %
-EPITHET_NOUN.length;
-var noun = EPITHET_NOUN[nounIdx];
-var fullName =
-'Сир ' +
-firstName +
-' ' +
-adj +
-' ' +
-noun;
-
+(h * 36 + s * 6 + c) % NOUN_EN.length;
 var rankIdx = (c * 6 + h * 5 + s) % 36;
-var rank = NOBLE_RANKS[rankIdx];
-var domain = DOMAIN_SETS[s][rankIdx];
-var fullTitle = rank + ' ' + domain;
-
-// assign one of 12 shields cleanly
 var shieldIdx = (h * 2 + s) % 12;
 
-SECRET_TITLES.push(fullTitle);
+var nameEn =
+'Sir ' +
+FIRST_EN[idx] +
+' ' +
+ADJ_EN[adjIdx] +
+' ' +
+NOUN_EN[nounIdx];
+var nameUk =
+'Сер ' +
+FIRST_UK[idx] +
+' ' +
+ADJ_UK[adjIdx] +
+' ' +
+NOUN_UK[nounIdx];
+var nameRu =
+'Сир ' +
+FIRST_RU[idx] +
+' ' +
+ADJ_RU[adjIdx] +
+' ' +
+NOUN_RU[nounIdx];
+
+var titleEn =
+RANKS_EN[rankIdx] +
+' of ' +
+DOM_EN[s][rankIdx];
+var titleUk =
+RANKS_UK[rankIdx] +
+' ' +
+DOM_UK[s][rankIdx];
+var titleRu =
+RANKS_RU[rankIdx] +
+' ' +
+DOM_RU[s][rankIdx];
+
+SECRET_TITLES.push(titleEn);
 MASTER_KNIGHTS.push({
 poolIndex: idx,
-first: firstName,
-adj: adj,
-noun: noun,
-epithet: adj + ' ' + noun,
-name: fullName,
-secretTitle: fullTitle,
+first: FIRST_EN[idx],
+adj: ADJ_EN[adjIdx],
+noun: NOUN_EN[nounIdx],
+epithet:
+ADJ_EN[adjIdx] + ' ' + NOUN_EN[nounIdx],
+name: nameEn,
+secretTitle: titleEn,
+names: {
+en: nameEn,
+uk: nameUk,
+ru: nameRu
+},
+titles: {
+en: titleEn,
+uk: titleUk,
+ru: titleRu
+},
 colorIdx: c,
 helmIdx: h,
 shieldIdx: shieldIdx

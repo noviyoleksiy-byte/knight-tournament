@@ -6,6 +6,7 @@
 var lastVersion = 0;
 var isPolling = false;
 var currentState = null;
+var lastLangApplied = '';
 
 // animation clocks for parade and combat
 // we drive smooth 60fps canvas motion
@@ -39,6 +40,8 @@ var modeBadge =
 document.getElementById('modeBadge');
 var btnSoundToggle =
 document.getElementById('btnSoundToggle');
+var btnLangToggle =
+document.getElementById('btnLangToggle');
 var prizeToast =
 document.getElementById('prizeToast');
 var prizeToastText =
@@ -77,6 +80,66 @@ var pCanvasRight =
 document.getElementById('previewCanvasRight');
 var arenaCanvas =
 document.getElementById('arenaCanvas');
+
+// get dictionary for active state language
+// defaults to english when lang is unset
+function getDict() {
+var lang =
+(currentState && currentState.lang) ||
+'en';
+if (window.GameI18n) {
+return window.GameI18n.getDict(lang);
+}
+return {};
+}
+
+// format language button label by code
+// shows active code in upper case
+function getLangBtnLabel(lang) {
+if (lang === 'uk') return 'МОВА: УКР';
+if (lang === 'ru') return 'ЯЗЫК: РУС';
+return 'LANG: EN';
+}
+
+// update static dom labels when lang changes
+// syncs headers buttons and bracket titles
+function applyStaticTranslations(lang) {
+var d = getDict();
+window.currentLang = lang;
+document.documentElement.lang = lang;
+document.title = d.tvTitle || '';
+
+var setTxt = function (id, val) {
+var el = document.getElementById(id);
+if (el && val) el.innerHTML = val;
+};
+
+setTxt('brandTitleText', d.brandTitle);
+setTxt('btnRestartParade', d.restartParade);
+setTxt('hostLinkBtn', d.hostPanelBtn);
+setTxt('colHeadQfWest', d.qfWest);
+setTxt('colHeadQfEast', d.qfEast);
+setTxt('colHeadSfLeft', d.sfHeader);
+setTxt('colHeadSfRight', d.sfHeader);
+setTxt('colHeadFinal', d.grandFinalHeader);
+setTxt('pLeftOddsLbl', d.winInBout);
+setTxt('pRightOddsLbl', d.winInBout);
+setTxt('champKickerText', d.champKicker);
+setTxt('champNoticeText', d.champLore);
+
+if (btnLangToggle) {
+btnLangToggle.innerHTML =
+getLangBtnLabel(lang);
+}
+if (btnSoundToggle) {
+var isMuted =
+window.GameSound &&
+window.GameSound.muted;
+btnSoundToggle.innerHTML = isMuted
+? d.soundOff
+: d.soundOn;
+}
+}
 
 // spawn wood or steel debris particles
 // we burst splinters when shield cracks
@@ -149,16 +212,18 @@ window.GameSound.playPrize();
 // format currency value by active mode
 // we show caps in pub mode or cash symbol
 function fmtVal(amount, mode) {
+var d = getDict();
 var n = Math.round(amount || 0);
 if (mode === 'CASH') {
-return n + ' ₽';
+return n + (d.curCash || ' $');
 }
-return n + ' КР';
+return n + (d.curCaps || ' CAPS');
 }
 
 // update knight parade presentation text
 // we show banner and 8 lineup cards below
 function renderParadeView(s) {
+var d = getDict();
 var p = s.parade || {};
 var list = s.aliveKnights || [];
 var idx = p.currentIndex || 0;
@@ -174,46 +239,50 @@ paradeAnimStart = Date.now();
 
 if (p.finished) {
 paradeStepBadge.innerHTML =
-'ПАРАД ЗАВЕРШЁН · ПЕРВЫЙ РАУНД ПРИЁМА СТАВОК С БОНУСОМ +20% К КОЭФФИЦИЕНТАМ!';
+d.paradeDoneKicker;
 paradeHeroName.innerHTML =
-'Все 8 рыцарей в строю и выбрали оружие!';
+d.paradeDoneTitle;
 paradeHeroDetails.innerHTML =
-'Делайте первые ставки с повышенным бонусом до перехода к Турнирной Сетке!';
+d.paradeDoneSub;
 } else {
 var curK = list[idx];
 paradeStepBadge.innerHTML =
-'ПАРАД УЧАСТНИКОВ И ВЫБОР ОРУЖИЯ (' +
+d.paradeStepKicker +
 (idx + 1) +
-' ИЗ 8)';
+d.of8;
 if (curK) {
 paradeHeroName.innerHTML =
 curK.name +
-' (Побед: ' +
+' (' +
+d.winsLbl +
 (curK.wins || 0) +
-' · Поражений: ' +
+' · ' +
+d.lossesLbl +
 (curK.losses || 0) +
 ')';
 if (p.subStep === 'RIDE_TO_RACK') {
 paradeHeroDetails.innerHTML =
-'Выезжает на коне: ' +
+d.ridesHorse +
 curK.horseName +
-' · Щит: ' +
+' · ' +
+d.ShieldLbl +
 curK.shieldName +
-' · Скачет к оружейной стойке...';
+d.gallopsToRack;
 } else {
 var favNote = curK.hasFavWeapon
-? ' (ЕГО ЛЮБИМОЕ ОРУЖИЕ! ★)'
-: ' (Случайный выбор со стойки)';
+? d.favWepNote
+: d.randWepNote;
 paradeHeroDetails.innerHTML =
-'Берёт со стойки: ' +
+d.picksFromRack +
 curK.weaponName +
 favNote +
-' и встаёт в строй!';
+d.andJoinsLine;
 }
 }
 }
 
 // build 8 lineup cards with bonus odds
+// shows horse weapon wins and +20% odds
 var html = '';
 for (var i = 0; i < 8; i++) {
 var k = list[i];
@@ -231,7 +300,7 @@ var col =
 window.KnightArt.getArmor(k.colorIdx).main;
 var wText = revealed
 ? k.weaponName + (k.hasFavWeapon ? ' ★' : '')
-: 'Выбирает оружие...';
+: d.pickingWeapon;
 
 var baseOdd = parseFloat(
 k.outrightOdds || 5.0
@@ -243,7 +312,8 @@ html +=
 cls +
 '">' +
 '<div>' +
-'<div class="pCardNum">УЧАСТНИК #' +
+'<div class="pCardNum">' +
+d.contenderNo +
 (i + 1) +
 '</div>' +
 '<div class="pCardColorBar" style="background:' +
@@ -257,15 +327,17 @@ k.horseName +
 '<br>' +
 wText +
 '</div>' +
-'<div class="pCardRec">Побед: ' +
+'<div class="pCardRec">' +
+d.winsLbl +
 (k.wins || 0) +
-' · Кубков: ' +
+' · ' +
+d.cupsLbl +
 (k.titles || 0) +
 '</div>' +
 '</div>' +
 '<div class="pCardOddsBox">' +
 '<span class="pCardOddsLabel">' +
-'БОНУС СТАВКА +20%' +
+d.bonusBet20 +
 '</span>' +
 '<span class="pCardOddsVal">x' +
 bonusOdd +
@@ -276,7 +348,7 @@ paradeLineupRow.innerHTML = html;
 }
 
 // draw parade canvas animation every frame
-// shows only champion banner & flower rain
+// shows pub logo banners and flower rain
 function drawParadeFrame() {
 if (
 !currentState ||
@@ -300,7 +372,8 @@ var isChampRiding = Boolean(
 curK && champId && curK.id === champId
 );
 
-// draw castle wall with pub logo on both banners
+// draw castle wall with pub logo on banners
+// crowd cheers when defending champion rides
 window.KnightArt.drawCastleScene(
 ctx,
 w,
@@ -318,6 +391,7 @@ champId,
 );
 
 // light rain of flowers when champion rides
+// spawns petals from upper spectator stands
 if (isChampRiding && Math.random() < 0.16) {
 spawnCrowdFlower(w);
 }
@@ -335,6 +409,7 @@ takenMap[tk.weaponIdx] = true;
 }
 
 // draw weapon rack on left side of field
+// hides weapons already taken by knights
 window.KnightArt.drawWeaponRack(
 ctx,
 250,
@@ -343,6 +418,7 @@ takenMap
 );
 
 // draw already lined up knights in a row
+// animates current rider galloping to rack
 for (var i = 0; i < list.length; i++) {
 var lk = list[i];
 var slotX = 560 + i * 172;
@@ -398,6 +474,7 @@ tProg < 1 ? 'run' : 'parade_no_lance'
 );
 
 // highlight chosen weapon above knight
+// floats above helm while riding to line
 if (tProg < 0.75) {
 window.KnightArt.drawWeapon(
 ctx,
@@ -413,12 +490,14 @@ lk.weaponIdx,
 }
 
 // draw falling crowd flowers on parade
+// updates particle positions on canvas
 updateAndDrawParticles(ctx);
 }
 
 // build single bracket match box html
 // we render both knights and match odds
 function renderMatchBox(m, idx, curIdx) {
+var d = getDict();
 var el =
 document.getElementById('matchBox' + idx);
 if (!el || !m) return;
@@ -431,18 +510,18 @@ cls += ' doneMatch';
 }
 el.className = cls;
 
-var stageLabel = '1/4 ФИНАЛА';
+var stageLabel = d.qfShort;
 if (idx === 4 || idx === 5) {
-stageLabel = '1/2 ФИНАЛА';
+stageLabel = d.sfShort;
 } else if (idx === 6) {
-stageLabel = 'ФИНАЛ КУБКА';
+stageLabel = d.finalShort;
 }
 
-var stText = 'ОЖИДАНИЕ';
+var stText = d.stWait;
 if (m.status === 'DONE') {
-stText = 'ЗАВЕРШЁН';
+stText = d.stDone;
 } else if (idx === curIdx) {
-stText = 'ТЕКУЩИЙ БОЙ';
+stText = d.stLive;
 }
 
 var html =
@@ -468,6 +547,7 @@ el.innerHTML = html;
 // build one knight row inside match box
 // we show color bar sir name and record
 function buildFighterSlot(k, odds, winId) {
+var d = getDict();
 if (!k) {
 return (
 '<div class="mSlot">' +
@@ -475,7 +555,9 @@ return (
 '<div class="colorDot" ' +
 'style="background:#334155"></div>' +
 '<div class="mNameWrap">' +
-'<div class="mSirName">Ожидание пары...</div>' +
+'<div class="mSirName">' +
+d.waitPair +
+'</div>' +
 '<div class="mSubStat">—</div>' +
 '</div></div>' +
 '<div class="mOddsTag">—</div></div>'
@@ -496,11 +578,13 @@ slotCls += ' loserSlot';
 var oddStr =
 odds ? Number(odds).toFixed(2) : '—';
 var recStr =
-'Побед: ' +
+d.winsLbl +
 (k.wins || 0) +
-' · Кубков: ' +
+' · ' +
+d.cupsLbl +
 (k.titles || 0) +
-' · Турнир: x' +
+' · ' +
+d.tourOddsLbl +
 Number(k.outrightOdds || 5).toFixed(2);
 
 return (
@@ -528,6 +612,7 @@ oddStr +
 // update center preview card for next bout
 // we fit knights nicely inside 245x190 box
 function renderPreviewCard(s) {
+var d = getDict();
 var m =
 s.matches &&
 s.matches[s.currentMatchIndex];
@@ -554,7 +639,7 @@ if (!m || !m.k1 || !m.k2) return;
 document.getElementById(
 'nextBoutTitle'
 ).innerHTML =
-'МАТЧ #' +
+d.matchNo +
 (s.currentMatchIndex + 1) +
 ' — ' +
 m.stageName;
@@ -562,13 +647,14 @@ m.stageName;
 document.getElementById(
 'liveBetIndicator'
 ).innerHTML = s.allowLiveBets
-? 'LIVE-СТАВКИ В БОЮ: ВКЛ'
-: 'СТАВКИ ДО НАЧАЛА БОЯ';
+? d.liveBetsOn
+: d.preBetsOnly;
 
 fillPreviewSide('Left', m.k1, m.odds1);
 fillPreviewSide('Right', m.k2, m.odds2);
 
 // draw mounted previews on castle meadow
+// renders left and right contender ponies
 if (pCanvasLeft && window.KnightArt) {
 var ctxL = pCanvasLeft.getContext('2d');
 ctxL.clearRect(0, 0, 245, 190);
@@ -623,8 +709,8 @@ var b = bets[i];
 totalPool += b.amount;
 var tag =
 b.betType === 'OUTRIGHT'
-? '[ТУРНИР]'
-: '[БОЙ]';
+? d.tagTour
+: d.tagBout;
 rowsHtml +=
 '<div class="betItemRow"><b>' +
 b.tableName +
@@ -640,15 +726,16 @@ tag +
 }
 
 poolEl.innerHTML =
-'Принято ставок: ' +
+d.totalBets +
 fmtVal(totalPool, s.gameMode);
 listEl.innerHTML =
-rowsHtml ||
-'Ведущий принимает ставки столов...';
+rowsHtml || d.waitHostBets;
 }
 
 // fill fighter text fields in preview box
+// shows horse weapon shield and win odds
 function fillPreviewSide(side, k, odds) {
+var d = getDict();
 var favTag = k.hasFavWeapon ? ' ★' : '';
 document.getElementById(
 'p' + side + 'Name'
@@ -663,11 +750,13 @@ favTag;
 document.getElementById(
 'p' + side + 'Rec'
 ).innerHTML =
-'Побед: ' +
+d.winsLbl +
 (k.wins || 0) +
-' · Поражений: ' +
+' · ' +
+d.lossesLbl +
 (k.losses || 0) +
-' · Щит: ' +
+' · ' +
+d.ShieldLbl +
 k.shieldName;
 document.getElementById(
 'p' + side + 'Odds'
@@ -676,29 +765,32 @@ document.getElementById(
 document.getElementById(
 'p' + side + 'Outright'
 ).innerHTML =
-'Победа в турнире: x' +
+d.tourWinOddsLbl +
 Number(k.outrightOdds || 5).toFixed(2);
 }
 
 // describe visual shield and fatigue state
+// hides fresh crack until strike lands
 function describeVisualCondition(k, hideHit) {
+var d = getDict();
 if (!k) return '';
 var dmg =
 (k.shieldDamage || 0) - (hideHit ? 1 : 0);
 if (dmg < 0) dmg = 0;
-var sh = 'Щит цел';
+var sh = d.shIntact;
 if (dmg === 1) {
-sh = 'Щит треснул!';
+sh = d.shCracked;
 } else if (dmg >= 2) {
-sh = 'Щит разбит в щепки!';
+sh = d.shShattered;
 }
 var fat = k.isTired
-? 'Тяжело дышит'
-: 'Полон сил';
+? d.fatTired
+: d.fatFresh;
 return sh + ' · ' + fat;
 }
 
 // clone knight with pre-impact shield state
+// keeps shield whole before lance clash
 function getVisualKnight(k, hideShieldHit) {
 if (!k || !hideShieldHit) return k;
 return {
@@ -720,6 +812,7 @@ shieldDamage: Math.max(
 // update top hud on combat arena screen
 // hides result text until blow/fall lands
 function renderCombatHud(s) {
+var d = getDict();
 var m =
 s.matches &&
 s.matches[s.currentMatchIndex];
@@ -773,40 +866,45 @@ hide2
 );
 
 // reveal outcome text only after visual hit
+// joust reveals at 3.25s melee at 4.75s
 var revealTime =
 c.mode === 'JOUST' ? 3.25 : 4.75;
 var showOutcome = elapsed >= revealTime;
 
-var badgeText = c.phaseTitle || 'ПОЕДИНОК';
+var badgeText =
+c.phaseTitle || d.boutTitle;
 if (c.mode === 'JOUST' && !showOutcome) {
 badgeText =
-'КОННАЯ СШИБКА ' +
+d.joustPassOf3 +
 (c.pass || 1) +
-' ИЗ 3';
+(s.lang === 'uk'
+? ' ІЗ 3'
+: s.lang === 'ru'
+? ' ИЗ 3'
+: ' OF 3');
 }
 document.getElementById(
 'combatPassBadge'
 ).innerHTML = badgeText;
 
-var subNote = 'Бой в разгаре...';
+var subNote = d.boutInProgress;
 if (showOutcome) {
 subNote = c.note || '';
 } else if (c.mode === 'JOUST') {
 var wHint =
 c.windDir === 1
-? ' · Ветер вправо →'
+? d.windRight
 : c.windDir === -1
-? ' · Ветер влево ←'
-: ' · Штиль';
+? d.windLeft
+: d.windCalm;
 subNote =
 (elapsed < 1.15
-? 'Всадники на изготовке...'
+? d.joustReady
 : elapsed < 2.9
-? 'Разгон по ристалищу...'
-: 'Сшибка копий!') + wHint;
+? d.joustCharge
+: d.joustClash) + wHint;
 } else {
-subNote =
-'Тяжёлый обмен ударами со щитами...';
+subNote = d.meleeClash;
 }
 document.getElementById(
 'combatSubNote'
@@ -815,11 +913,11 @@ document.getElementById(
 document.getElementById(
 'cLeftLiveOdds'
 ).innerHTML =
-'К1: x' + Number(m.odds1 || 1.9).toFixed(2);
+d.k1Short + Number(m.odds1 || 1.9).toFixed(2);
 document.getElementById(
 'cRightLiveOdds'
 ).innerHTML =
-'К2: x' + Number(m.odds2 || 1.9).toFixed(2);
+d.k2Short + Number(m.odds2 || 1.9).toFixed(2);
 
 var banner =
 document.getElementById(
@@ -851,6 +949,14 @@ function applyState(s) {
 if (!s) return;
 currentState = s;
 
+var lang = s.lang || 'en';
+if (lang !== lastLangApplied) {
+lastLangApplied = lang;
+applyStaticTranslations(lang);
+}
+
+var d = getDict();
+
 if (s.tvScreen !== lastScreenSeen) {
 lastScreenSeen = s.tvScreen;
 particles = [];
@@ -876,15 +982,15 @@ s.combat.mode === 'JOUST'
 }
 
 pubSeedBadge.innerHTML =
-'ПАБ #' + s.pubSeed;
+d.pubBadge + s.pubSeed;
 tourCounter.innerHTML =
-'ТУРНИР №' + s.tournamentNumber;
+d.tourNo + s.tournamentNumber;
 phaseText.innerHTML =
-s.statusText || 'ПАРАД РЫЦАРЕЙ';
+s.statusText || d.paradePhase;
 modeBadge.innerHTML =
 s.gameMode === 'CASH'
-? 'РЕЖИМ: НА ДЕНЬГИ (БАНК)'
-: 'РЕЖИМ: ПАБ (КРЫШКИ И ПРИЗЫ)';
+? d.modeCashFull
+: d.modePubFull;
 
 if (s.prizeBannerText) {
 prizeToast.className = 'prizeBanner';
@@ -953,7 +1059,9 @@ lastVersion = s.version;
 }
 
 // render bottom tables and prize showcase
+// updates balances and localized prize names
 function renderBottomBar(s) {
+var d = getDict();
 var tTitle =
 document.getElementById('tablesTitle');
 var pTitle =
@@ -965,8 +1073,8 @@ document.getElementById('prizesRow');
 
 tTitle.innerHTML =
 s.gameMode === 'CASH'
-? 'ИГРОКИ И СТОЛЫ (БАНК В КАССЕ):'
-: 'СТОЛЫ ПАБА (БАЛАНС КРЫШЕК ЗА ЗАКАЗЫ):';
+? d.tablesCashTitle
+: d.tablesPubTitle;
 
 var tHtml = '';
 var tables = s.tables || [];
@@ -982,8 +1090,7 @@ fmtVal(tb.balance, s.gameMode) +
 tRow.innerHTML = tHtml;
 
 if (s.gameMode === 'CASH') {
-pTitle.innerHTML =
-'ПОСЛЕДНИЕ ВЫПЛАТЫ ТОТАЛИЗАТОРА:';
+pTitle.innerHTML = d.payoutsTitle;
 var logs = s.recentPayouts || [];
 var lHtml = '';
 for (var j = 0; j < logs.length; j++) {
@@ -995,11 +1102,10 @@ logs[j] +
 pRow.innerHTML =
 lHtml ||
 '<div class="prizeChip">' +
-'Ожидание расчёта ставок' +
+d.waitPayouts +
 '</div>';
 } else {
-pTitle.innerHTML =
-'ВИТРИНА ПРИЗОВ ПАБА (ОБМЕН КРЫШЕК):';
+pTitle.innerHTML = d.prizesTitle;
 var prizes = s.prizes || [];
 var pHtml = '';
 for (var k = 0; k < prizes.length; k++) {
@@ -1009,7 +1115,8 @@ pHtml +=
 pr.title +
 '<b>' +
 pr.cost +
-' КР</b></div>';
+d.curCaps +
+'</b></div>';
 }
 pRow.innerHTML = pHtml;
 }
@@ -1040,6 +1147,7 @@ ctx.rotate(pt.rot || 0);
 
 if (pt.kind === 'FLOWER') {
 // 5-petal flower from circus-tiger-runner
+// drawn with white center disk
 ctx.fillStyle = pt.color;
 for (var fl = 0; fl < 5; fl++) {
 var fa = (fl * Math.PI * 2) / 5;
@@ -1075,6 +1183,7 @@ particles.splice(pIdx, 1);
 }
 
 // draw parade or combat canvas every frame
+// drives 60fps animation on tv stage
 function drawArenaFrame() {
 animClock += 0.035;
 if (!currentState) {
@@ -1116,6 +1225,7 @@ var revealTime =
 c.mode === 'JOUST' ? 3.25 : 4.75;
 
 // refresh hud as impact/banner timers pass
+// plays fanfare once when outcome reveals
 renderCombatHud(currentState);
 if (c.finished && elapsed >= revealTime) {
 renderBottomBar(currentState);
@@ -1125,7 +1235,8 @@ triggerSound('fanfare');
 }
 }
 
-// determine spectator crowd mood
+// set spectator crowd mood by combat phase
+// cheers during melee or joust collision
 var crowdMood = 'IDLE';
 if (c.finished && elapsed >= revealTime) {
 crowdMood = 'VICTORY';
@@ -1137,6 +1248,7 @@ crowdMood = 'CHEER';
 }
 
 // draw castle battlements spectators meadow
+// includes heraldic banners and wind flags
 window.KnightArt.drawCastleScene(
 ctx,
 w,
@@ -1157,6 +1269,7 @@ return;
 }
 
 // toss flowers from spectators after win
+// triggered on pass 3 or grand final win
 if (
 c.throwFlowers &&
 elapsed >= revealTime &&
@@ -1167,6 +1280,7 @@ spawnCrowdFlower(w);
 
 if (c.mode === 'JOUST') {
 // 5.2s joust pass from current field ends
+// riders keep ends without teleporting
 var prog = Math.min(1, elapsed / 5.2);
 var evenPass = (c.pass || 1) % 2 === 0;
 var startX1 = evenPass ? 1620 : 180;
@@ -1231,6 +1345,7 @@ window.KnightArt.getArmor(m.k2.colorIdx)
 
 if (prog < 0.22) {
 // pause at current ends before charge
+// riders lower lances at list ends
 var readyWave = prog / 0.22;
 var stepIn =
 (c.pass || 1) === 1
@@ -1242,6 +1357,7 @@ pose1 = 'ready';
 pose2 = 'ready';
 } else if (prog < 0.56) {
 // accelerating gallop toward center clash
+// quadratic ease-in builds lance speed
 var tCharge = (prog - 0.22) / 0.34;
 var easeIn = tCharge * tCharge;
 x1 =
@@ -1254,6 +1370,7 @@ pose1 = 'run';
 pose2 = 'run';
 } else {
 // horses run to opposite ends turn and rear
+// unseated rider falls at center meadow
 var tAfter = (prog - 0.56) / 0.44;
 var tRun = Math.min(1, tAfter / 0.72);
 x1 =
@@ -1272,7 +1389,6 @@ fallen1 = true;
 } else if (tRun < 1) {
 pose1 = 'run';
 } else {
-// turn back toward center and rear up
 facing1 = -dir1 * 1.45;
 pose1 =
 c.winnerSide === 1 ? 'victory' : 'rear';
@@ -1287,7 +1403,6 @@ fallen2 = true;
 } else if (tRun < 1) {
 pose2 = 'run';
 } else {
-// turn back toward center and rear up
 facing2 = -dir2 * 1.45;
 pose2 =
 c.winnerSide === 2 ? 'victory' : 'rear';
@@ -1314,6 +1429,7 @@ pose2
 );
 
 // draw unseated knight lying on meadow
+// animates drop from saddle to turf
 if (fallen1) {
 var fallProgress1 = Math.min(
 1,
@@ -1344,6 +1460,7 @@ visK2
 }
 
 // draw star burst at center impact moment
+// flashes blue-white when lances meet
 if (prog > 0.52 && prog < 0.64) {
 ctx.fillStyle = '#38BDF8';
 ctx.beginPath();
@@ -1373,6 +1490,7 @@ var hitTime1 = k1Wins ? 2.9 : 4.25;
 var hitTime2 = k1Wins ? 4.25 : 2.9;
 
 // delay shield crack until weapon strike lands
+// keeps defender shield intact before blow
 var visM1 = getVisualKnight(
 m.k1,
 c.shieldHit1 && elapsed < hitTime1
@@ -1414,14 +1532,12 @@ window.KnightArt.getArmor(m.k1.colorIdx)
 }
 
 if (elapsed < 0.85) {
-// step forward into guard stance
 var p0 = elapsed / 0.85;
 fx1 = 755 + p0 * 50;
 fx2 = 1045 - p0 * 50;
 mState1 = 'guard';
 mState2 = 'guard';
 } else if (elapsed < 1.4) {
-// exchange 1 windup: winner attacks first
 if (k1Wins) {
 fx1 = 815;
 fx2 = 995;
@@ -1434,7 +1550,6 @@ mState1 = 'block';
 mState2 = 'windup';
 }
 } else if (elapsed < 2.05) {
-// exchange 1 strike: winner hits loser shield
 if (k1Wins) {
 fx1 = 850;
 fx2 = 985;
@@ -1451,13 +1566,11 @@ sparkX = 860;
 sparkY = 345;
 }
 } else if (elapsed < 2.35) {
-// brief guard reset between blows
 fx1 = 805;
 fx2 = 995;
 mState1 = 'guard';
 mState2 = 'guard';
 } else if (elapsed < 2.85) {
-// exchange 2 windup: loser counter-attacks
 if (k1Wins) {
 fx1 = 805;
 fx2 = 985;
@@ -1470,7 +1583,6 @@ mState1 = 'windup';
 mState2 = 'block';
 }
 } else if (elapsed < 3.45) {
-// exchange 2 strike: winner blocks loser blow
 if (k1Wins) {
 fx1 = 815;
 fx2 = 950;
@@ -1487,13 +1599,11 @@ sparkX = 940;
 sparkY = 345;
 }
 } else if (elapsed < 3.75) {
-// reset before final decisive blow
 fx1 = 805;
 fx2 = 995;
 mState1 = 'guard';
 mState2 = 'guard';
 } else if (elapsed < 4.2) {
-// exchange 3 windup: winner prepares finish
 if (k1Wins) {
 fx1 = 820;
 fx2 = 990;
@@ -1506,7 +1616,6 @@ mState1 = 'block';
 mState2 = 'windup';
 }
 } else if (elapsed < 4.75) {
-// exchange 3 strike: winner delivers final blow
 if (!soundDoneClash) {
 soundDoneClash = true;
 triggerSound('clash');
@@ -1527,7 +1636,6 @@ sparkX = 858;
 sparkY = 345;
 }
 } else {
-// loser drops to knee from winner's strike
 if (k1Wins) {
 fx1 = 835;
 fx2 = 990;
@@ -1542,6 +1650,7 @@ mState2 = 'guard';
 }
 
 // draw defender first so attacker weapon is on top
+// keeps striking blade above defender shield
 var k1Attacking =
 mState1 === 'strike' ||
 mState1 === 'windup';
@@ -1586,6 +1695,7 @@ mState2
 }
 
 // draw silver shield block impact flash
+// shows star spark where blade hits shield
 if (sparkX > 0) {
 ctx.fillStyle = '#F8FAFC';
 ctx.strokeStyle = '#090D16';
@@ -1606,12 +1716,14 @@ ctx.stroke();
 }
 
 // render splinters and crowd flowers
+// draws active particles over arena
 updateAndDrawParticles(ctx);
 
 requestNextFrame();
 }
 
 // schedule next animation frame safely
+// falls back to 30fps timer if needed
 function requestNextFrame() {
 var raf =
 window.requestAnimationFrame ||
@@ -1622,6 +1734,7 @@ raf(drawArenaFrame);
 }
 
 // poll server state periodically via xhr
+// updates tv screen every 500ms
 function pollState() {
 if (isPolling) return;
 isPolling = true;
@@ -1638,6 +1751,7 @@ JSON.parse(xhr.responseText);
 applyState(data);
 } catch (e) {
 // skip json parse error
+// next poll will retry
 }
 }
 }
@@ -1651,23 +1765,9 @@ isPolling = false;
 xhr.send();
 }
 
-if (btnSoundToggle) {
-btnSoundToggle.onclick = function () {
-if (window.GameSound) {
-window.GameSound.init();
-var m =
-window.GameSound.toggleMute();
-btnSoundToggle.innerHTML = m
-? 'ЗВУК: ВЫКЛ'
-: 'ЗВУК: ВКЛ';
-}
-};
-}
-
-var btnRestartParade =
-document.getElementById('btnRestartParade');
-if (btnRestartParade) {
-btnRestartParade.onclick = function () {
+// send post action from tv header button
+// used for language cycle and parade replay
+function postTvAction(payload) {
 var xhr = new XMLHttpRequest();
 xhr.open('POST', '/api/action', true);
 xhr.setRequestHeader(
@@ -1685,9 +1785,34 @@ if (r.state) applyState(r.state);
 } catch (e) {}
 }
 };
-xhr.send(
-JSON.stringify({ type: 'restart_parade' })
-);
+xhr.send(JSON.stringify(payload));
+}
+
+if (btnSoundToggle) {
+btnSoundToggle.onclick = function () {
+if (window.GameSound) {
+window.GameSound.init();
+var m =
+window.GameSound.toggleMute();
+var d = getDict();
+btnSoundToggle.innerHTML = m
+? d.soundOff
+: d.soundOn;
+}
+};
+}
+
+if (btnLangToggle) {
+btnLangToggle.onclick = function () {
+postTvAction({ type: 'cycle_lang' });
+};
+}
+
+var btnRestartParade =
+document.getElementById('btnRestartParade');
+if (btnRestartParade) {
+btnRestartParade.onclick = function () {
+postTvAction({ type: 'restart_parade' });
 };
 }
 

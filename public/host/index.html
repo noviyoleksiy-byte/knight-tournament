@@ -1,55 +1,58 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Пульт Ведущего — Рыцарский Турнир</title>
+<title>Host Panel — Knight Tournament</title>
 <link rel="stylesheet" href="host.css">
 </head>
 <body>
 <div id="hostApp">
 
 <div class="topBar">
-<div class="barTitle">ПУЛЬТ ВЕДУЩЕГО</div>
-<div class="barBadge" id="hostTourBadge">ТУРНИР №1</div>
+<div class="barTitle" id="hostHeaderTitle">HOST PANEL</div>
+<div style="display:flex;gap:6px;align-items:center;">
+<button class="btn btnDark" id="btnHostLang" style="padding:5px 10px;font-size:12px;">LANG: EN</button>
+<div class="barBadge" id="hostTourBadge">TOURNAMENT #1</div>
+</div>
 </div>
 
 <div class="card statusCard">
 <div class="statusRow">
-<span>ЭКРАН ТВ: <b id="hostScreenText">СЕТКА</b></span>
-<span>РЕЖИМ: <b id="hostModeText">ПАБ</b></span>
+<span><span id="hostTvScreenLbl">TV SCREEN: </span><b id="hostScreenText">BRACKET</b></span>
+<span><span id="hostModeLbl">MODE: </span><b id="hostModeText">PUB</b></span>
 </div>
-<div class="boutSummary" id="hostBoutTitle">Матч #1: Сир Рагнар vs Сир Корвус</div>
-<div class="boutSubStatus" id="hostBoutSub">Ставки открыты · К1: 1.85 | К2: 1.95</div>
-</div>
-
-<div class="sectionTitle">УПРАВЛЕНИЕ ЭКРАНОМ И ПОЕДИНКОМ</div>
-<div class="btnGrid grid2">
-<button class="btn btnGreen" id="btnStartStep">НАЧАТЬ БОЙ / ШАГ</button>
-<button class="btn btnBlue" id="btnNextMatch">СЛЕДУЮЩИЙ МАТЧ</button>
-</div>
-<div class="btnGrid grid2">
-<button class="btn btnCopper" id="btnReplayParade">ПАРАД С НАЧАЛА</button>
-<button class="btn btnPurple" id="btnLiveToggle">LIVE В БОЮ: ВКЛ</button>
-</div>
-<div class="btnGrid grid2">
-<button class="btn btnDark" id="btnSwitchScreen">ПЕРЕКЛЮЧИТЬ ЭКРАН ТВ</button>
+<div class="boutSummary" id="hostBoutTitle">Match #1: Sir Ragnar vs Sir Corvus</div>
+<div class="boutSubStatus" id="hostBoutSub">Betting open · K1: 1.85 | K2: 1.95</div>
 </div>
 
-<div class="sectionTitle">ПРИЁМ СТАВОК (НА БОЙ ИЛИ НА ТУРНИР)</div>
+<div class="sectionTitle" id="secCtrlTitle">SCREEN & BOUT CONTROLS</div>
+<div class="btnGrid grid2">
+<button class="btn btnGreen" id="btnStartStep">START BOUT / STEP</button>
+<button class="btn btnBlue" id="btnNextMatch">NEXT MATCH</button>
+</div>
+<div class="btnGrid grid2">
+<button class="btn btnCopper" id="btnReplayParade">RESTART PARADE</button>
+<button class="btn btnPurple" id="btnLiveToggle">LIVE BETS: ON</button>
+</div>
+<div class="btnGrid grid2">
+<button class="btn btnDark" id="btnSwitchScreen">SWITCH TV SCREEN</button>
+</div>
+
+<div class="sectionTitle" id="secBetTitle">PLACE BETS (BOUT OR TOURNAMENT)</div>
 <div class="card formCard">
 <div class="btnGrid grid2">
-<button class="btn btnSmallTab activeTab" id="tabBetMatch">НА ТЕКУЩИЙ БОЙ</button>
-<button class="btn btnSmallTab" id="tabBetOutright">НА ЧЕМПИОНА ТУРНИРА</button>
+<button class="btn btnSmallTab activeTab" id="tabBetMatch">ON CURRENT BOUT</button>
+<button class="btn btnSmallTab" id="tabBetOutright">ON TOURNEY CHAMPION</button>
 </div>
 
-<div class="fieldLabel">КТО СТАВИТ (СТОЛ / ИГРОК):</div>
+<div class="fieldLabel" id="lblWhoBets">WHO BETS (TABLE / PLAYER):</div>
 <select id="selectTable" class="selectBox"></select>
 
-<div class="fieldLabel">НА КАКОГО РЫЦАРЯ СТАВКА:</div>
+<div class="fieldLabel" id="lblWhichKnight">BET ON WHICH KNIGHT:</div>
 <select id="selectKnight" class="selectBox"></select>
 
-<div class="fieldLabel">СУММА СТАВКИ:</div>
+<div class="fieldLabel" id="lblBetAmt">BET AMOUNT:</div>
 <div class="btnGrid grid4">
 <button class="btn btnChip" data-amt="50">50</button>
 <button class="btn btnChip" data-amt="100">100</button>
@@ -57,46 +60,47 @@
 <button class="btn btnChip" data-amt="500">500</button>
 </div>
 <div class="inputRow">
-<input type="number" id="betAmountInput" value="100" placeholder="Сумма ставки">
-<button class="btn btnGreen btnAcceptBet" id="btnPlaceBet">ПРИНЯТЬ СТАВКУ</button>
+<input type="number" id="betAmountInput" value="100" placeholder="Bet amount">
+<button class="btn btnGreen btnAcceptBet" id="btnPlaceBet">PLACE BET</button>
 </div>
 </div>
 
-<div class="sectionTitle" id="economySectionTitle">КАССА ПАБА: ЗАКАЗЫ И ПРИЗЫ</div>
+<div class="sectionTitle" id="economySectionTitle">PUB CASHIER: ORDERS & PRIZES</div>
 <div class="card formCard">
-<div class="fieldLabel" id="creditLabel">НАЧИСЛИТЬ СТОЛУ ЗА ЗАКАЗ НА БАРЕ:</div>
+<div class="fieldLabel" id="creditLabel">AWARD CAPS FOR BAR ORDER:</div>
 <div class="btnGrid grid3">
-<button class="btn btnCopper" id="btnAddDrink">+БОКАЛ (+100)</button>
-<button class="btn btnCopper" id="btnAddFood">+ЕДА (+200)</button>
-<button class="btn btnCopper" id="btnAddSet">+СЕТ (+500)</button>
+<button class="btn btnCopper" id="btnAddDrink">+DRINK (+100)</button>
+<button class="btn btnCopper" id="btnAddFood">+FOOD (+200)</button>
+<button class="btn btnCopper" id="btnAddSet">+SET (+500)</button>
 </div>
 
 <div id="prizeRedeemBlock">
-<div class="fieldLabel">ВЫДАТЬ ПРИЗ БАРА ВЫБРАННОМУ СТОЛУ:</div>
+<div class="fieldLabel" id="lblRedeemPrize">AWARD BAR PRIZE TO SELECTED TABLE:</div>
 <div class="inputRow">
 <select id="selectPrize" class="selectBox"></select>
-<button class="btn btnBlue btnRedeem" id="btnClaimPrize">ВЫДАТЬ ПРИЗ</button>
+<button class="btn btnBlue btnRedeem" id="btnClaimPrize">AWARD PRIZE</button>
 </div>
 </div>
 
-<div class="fieldLabel">ДОБАВИТЬ НОВЫЙ СТОЛ ИЛИ ИГРОКА:</div>
+<div class="fieldLabel" id="lblAddTable">ADD NEW TABLE OR PLAYER:</div>
 <div class="inputRow">
-<input type="text" id="newTableName" placeholder="Напр. Стол №5 или Барная стойка">
-<button class="btn btnDark btnSmallAdd" id="btnAddTable">+ СТОЛ</button>
+<input type="text" id="newTableName" placeholder="E.g. Table #5 or Bar Counter">
+<button class="btn btnDark btnSmallAdd" id="btnAddTable">+ TABLE</button>
 </div>
 </div>
 
-<div class="sectionTitle">НАСТРОЙКИ ПАБА И ТУРНИРА</div>
+<div class="sectionTitle" id="secSettingsTitle">PUB & TOURNAMENT SETTINGS</div>
 <div class="btnGrid grid2">
-<button class="btn btnBlue" id="btnToggleMode">РЕЖИМ: ПАБ / ДЕНЬГИ</button>
-<button class="btn btnPurple" id="btnNewTour">НОВЫЙ ТУРНИР (8 ИЗ 24)</button>
+<button class="btn btnBlue" id="btnToggleMode">MODE: PUB / CASH</button>
+<button class="btn btnPurple" id="btnNewTour">NEW TOURNEY (8 OF 24)</button>
 </div>
 <div class="btnGrid grid2">
-<button class="btn btnRed" id="btnNewSeed">СМЕНИТЬ СИД ПАБА</button>
-<a href="/" class="btn btnDark linkBtn">ОТКРЫТЬ ЭКРАН ТВ</a>
+<button class="btn btnRed" id="btnNewSeed">CHANGE PUB SEED</button>
+<a href="/" class="btn btnDark linkBtn" id="btnOpenTv">OPEN TV SCREEN</a>
 </div>
 
 </div>
+<script src="/js/i18n.js"></script>
 <script src="host.js"></script>
 </body>
 </html>
