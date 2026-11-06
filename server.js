@@ -454,6 +454,7 @@ roster[1].wins = 2;
 }
 
 var data = {
+economyVersion: 2,
 lang: l,
 pubSeed: seed,
 tournamentNumber: 0,
@@ -461,35 +462,35 @@ lastChampionId: 'K1',
 lastFinalistId: 'K2',
 roster: roster,
 tables: [
-{ id: 1, name: 'Table #1', balance: 500 },
-{ id: 2, name: 'Table #2', balance: 500 },
-{ id: 3, name: 'Table #3', balance: 500 },
+{ id: 1, name: 'Table #1', balance: 0 },
+{ id: 2, name: 'Table #2', balance: 0 },
+{ id: 3, name: 'Table #3', balance: 0 },
 {
 id: 4,
 name: 'Bar Counter',
-balance: 500
+balance: 0
 }
 ],
 prizes: [
 {
 id: 1,
 title: PRIZE_NAMES[1][l],
-cost: 300
+cost: 5
 },
 {
 id: 2,
 title: PRIZE_NAMES[2][l],
-cost: 600
+cost: 10
 },
 {
 id: 3,
 title: PRIZE_NAMES[3][l],
-cost: 1200
+cost: 20
 },
 {
 id: 4,
 title: PRIZE_NAMES[4][l],
-cost: 2500
+cost: 40
 }
 ]
 };
@@ -500,14 +501,18 @@ return data;
 }
 
 // load persistent pub roster from disk
-// defaults language to english on startup
+// resets legacy test pub data if version old
 function loadPubData() {
 try {
 if (fs.existsSync(ROSTER_FILE)) {
 var raw =
 fs.readFileSync(ROSTER_FILE, 'utf8');
 var parsed = JSON.parse(raw);
-if (parsed && parsed.roster) {
+if (
+parsed &&
+parsed.roster &&
+parsed.economyVersion === 2
+) {
 parsed.lang = 'en';
 if (!parsed.lastChampionId) {
 parsed.lastChampionId = 'K1';
@@ -584,8 +589,8 @@ PRIZE_NAMES[pObj.id][parsed.lang];
 }
 }
 savePubData(parsed);
-}
 return parsed;
+}
 }
 } catch (e) {
 console.log('read roster err:', e);
@@ -841,18 +846,35 @@ bet2 += bet.amount * outWeight;
 }
 }
 
-var liq = 800;
+var liq = 25;
 var w1 = liq * p1 + bet1;
 var w2 = liq * (1 - p1) + bet2;
 p1 = w1 / (w1 + w2);
 return Math.max(0.15, Math.min(0.85, p1));
 }
 
+// compute +20% parade bonus odd with 0.1 step
+// guarantees at least +0.2 above base odd
+function calcParadeBonusOdd(baseOdd) {
+var b = parseFloat(baseOdd) || 1.9;
+var boosted =
+Math.round(b * 1.2 * 10) / 10;
+return Math.max(b + 0.2, boosted).toFixed(1);
+}
+
+// compute integer cap payout for winning bet
+// rounds up so 1 cap always yields +1 profit
+function calcBetPayout(amount, odds) {
+var raw = amount * odds;
+var ceiled = Math.ceil(raw - 0.0001);
+return Math.max(amount + 1, ceiled);
+}
+
 // compute match and outright bookmaker odds
-// uses exact bracket tree so final matches
+// uses exact bracket tree with 0.1 odd step
 function updateAllOdds(state) {
 if (!state || !state.matches) return;
-var vig = 1.06;
+var vig = 1.04;
 
 for (var i = 0; i < state.matches.length; i++) {
 var m = state.matches[i];
@@ -867,13 +889,13 @@ state
 var p2 = 1 - p1;
 
 m.odds1 = Math.max(
-1.12,
+1.2,
 Math.min(6.5, 1 / (p1 * vig))
-).toFixed(2);
+).toFixed(1);
 m.odds2 = Math.max(
-1.12,
+1.2,
 Math.min(6.5, 1 / (p2 * vig))
-).toFixed(2);
+).toFixed(1);
 }
 
 // build semi-finalists from quarterfinals
@@ -1012,9 +1034,9 @@ var uk = alive[u];
 var prob = champProb[uk.id] || 0.125;
 var rawOdd = 1 / (prob * vig);
 uk.outrightOdds = Math.max(
-1.12,
+1.2,
 Math.min(18.0, rawOdd)
-).toFixed(2);
+).toFixed(1);
 }
 
 // sync outright odds into all match slots
@@ -1213,8 +1235,9 @@ b++
 var bet = gameState.activeBets[b];
 if (bet.betType === 'MATCH') {
 if (bet.knightId === winK.id) {
-var winAmt = Math.round(
-bet.amount * bet.odds
+var winAmt = calcBetPayout(
+bet.amount,
+bet.odds
 );
 creditTableById(bet.tableId, winAmt);
 payLogs.push(
@@ -1300,8 +1323,9 @@ if (
 ob.betType === 'OUTRIGHT' &&
 ob.knightId === winK.id
 ) {
-var outWin = Math.round(
-ob.amount * ob.odds
+var outWin = calcBetPayout(
+ob.amount,
+ob.odds
 );
 creditTableById(ob.tableId, outWin);
 payLogs.push(
@@ -1905,7 +1929,7 @@ ak.outrightOdds
 // apply +20% bonus during opening parade
 if (gameState.tvScreen === 'PARADE') {
 lockedOdds = parseFloat(
-(lockedOdds * 1.2).toFixed(2)
+calcParadeBonusOdd(lockedOdds)
 );
 }
 
@@ -1925,7 +1949,7 @@ updateAllOdds(gameState);
 }
 } else if (type === 'add_credit') {
 var cTableId = parseInt(body.tableId, 10);
-var delta = parseInt(body.delta, 10) || 100;
+var delta = parseInt(body.delta, 10) || 1;
 creditTableById(cTableId, delta);
 gameState.soundToPlay = 'bet';
 savePubData(pubData);
@@ -1985,7 +2009,7 @@ gameState.lang === 'uk'
 pubData.tables.push({
 id: newId,
 name: body.name || defPref + newId,
-balance: 300
+balance: 0
 });
 gameState.tables = pubData.tables;
 savePubData(pubData);

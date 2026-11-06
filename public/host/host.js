@@ -447,10 +447,10 @@ boutSub.innerHTML =
 (s.statusText || '') +
 ' · ' +
 d.k1Short +
-Number(m.odds1).toFixed(2) +
+Number(m.odds1).toFixed(1) +
 ' | ' +
 d.k2Short +
-Number(m.odds2).toFixed(2);
+Number(m.odds2).toFixed(1);
 }
 } else if (s.champion) {
 boutTitle.innerHTML =
@@ -516,17 +516,17 @@ document.getElementById(
 document.getElementById(
 'btnAddDrink'
 ).innerHTML = isCash
-? '+100' + curSym
+? '+1' + curSym
 : d.addDrinkPub;
 document.getElementById(
 'btnAddFood'
 ).innerHTML = isCash
-? '+200' + curSym
+? '+3' + curSym
 : d.addFoodPub;
 document.getElementById(
 'btnAddSet'
 ).innerHTML = isCash
-? '+500' + curSym
+? '+5' + curSym
 : d.addSetPub;
 document.getElementById(
 'prizeRedeemBlock'
@@ -551,13 +551,21 @@ fmtMoney(tb.balance, s.gameMode) +
 }
 syncSelect(selectTable, tItems);
 
+// format knight odd with optional +20% bonus
+// keeps 0.1 step and +0.2 minimum boost
+function fmtHostOdd(rawOdd, isParade) {
+var b = parseFloat(rawOdd) || 1.9;
+if (!isParade) return b.toFixed(1);
+var boosted =
+Math.round(b * 1.2 * 10) / 10;
+return Math.max(b + 0.2, boosted).toFixed(1);
+}
+
 // populate knights dropdown by bet mode
 // adds +20% bonus tag during parade
 var kItems = [];
-var bonusMult =
-s.tvScreen === 'PARADE' ? 1.2 : 1.0;
-var bonusLabel =
-s.tvScreen === 'PARADE'
+var isParade = s.tvScreen === 'PARADE';
+var bonusLabel = isParade
 ? d.bonusTag20
 : '';
 
@@ -567,7 +575,7 @@ value: m.k1.id,
 text:
 m.k1.name +
 d.boutOpt +
-(Number(m.odds1) * bonusMult).toFixed(2) +
+fmtHostOdd(m.odds1, isParade) +
 ')' +
 bonusLabel
 });
@@ -576,7 +584,7 @@ value: m.k2.id,
 text:
 m.k2.name +
 d.boutOpt +
-(Number(m.odds2) * bonusMult).toFixed(2) +
+fmtHostOdd(m.odds2, isParade) +
 ')' +
 bonusLabel
 });
@@ -589,9 +597,7 @@ value: ak.id,
 text:
 ak.name +
 d.tourOpt +
-(
-Number(ak.outrightOdds) * bonusMult
-).toFixed(2) +
+fmtHostOdd(ak.outrightOdds, isParade) +
 ')' +
 bonusLabel
 });
@@ -726,14 +732,14 @@ betType: betMode
 };
 
 // bind drink and deposit credit buttons
-// awards 100 200 or 500 to selected table
+// awards 1 3 or 5 caps to selected table
 document.getElementById(
 'btnAddDrink'
 ).onclick = function () {
 sendAction({
 type: 'add_credit',
 tableId: parseInt(selectTable.value, 10),
-delta: 100
+delta: 1
 });
 };
 
@@ -743,7 +749,7 @@ document.getElementById(
 sendAction({
 type: 'add_credit',
 tableId: parseInt(selectTable.value, 10),
-delta: 200
+delta: 3
 });
 };
 
@@ -753,7 +759,7 @@ document.getElementById(
 sendAction({
 type: 'add_credit',
 tableId: parseInt(selectTable.value, 10),
-delta: 500
+delta: 5
 });
 };
 

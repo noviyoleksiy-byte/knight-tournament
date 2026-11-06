@@ -305,7 +305,12 @@ var wText = revealed
 var baseOdd = parseFloat(
 k.outrightOdds || 5.0
 );
-var bonusOdd = (baseOdd * 1.2).toFixed(2);
+var boosted =
+Math.round(baseOdd * 1.2 * 10) / 10;
+var bonusOdd = Math.max(
+baseOdd + 0.2,
+boosted
+).toFixed(1);
 
 html +=
 '<div class="' +
@@ -576,7 +581,7 @@ slotCls += ' loserSlot';
 }
 
 var oddStr =
-odds ? Number(odds).toFixed(2) : '—';
+odds ? Number(odds).toFixed(1) : '—';
 var recStr =
 d.winsLbl +
 (k.wins || 0) +
@@ -585,7 +590,7 @@ d.cupsLbl +
 (k.titles || 0) +
 ' · ' +
 d.tourOddsLbl +
-Number(k.outrightOdds || 5).toFixed(2);
+Number(k.outrightOdds || 5).toFixed(1);
 
 return (
 '<div class="' +
@@ -719,7 +724,7 @@ fmtVal(b.amount, s.gameMode) +
 ' → ' +
 b.knightName +
 ' (x' +
-Number(b.odds).toFixed(2) +
+Number(b.odds).toFixed(1) +
 ') ' +
 tag +
 '</div>';
@@ -761,12 +766,12 @@ k.shieldName;
 document.getElementById(
 'p' + side + 'Odds'
 ).innerHTML =
-'x' + Number(odds || 1.9).toFixed(2);
+'x' + Number(odds || 1.9).toFixed(1);
 document.getElementById(
 'p' + side + 'Outright'
 ).innerHTML =
 d.tourWinOddsLbl +
-Number(k.outrightOdds || 5).toFixed(2);
+Number(k.outrightOdds || 5).toFixed(1);
 }
 
 // describe visual shield and fatigue state
@@ -913,11 +918,11 @@ document.getElementById(
 document.getElementById(
 'cLeftLiveOdds'
 ).innerHTML =
-d.k1Short + Number(m.odds1 || 1.9).toFixed(2);
+d.k1Short + Number(m.odds1 || 1.9).toFixed(1);
 document.getElementById(
 'cRightLiveOdds'
 ).innerHTML =
-d.k2Short + Number(m.odds2 || 1.9).toFixed(2);
+d.k2Short + Number(m.odds2 || 1.9).toFixed(1);
 
 var banner =
 document.getElementById(

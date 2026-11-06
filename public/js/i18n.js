@@ -133,9 +133,9 @@ creditCashLbl:
 'TOP UP PLAYER / TABLE BANK:',
 creditPubLbl:
 'AWARD CAPS FOR BAR ORDER:',
-addDrinkPub: '+DRINK (+100)',
-addFoodPub: '+FOOD (+200)',
-addSetPub: '+SET (+500)',
+addDrinkPub: '+DRINK (+1)',
+addFoodPub: '+FOOD (+3)',
+addSetPub: '+SET (+5)',
 redeemLbl:
 'AWARD BAR PRIZE TO SELECTED TABLE:',
 btnClaimPrize: 'AWARD PRIZE',
@@ -315,9 +315,9 @@ creditCashLbl:
 'ПОПОВНИТИ БАНК ГРАВЦЯ / СТОЛУ:',
 creditPubLbl:
 'НАРАХУВАТИ КРИШКИ ЗА ЗАМОВЛЕННЯ:',
-addDrinkPub: '+КЕЛИХ (+100)',
-addFoodPub: '+ЇЖА (+200)',
-addSetPub: '+СЕТ (+500)',
+addDrinkPub: '+КЕЛИХ (+1)',
+addFoodPub: '+ЇЖА (+3)',
+addSetPub: '+СЕТ (+5)',
 redeemLbl:
 'ВИДАТИ ПРИЗ БАРУ ОБРАНОМУ СТОЛУ:',
 btnClaimPrize: 'ВИДАТИ ПРИЗ',
@@ -497,9 +497,9 @@ creditCashLbl:
 'ПОПОЛНИТЬ БАНК ИГРОКА / СТОЛА:',
 creditPubLbl:
 'НАЧИСЛИТЬ КРЫШКИ ЗА ЗАКАЗ НА БАРЕ:',
-addDrinkPub: '+БОКАЛ (+100)',
-addFoodPub: '+ЕДА (+200)',
-addSetPub: '+СЕТ (+500)',
+addDrinkPub: '+БОКАЛ (+1)',
+addFoodPub: '+ЕДА (+3)',
+addSetPub: '+СЕТ (+5)',
 redeemLbl:
 'ВЫДАТЬ ПРИЗ БАРА ВЫБРАННОМУ СТОЛУ:',
 btnClaimPrize: 'ВЫДАТЬ ПРИЗ',
