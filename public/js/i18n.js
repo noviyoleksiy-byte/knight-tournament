@@ -71,6 +71,7 @@ tagTour: '[TOURNEY]',
 tagBout: '[BOUT]',
 badgeBout: 'BOUT x',
 badgeTour: 'TOUR x',
+h2hLbl: 'HEAD-TO-HEAD: ',
 champKicker:
 'THE CHAMPION REMOVES HIS HELM! TRUE TITLE REVEALED:',
 champLore:
@@ -252,6 +253,7 @@ tagTour: '[ТУРНІР]',
 tagBout: '[БІЙ]',
 badgeBout: 'БІЙ x',
 badgeTour: 'ТУР x',
+h2hLbl: 'ОСОБИСТИЙ РАХУНОК: ',
 champKicker:
 'ЧЕМПІОН ЗНІМАЄ ШОЛОМ! СПРАВЖНІЙ ТИТУЛ РОЗКРИТО:',
 champLore:
@@ -436,6 +438,7 @@ tagTour: '[ТУРНИР]',
 tagBout: '[БОЙ]',
 badgeBout: 'БОЙ x',
 badgeTour: 'ТУР x',
+h2hLbl: 'ЛИЧНЫЙ СЧЁТ: ',
 champKicker:
 'ЧЕМПИОН СНИМАЕТ ШЛЕМ! ИСТИННЫЙ ТИТУЛ РАСКРЫТ:',
 champLore:

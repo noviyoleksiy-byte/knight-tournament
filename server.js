@@ -439,7 +439,8 @@ gritSkill: 78 + gBias,
 isRare: i >= 18,
 wins: 0,
 losses: 0,
-titles: 0
+titles: 0,
+vsWins: {}
 };
 localizeKnight(kObj, l);
 roster.push(kObj);
@@ -450,7 +451,10 @@ roster.push(kObj);
 if (roster.length >= 2) {
 roster[0].wins = 3;
 roster[0].titles = 1;
+roster[0].vsWins = { K2: 1 };
 roster[1].wins = 2;
+roster[1].losses = 1;
+roster[1].vsWins = {};
 }
 
 var data = {
@@ -561,7 +565,23 @@ Math.floor(
 seededHash(pSeed, i * 31 + 9) * 10
 ) % 10;
 }
+if (!parsed.roster[i].vsWins) {
+parsed.roster[i].vsWins = {};
 }
+}
+}
+if (
+parsed.roster[0] &&
+parsed.roster[1] &&
+Object.keys(
+parsed.roster[0].vsWins || {}
+).length === 0
+) {
+parsed.roster[0].vsWins = { K2: 1 };
+parsed.roster[1].losses = Math.max(
+1,
+parsed.roster[1].losses || 0
+);
 }
 if (parsed.tables) {
 for (
@@ -1209,18 +1229,24 @@ m.status = 'DONE';
 m.winnerId = winK.id;
 
 // update eternal pub roster win records
+// also tracks head-to-head score vs opponent
 for (
 var r = 0;
 r < pubData.roster.length;
 r++
 ) {
 var rk = pubData.roster[r];
+if (!rk.vsWins) rk.vsWins = {};
 if (rk.id === winK.id) {
 rk.wins += 1;
+rk.vsWins[loseK.id] =
+(rk.vsWins[loseK.id] || 0) + 1;
 winK.wins = rk.wins;
+winK.vsWins = rk.vsWins;
 } else if (rk.id === loseK.id) {
 rk.losses += 1;
 loseK.losses = rk.losses;
+loseK.vsWins = rk.vsWins;
 }
 }
 

@@ -334,8 +334,8 @@ wText +
 d.winsLbl +
 (k.wins || 0) +
 ' · ' +
-d.cupsLbl +
-(k.titles || 0) +
+d.lossesLbl +
+(k.losses || 0) +
 '</div>' +
 '</div>' +
 '<div class="pCardOddsBox">' +
@@ -497,9 +497,21 @@ lk.weaponIdx,
 updateAndDrawParticles(ctx);
 }
 
+// get head-to-head wins between two knights
+// returns [w1, w2] from vsWins dictionaries
+function getHeadToHead(k1, k2) {
+if (!k1 || !k2) return [0, 0];
+var w1 =
+(k1.vsWins && k1.vsWins[k2.id]) || 0;
+var w2 =
+(k2.vsWins && k2.vsWins[k1.id]) || 0;
+return [w1, w2];
+}
+
 // build single bracket match box html
-// renders two large fighter slots without clutter
+// shows fighter slots and head-to-head score
 function renderMatchBox(m, idx, curIdx) {
+var d = getDict();
 var el =
 document.getElementById('matchBox' + idx);
 if (!el || !m) return;
@@ -517,11 +529,25 @@ cls += ' doneMatch';
 }
 el.className = cls;
 
+var h2h = getHeadToHead(m.k1, m.k2);
+var h2hHtml = '';
+if (h2h[0] + h2h[1] > 0) {
+h2hHtml =
+'<div class="mH2hBar">' +
+d.h2hLbl +
+'<b>' +
+h2h[0] +
+' : ' +
+h2h[1] +
+'</b></div>';
+}
+
 var html = buildFighterSlot(
 m.k1,
 m.odds1,
 m.winnerId
 );
+html += h2hHtml;
 html += buildFighterSlot(
 m.k2,
 m.odds2,
@@ -531,7 +557,7 @@ el.innerHTML = html;
 }
 
 // build one knight row inside match box
-// shows armor bar sir name and two odds badges
+// shows armor bar name record and two badges
 function buildFighterSlot(k, odds, winId) {
 var d = getDict();
 if (!k) {
@@ -558,6 +584,13 @@ slotCls += ' loserSlot';
 }
 }
 
+var recStr =
+d.winsLbl +
+(k.wins || 0) +
+' · ' +
+d.lossesLbl +
+(k.losses || 0);
+
 var boutBadge = odds
 ? '<span class="mBadgeBout">' +
 d.badgeBout +
@@ -582,6 +615,9 @@ col +
 '<div class="mSirName">' +
 k.name +
 '</div>' +
+'<div class="mSubStat">' +
+recStr +
+'</div>' +
 '</div></div>' +
 '<div class="mBadgesCol">' +
 boutBadge +
@@ -591,7 +627,7 @@ tourBadge +
 }
 
 // update center preview card for next bout
-// draws large 310x250 mounted knights
+// draws large 310x240 mounted knights
 function renderPreviewCard(s) {
 var d = getDict();
 var m =
@@ -635,22 +671,22 @@ fillPreviewSide('Left', m.k1, m.odds1);
 fillPreviewSide('Right', m.k2, m.odds2);
 
 // draw large mounted knights on meadow
-// scaled to 1.08 inside 310x250 canvas
+// scaled to 1.04 inside 310x240 canvas
 if (pCanvasLeft && window.KnightArt) {
 var ctxL = pCanvasLeft.getContext('2d');
-ctxL.clearRect(0, 0, 310, 250);
+ctxL.clearRect(0, 0, 310, 240);
 window.KnightArt.drawCastleScene(
 ctxL,
 310,
-250,
-92,
+240,
+88,
 false
 );
 window.KnightArt.drawMountedKnight(
 ctxL,
-140,
-184,
-1.08,
+138,
+176,
+1.04,
 m.k1,
 animClock,
 'idle'
@@ -658,19 +694,19 @@ animClock,
 }
 if (pCanvasRight && window.KnightArt) {
 var ctxR = pCanvasRight.getContext('2d');
-ctxR.clearRect(0, 0, 310, 250);
+ctxR.clearRect(0, 0, 310, 240);
 window.KnightArt.drawCastleScene(
 ctxR,
 310,
-250,
-92,
+240,
+88,
 false
 );
 window.KnightArt.drawMountedKnight(
 ctxR,
-170,
-184,
--1.08,
+172,
+176,
+-1.04,
 m.k2,
 animClock + 1.2,
 'idle'
@@ -679,10 +715,31 @@ animClock + 1.2,
 
 var vsCol =
 document.getElementById('vsCenterCol');
+var h2hEl =
+document.getElementById('h2hScoreBox');
 var poolEl =
 document.getElementById('matchPoolText');
 var listEl =
 document.getElementById('activeBetsList');
+
+var h2h = getHeadToHead(m.k1, m.k2);
+var hasH2h = h2h[0] + h2h[1] > 0;
+if (h2hEl) {
+if (hasH2h) {
+h2hEl.className = 'h2hBadge';
+h2hEl.innerHTML =
+'<span class="h2hTitle">' +
+d.h2hLbl +
+'</span><span class="h2hScore">' +
+h2h[0] +
+' : ' +
+h2h[1] +
+'</span>';
+} else {
+h2hEl.className = 'h2hBadge hidden';
+}
+}
+
 var bets = s.activeBets || [];
 var totalPool = 0;
 var rowsHtml = '';
@@ -720,14 +777,16 @@ fmtVal(totalPool, s.gameMode);
 listEl.innerHTML = rowsHtml;
 } else {
 if (vsCol) {
-vsCol.className = 'vsCenterCol';
+vsCol.className = hasH2h
+? 'vsCenterCol hasH2h'
+: 'vsCenterCol';
 }
 poolEl.className = 'poolInfo hidden';
 listEl.className = 'betsList hidden';
 }
 }
 
-// fill fighter name and two large odds badges
+// fill fighter name record and two badges
 // skips redundant horse weapon shield text
 function fillPreviewSide(side, k, odds) {
 var d = getDict();
@@ -735,6 +794,14 @@ var favTag = k.hasFavWeapon ? ' ★' : '';
 document.getElementById(
 'p' + side + 'Name'
 ).innerHTML = k.name + favTag;
+document.getElementById(
+'p' + side + 'Rec'
+).innerHTML =
+d.winsLbl +
+(k.wins || 0) +
+' · ' +
+d.lossesLbl +
+(k.losses || 0);
 document.getElementById(
 'p' + side + 'Odds'
 ).innerHTML =
