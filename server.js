@@ -525,7 +525,7 @@ console.log('read store err:', e);
 }
 var emptyStore = {
 schemaVersion: 3,
-lang: 'ru',
+lang: 'en',
 activePubId: null,
 pubs: []
 };

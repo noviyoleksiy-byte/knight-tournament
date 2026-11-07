@@ -76,11 +76,11 @@ var arenaCanvas =
 document.getElementById('arenaCanvas');
 
 // get dictionary for active state language
-// defaults to russian when lang is unset
+// defaults to english when lang is unset
 function getDict() {
 var lang =
 (currentState && currentState.lang) ||
-'ru';
+'en';
 if (window.GameI18n) {
 return window.GameI18n.getDict(lang);
 }
@@ -1960,6 +1960,7 @@ window.location.href = '/host';
 
 // hydrate immediately from local backup on boot
 // avoids blank screen on android capacitor
+applyStaticTranslations('en');
 var bootCache = loadLocalBackup();
 if (bootCache) {
 applyState(bootCache);
