@@ -1482,21 +1482,10 @@ var cy = by + pad;
 var cw = bw - pad * 2;
 var ch = bh - pad * 2;
 
-// split heraldic cloth background
-ctx.fillStyle = col.dark;
-ctx.fillRect(cx, cy, cw, ch);
+// solid single-color cloth background
+// avoids diagonal triangle sheen
 ctx.fillStyle = col.main;
-ctx.fillRect(cx, cy, cw * 0.5, ch);
-
-// subtle diagonal fabric sheen
-ctx.fillStyle = 'rgba(255,255,255,0.07)';
-ctx.beginPath();
-ctx.moveTo(cx, cy);
-ctx.lineTo(cx + cw * 0.65, cy);
-ctx.lineTo(cx + cw * 0.25, cy + ch);
-ctx.lineTo(cx, cy + ch);
-ctx.closePath();
-ctx.fill();
+ctx.fillRect(cx, cy, cw, ch);
 
 // border in gleaming silver for prev champ
 if (isChamp) {
@@ -1548,7 +1537,7 @@ sIdx,
 }
 
 // draw brand icon on parade side banners
-// shows left icon part without text
+// uses solid dark green logo background
 function drawPubLogoBanner(
 ctx,
 bx,
@@ -1565,27 +1554,20 @@ var cy = by + pad;
 var cw = bw - pad * 2;
 var ch = bh - pad * 2;
 
-// natural cotton cloth backing in frame
-ctx.fillStyle = '#F5F0E6';
+// fill solid dark green like logo bg
+// avoids white backing around icon
+ctx.fillStyle = '#072E1B';
 ctx.fillRect(cx, cy, cw, ch);
 
 ctx.strokeStyle = '#090D16';
 ctx.lineWidth = 3;
 ctx.strokeRect(cx, cy, cw, ch);
 
-ctx.strokeStyle = '#072E1B';
-ctx.lineWidth = 2;
-ctx.strokeRect(
-cx + 3,
-cy + 3,
-cw - 6,
-ch - 6
-);
-
 // draw rowan icon centered in banner
+// blends into solid green cloth
 var iconSz = Math.max(
 24,
-Math.min(cw, ch) - 12
+Math.min(cw, ch) - 8
 );
 var ix = bx + (bw - iconSz) * 0.5;
 var iy = by + (bh - iconSz) * 0.5;
@@ -1601,98 +1583,46 @@ iy,
 iconSz,
 iconSz
 );
-} else {
-fillRoundBox(
-ctx,
-ix,
-iy,
-iconSz,
-iconSz,
-iconSz * 0.22,
-'#072E1B',
-null,
-0
-);
 }
 }
 
-// draw cotton streamer with full logo
-// hangs on castle wall before spectators
+// draw readable banner on castle wall
+// uses clean single-color background
 function drawWallCottonBanner(
 ctx,
 w,
 wallTop,
-wallH
+wallH,
+merlonH
 ) {
 var banH = Math.max(
-54,
-Math.round(wallH * 0.92)
+96,
+Math.round(wallH * 1.42)
 );
 var banW = Math.round(
-banH * (685 / 260) * 1.16
+banH * (685 / 260) * 1.08
 );
 var bx = Math.round((w - banW) * 0.5);
 var by = Math.round(
-wallTop + (wallH - banH) * 0.5
+wallTop - (merlonH || 16) + 2
 );
 
-// iron wall ties at four banner corners
-ctx.strokeStyle = '#090D16';
-ctx.lineWidth = 3;
-ctx.beginPath();
-ctx.moveTo(bx - 8, wallTop + 2);
-ctx.lineTo(bx + 6, by + 6);
-ctx.moveTo(bx + banW + 8, wallTop + 2);
-ctx.lineTo(bx + banW - 6, by + 6);
-ctx.moveTo(bx - 8, wallTop + wallH - 2);
-ctx.lineTo(bx + 6, by + banH - 6);
-ctx.moveTo(
-bx + banW + 8,
-wallTop + wallH - 2
-);
-ctx.lineTo(
-bx + banW - 6,
-by + banH - 6
-);
-ctx.stroke();
-
-// warm woven cotton banner cloth
+// solid single-color cotton background
+// no corner triangles or extra clutter
 fillRoundBox(
 ctx,
 bx,
 by,
 banW,
 banH,
-7,
+10,
 '#F5F0E6',
-'#090D16',
-2.5
+'#072E1B',
+3.5
 );
 
-// subtle inner cotton stitch border
-ctx.strokeStyle = '#C8B9A6';
-ctx.lineWidth = 1.5;
-ctx.strokeRect(
-bx + 4,
-by + 4,
-banW - 8,
-banH - 8
-);
-
-// corner grommet rings on cotton cloth
-ctx.fillStyle = '#475569';
-var gx1 = bx + 8;
-var gx2 = bx + banW - 8;
-var gy1 = by + 8;
-var gy2 = by + banH - 8;
-ctx.beginPath();
-ctx.arc(gx1, gy1, 2.5, 0, Math.PI * 2);
-ctx.arc(gx2, gy1, 2.5, 0, Math.PI * 2);
-ctx.arc(gx1, gy2, 2.5, 0, Math.PI * 2);
-ctx.arc(gx2, gy2, 2.5, 0, Math.PI * 2);
-ctx.fill();
-
-// draw full rowan events logo on cotton
+// draw full rowan events logo large
+// fills banner for clear readability
 if (
 rowanFullLogoImg &&
 rowanFullLogoImg.complete &&
@@ -1938,16 +1868,6 @@ ctx.moveTo(0, wallBottomY);
 ctx.lineTo(w, wallBottomY);
 ctx.stroke();
 
-// cotton streamer with full logo on wall
-if (w >= 600 && !noCrowd) {
-drawWallCottonBanner(
-ctx,
-w,
-wallTop,
-wallH
-);
-}
-
 // 5. dark-green meadow lawn (лужайка)
 ctx.fillStyle = '#14532D';
 ctx.fillRect(
@@ -1976,8 +1896,20 @@ w,
 lawnH * 0.16
 );
 
-// 6. large branded flags along jousting lists
-// shows rowan icon clearly on every flag
+// readable banner with full logo on wall
+// drawn after lawn so bottom is not clipped
+if (w >= 600 && !noCrowd) {
+drawWallCottonBanner(
+ctx,
+w,
+wallTop,
+wallH,
+merlonH
+);
+}
+
+// 6. solid green flags along jousting lists
+// uses logo background color without white
 if (showRail) {
 var wDir = windDir || 0;
 var hasIcon = Boolean(
@@ -1999,8 +1931,8 @@ rx - 3,
 2
 );
 
-// finial ball atop pole
-ctx.fillStyle = '#F5F0E6';
+// dark iron finial ball atop pole
+ctx.fillStyle = '#475569';
 ctx.strokeStyle = '#090D16';
 ctx.lineWidth = 1.8;
 ctx.beginPath();
@@ -2009,7 +1941,7 @@ ctx.fill();
 ctx.stroke();
 
 if (wDir === 0) {
-// calm wind: large banner hangs under bar
+// calm wind: solid green banner under bar
 fillRoundBox(
 ctx,
 rx - 29,
@@ -2021,15 +1953,14 @@ rx - 29,
 '#090D16',
 1.5
 );
-ctx.fillStyle = '#F5F0E6';
-ctx.strokeStyle = '#072E1B';
-ctx.lineWidth = 2.2;
+ctx.fillStyle = '#072E1B';
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 2;
 ctx.beginPath();
 ctx.moveTo(rx - 26, 324);
 ctx.lineTo(rx + 26, 324);
-ctx.lineTo(rx + 26, 378);
-ctx.lineTo(rx, 390);
-ctx.lineTo(rx - 26, 378);
+ctx.lineTo(rx + 26, 380);
+ctx.lineTo(rx - 26, 380);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
@@ -2037,39 +1968,34 @@ ctx.stroke();
 if (hasIcon) {
 ctx.drawImage(
 rowanIconImg,
-rx - 22,
-328,
-44,
-44
+rx - 23,
+329,
+46,
+46
 );
 }
 } else {
 // wind blowing left (-1) or right (+1)
 var wave =
 Math.sin(t * 7.5 + rx * 0.04) * 4.5;
-var fW = 70;
+var fW = 62;
 var fH = 54;
 var tipX = rx + wDir * fW;
 var midX = rx + wDir * (fW * 0.5);
-var notchX = rx + wDir * (fW - 12);
 var topY = 322;
 
-ctx.fillStyle = '#F5F0E6';
-ctx.strokeStyle = '#072E1B';
-ctx.lineWidth = 2.2;
+ctx.fillStyle = '#072E1B';
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 2;
 ctx.beginPath();
 ctx.moveTo(rx + wDir * 3, topY);
 ctx.quadraticCurveTo(
 midX,
 topY - 2 + wave * 0.5,
 tipX,
-topY + 3 + wave
+topY + 2 + wave
 );
-ctx.lineTo(
-notchX,
-topY + fH * 0.5 + wave * 0.7
-);
-ctx.lineTo(tipX, topY + fH - 3 + wave);
+ctx.lineTo(tipX, topY + fH - 2 + wave);
 ctx.quadraticCurveTo(
 midX,
 topY + fH + 2 + wave * 0.5,
@@ -2081,11 +2007,11 @@ ctx.fill();
 ctx.stroke();
 
 if (hasIcon) {
-var icSz = 42;
+var icSz = 46;
 var icX =
 wDir > 0
-? rx + 8
-: rx - 8 - icSz;
+? rx + 9
+: rx - 9 - icSz;
 var icY =
 topY +
 (fH - icSz) * 0.5 +
