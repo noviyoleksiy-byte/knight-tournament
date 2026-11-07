@@ -33,14 +33,14 @@ overflow: hidden;
 display: none !important;
 }
 
-/* invisible bottom-right triple-tap button */
+/* invisible top-right triple-tap button */
 /* opens host panel after 3 quick taps */
 .secretHostBtn {
 position: fixed;
+top: 0;
 right: 0;
-bottom: 0;
-width: 96px;
-height: 96px;
+width: 110px;
+height: 110px;
 opacity: 0;
 background: transparent;
 border: none;

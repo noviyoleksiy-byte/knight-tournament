@@ -1035,6 +1035,14 @@ netUrlEl.textContent = dispUrl;
 }
 
 if (s.noPubSelected || s.tvScreen === 'WAITING') {
+var wSubEl =
+document.getElementById('waitingSubText');
+if (wSubEl) {
+wSubEl.textContent =
+!s.noPubSelected && s.pubName
+? s.pubName + (d.waitingReadySub || '')
+: d.waitingSub || '';
+}
 if (screenWaiting) {
 screenWaiting.className = 'tvScreen';
 }
@@ -1042,7 +1050,12 @@ screenParade.className = 'tvScreen hidden';
 screenBracket.className = 'tvScreen hidden';
 screenCombat.className = 'tvScreen hidden';
 if (tvBottomBar) {
+if (!s.noPubSelected) {
+tvBottomBar.className = 'bottomBar';
+renderBottomBar(s);
+} else {
 tvBottomBar.className = 'bottomBar hidden';
+}
 }
 prizeToast.className = 'prizeBanner hidden';
 return;
@@ -1804,8 +1817,15 @@ return setTimeout(cb, 33);
 raf(drawArenaFrame);
 }
 
-var BACKUP_KEY = 'kt_active_backup_v3';
-var triedRestore = false;
+var BACKUP_KEY = 'kt_active_backup_v4';
+try {
+window.localStorage.removeItem(
+'kt_active_backup_v2'
+);
+window.localStorage.removeItem(
+'kt_active_backup_v3'
+);
+} catch (e) {}
 
 // save latest state snapshot to localStorage
 // keeps mid-game backup on web and android
@@ -1820,7 +1840,7 @@ JSON.stringify(s)
 }
 
 // read saved state snapshot from localStorage
-// used on boot or when server disk resets
+// used on boot before first server poll
 function loadLocalBackup() {
 try {
 var raw =
@@ -1832,27 +1852,9 @@ return null;
 }
 }
 
-// check if server lost disk state after crash
-// restores client backup if server is fresh
-function checkServerRecovery(srvState) {
-if (triedRestore || !srvState) return false;
-var cached = loadLocalBackup();
-if (!cached) return false;
-
-if (
-srvState.noPubSelected &&
-(srvState.pubsSummary || []).length === 0 &&
-cached.storeBackup &&
-Array.isArray(cached.storeBackup.pubs) &&
-cached.storeBackup.pubs.length > 0
-) {
-triedRestore = true;
-postTvAction({
-type: 'restore_snapshot',
-snapshot: cached
-});
-return true;
-}
+// passive tv view never overwrites server
+// only host controller restores snapshots
+function checkServerRecovery() {
 return false;
 }
 
@@ -1917,7 +1919,7 @@ applyState(r.state);
 xhr.send(JSON.stringify(payload));
 }
 
-// bind bottom-right invisible triple-tap button
+// bind top-right invisible triple-tap button
 // opens host panel after 3 quick taps
 var secretBtn =
 document.getElementById('secretHostTap');

@@ -229,7 +229,16 @@ giftRequiredErr:
 'Enter a gift name before saving Gift mode!',
 paradeBonusSaved: 'Parade bonus saved!',
 paradeDoneHostTitleGift:
-'PARADE DONE: BONUS BETS (GIFT: '
+'PARADE DONE: BONUS BETS (GIFT: ',
+scrWaiting: 'WAITING SCREEN',
+waitingReadySub:
+' — Waiting for the host to start the Knights Parade...',
+waitingHostTitle:
+'TV IS ON WAITING SCREEN',
+waitingHostSub:
+'Configure tables, bonuses and prizes, then press Start Knights Parade',
+btnStartParadeCmd:
+'START KNIGHTS PARADE'
 },
 
 uk: {
@@ -462,7 +471,16 @@ giftRequiredErr:
 'Вкажіть подарунок, інакше зберегти не можна!',
 paradeBonusSaved: 'Бонус параду збережено!',
 paradeDoneHostTitleGift:
-'ПАРАД ЗАВЕРШЕНО: БОНУС-СТАВКИ (ПОДАРУНОК: '
+'ПАРАД ЗАВЕРШЕНО: БОНУС-СТАВКИ (ПОДАРУНОК: ',
+scrWaiting: 'ЕКРАН ОЧІКУВАННЯ',
+waitingReadySub:
+' — Очікування команди ведучого для початку параду...',
+waitingHostTitle:
+'ТБ НА ЕКРАНІ ОЧІКУВАННЯ',
+waitingHostSub:
+'Налаштуйте столи, бонуси та призи і натисніть Почати парад лицарів',
+btnStartParadeCmd:
+'ПОЧАТИ ПАРАД ЛИЦАРІВ'
 },
 
 ru: {
@@ -695,7 +713,16 @@ giftRequiredErr:
 'Укажите подарок, иначе сохранить нельзя!',
 paradeBonusSaved: 'Бонус парада сохранён!',
 paradeDoneHostTitleGift:
-'ПАРАД ЗАВЕРШЁН: БОНУС-СТАВКИ (ПОДАРОК: '
+'ПАРАД ЗАВЕРШЁН: БОНУС-СТАВКИ (ПОДАРОК: ',
+scrWaiting: 'ЭКРАН ОЖИДАНИЯ',
+waitingReadySub:
+' — Ожидание команды ведущего для запуска парада...',
+waitingHostTitle:
+'ТВ НА ЭКРАНЕ ОЖИДАНИЯ',
+waitingHostSub:
+'Настройте столы, бонусы и призы, затем нажмите Начать парад рыцарей',
+btnStartParadeCmd:
+'НАЧАТЬ ПАРАД РЫЦАРЕЙ'
 }
 };
 

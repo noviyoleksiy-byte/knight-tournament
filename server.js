@@ -1134,10 +1134,10 @@ paradeBonusType:
 pubData.paradeBonusType || 'PERCENT_20',
 paradeGiftText:
 pubData.paradeGiftText || '',
-tvScreen: 'PARADE',
+tvScreen: 'WAITING',
 tournamentStatus: 'ACTIVE',
-statusKey: 'PARADE_START',
-statusText: getStatusStr('PARADE_START', l),
+statusKey: 'WAITING_PUB',
+statusText: getStatusStr('WAITING_PUB', l),
 currentMatchIndex: 0,
 matches: matches,
 aliveKnights: eight,
@@ -1150,10 +1150,10 @@ prizeBannerText: null,
 champion: null,
 lastChampionId:
 pubData.lastChampionId || null,
-soundToPlay: 'horn',
+soundToPlay: null,
 lastParadeAt: Date.now(),
 parade: {
-active: true,
+active: false,
 currentIndex: 0,
 subStep: 'RIDE_TO_RACK',
 finished: false,
@@ -1845,6 +1845,7 @@ return;
 if (
 gameState.tvScreen === 'PARADE' &&
 gameState.parade &&
+gameState.parade.active &&
 !gameState.parade.finished
 ) {
 var pWait =
@@ -2146,6 +2147,21 @@ ok: true,
 state: buildClientResponse()
 });
 return;
+} else if (type === 'reset_all') {
+pubStore = {
+schemaVersion: 3,
+lang: (pubStore && pubStore.lang) || 'en',
+activePubId: null,
+pubs: []
+};
+pubData = null;
+gameState = buildWaitingState();
+savePubStore(pubStore);
+res.json({
+ok: true,
+state: buildClientResponse()
+});
+return;
 } else if (type === 'cycle_lang') {
 var curL =
 (pubData && pubData.lang) ||
@@ -2347,7 +2363,23 @@ bonusActive: true
 };
 gameState.soundToPlay = 'horn';
 } else if (type === 'toggle_screen') {
-if (gameState.tvScreen === 'PARADE') {
+if (gameState.tvScreen === 'WAITING') {
+gameState.tvScreen = 'PARADE';
+gameState.statusKey = 'PARADE_START';
+gameState.statusText = getStatusStr(
+'PARADE_START',
+gameState.lang
+);
+gameState.lastParadeAt = Date.now();
+gameState.parade = {
+active: true,
+currentIndex: 0,
+subStep: 'RIDE_TO_RACK',
+finished: false,
+bonusActive: true
+};
+gameState.soundToPlay = 'horn';
+} else if (gameState.tvScreen === 'PARADE') {
 gameState.tvScreen = 'BRACKET';
 gameState.statusKey = 'BETS_OPEN';
 gameState.statusText = getStatusStr(
@@ -2511,6 +2543,30 @@ balance: 0
 gameState.tables = pubData.tables;
 savePubData(pubData);
 } else if (type === 'combat_step') {
+if (gameState.tvScreen === 'WAITING') {
+// start knight parade on host command
+gameState.tvScreen = 'PARADE';
+gameState.statusKey = 'PARADE_START';
+gameState.statusText = getStatusStr(
+'PARADE_START',
+gameState.lang
+);
+gameState.lastParadeAt = Date.now();
+gameState.parade = {
+active: true,
+currentIndex: 0,
+subStep: 'RIDE_TO_RACK',
+finished: false,
+bonusActive: true
+};
+gameState.soundToPlay = 'horn';
+saveGameState(gameState);
+res.json({
+ok: true,
+state: buildClientResponse()
+});
+return;
+}
 if (gameState.tvScreen === 'PARADE') {
 if (
 gameState.parade &&

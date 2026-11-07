@@ -793,7 +793,9 @@ d.pubBadge +
 s.pubSeed +
 ')';
 screenText.innerHTML =
-s.tvScreen === 'PARADE'
+s.tvScreen === 'WAITING'
+? d.scrWaiting
+: s.tvScreen === 'PARADE'
 ? d.scrParade
 : s.tvScreen === 'COMBAT'
 ? d.scrCombat
@@ -814,7 +816,13 @@ Boolean(s.paradeGiftText);
 var m =
 s.matches &&
 s.matches[s.currentMatchIndex];
-if (s.tvScreen === 'PARADE' && s.parade) {
+if (s.tvScreen === 'WAITING') {
+boutTitle.innerHTML = d.waitingHostTitle;
+boutSub.innerHTML = d.waitingHostSub;
+} else if (
+s.tvScreen === 'PARADE' &&
+s.parade
+) {
 if (s.parade.finished) {
 boutTitle.innerHTML = isGiftParade
 ? d.paradeDoneHostTitleGift +
@@ -895,7 +903,10 @@ s.combat && s.combat.mode === 'JOUST'
 ? 3.25
 : 4.75;
 
-if (s.tvScreen === 'PARADE') {
+if (s.tvScreen === 'WAITING') {
+btnStartStep.innerHTML =
+'🎺 ' + d.btnStartParadeCmd;
+} else if (s.tvScreen === 'PARADE') {
 if (s.parade && s.parade.finished) {
 btnStartStep.innerHTML = d.btnCloseBonus;
 } else {
@@ -1091,8 +1102,16 @@ URL.revokeObjectURL(url);
 xhr.send();
 }
 
-var HOST_BACKUP_KEY = 'kt_active_backup_v3';
+var HOST_BACKUP_KEY = 'kt_active_backup_v4';
 var hostTriedRestore = false;
+try {
+window.localStorage.removeItem(
+'kt_active_backup_v2'
+);
+window.localStorage.removeItem(
+'kt_active_backup_v3'
+);
+} catch (e) {}
 
 // save latest state snapshot on host device
 // keeps multi-pub backup on phone storage
