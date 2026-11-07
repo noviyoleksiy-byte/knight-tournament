@@ -146,13 +146,13 @@ width: 100%;
 /* knight parade and weapon rack screen */
 /* we present each knight and bonus odds */
 .paradeHeaderBanner {
-height: 136px;
+height: 124px;
 background: #111827;
 border: 2px solid #2563EB;
 border-radius: 12px;
-padding: 14px 26px;
+padding: 10px 26px;
 text-align: center;
-margin-bottom: 14px;
+margin-bottom: 12px;
 display: flex;
 flex-direction: column;
 justify-content: center;
@@ -166,10 +166,10 @@ letter-spacing: 1.5px;
 }
 
 .paradeMainTitle {
-font-size: 34px;
+font-size: 32px;
 font-weight: 900;
 color: #F8FAFC;
-margin: 4px 0;
+margin: 3px 0;
 }
 
 .paradeSubTitle {
@@ -179,19 +179,19 @@ color: #34D399;
 }
 
 .paradeCanvasWrap {
-height: 496px;
+height: 542px;
 background: #0B111E;
 border: 2px solid #1E293B;
 border-radius: 12px;
 overflow: hidden;
-margin-bottom: 14px;
+margin-bottom: 12px;
 display: flex;
 align-items: center;
 justify-content: center;
 }
 
 .paradeLineupGrid {
-height: 260px;
+height: 228px;
 display: flex;
 gap: 10px;
 justify-content: space-between;
@@ -202,7 +202,7 @@ flex: 1;
 background: #111827;
 border: 2px solid #1E293B;
 border-radius: 10px;
-padding: 10px 8px;
+padding: 7px 6px;
 display: flex;
 flex-direction: column;
 justify-content: space-between;
@@ -228,27 +228,29 @@ color: #94A3B8;
 }
 
 .pCardColorBar {
-height: 6px;
+height: 5px;
 width: 100%;
 border-radius: 3px;
-margin: 4px 0;
+margin: 3px 0;
 }
 
 .pCardName {
-font-size: 15px;
-font-weight: 800;
+font-size: 16px;
+font-weight: 900;
 color: #F8FAFC;
-line-height: 1.2;
+line-height: 1.15;
 }
 
 .pCardGear {
-font-size: 12px;
-color: #CBD5E1;
-font-weight: 700;
+font-size: 16px;
+color: #F1F5F9;
+font-weight: 800;
+line-height: 1.24;
+margin: 2px 0;
 }
 
 .pCardRec {
-font-size: 15px;
+font-size: 14px;
 font-weight: 800;
 color: #CBD5E1;
 }
@@ -257,20 +259,20 @@ color: #CBD5E1;
 background: #090D16;
 border: 1px solid #2563EB;
 border-radius: 7px;
-padding: 6px 4px;
-margin-top: 4px;
+padding: 4px 4px;
+margin-top: 2px;
 }
 
 .pCardOddsLabel {
 display: block;
-font-size: 10px;
+font-size: 11px;
 color: #34D399;
 font-weight: 800;
 }
 
 .pCardOddsVal {
 display: block;
-font-size: 20px;
+font-size: 19px;
 font-weight: 900;
 color: #38BDF8;
 }

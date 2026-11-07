@@ -264,13 +264,9 @@ d.ShieldLbl +
 curK.shieldName +
 d.gallopsToRack;
 } else {
-var favNote = curK.hasFavWeapon
-? d.favWepNote
-: d.randWepNote;
 paradeHeroDetails.innerHTML =
 d.picksFromRack +
 curK.weaponName +
-favNote +
 d.andJoinsLine;
 }
 }
@@ -294,7 +290,7 @@ else if (revealed) cls += ' revealedCard';
 var col =
 window.KnightArt.getArmor(k.colorIdx).main;
 var wText = revealed
-? k.weaponName + (k.hasFavWeapon ? ' ★' : '')
+? k.weaponName
 : d.pickingWeapon;
 
 var baseOdd = parseFloat(
@@ -378,7 +374,7 @@ window.KnightArt.drawCastleScene(
 ctx,
 w,
 h,
-185,
+192,
 false,
 animClock,
 p.finished || isChampRiding
@@ -410,37 +406,40 @@ takenMap[tk.weaponIdx] = true;
 
 // draw weapon rack on left side of field
 // hides weapons already taken by knights
+var rackX = 225;
+var rackY = 265;
 window.KnightArt.drawWeaponRack(
 ctx,
-250,
-235,
+rackX,
+rackY,
 takenMap
 );
 
-// draw already lined up knights in a row
-// animates current rider galloping to rack
+// collect riders to draw in y-depth order
+// staggered checkerboard gives room for scale
+var drawQueue = [];
 for (var i = 0; i < list.length; i++) {
 var lk = list[i];
-var slotX = 560 + i * 172;
-var slotY = 305;
+var slotX = 520 + i * 180;
+var slotY = i % 2 === 0 ? 302 : 374;
 
 if (p.finished || i < curIdx) {
-window.KnightArt.drawMountedKnight(
-ctx,
-slotX,
-slotY,
-0.78,
-lk,
-animClock + i,
-'parade_no_lance'
-);
+drawQueue.push({
+x: slotX,
+y: slotY,
+sc: 0.94,
+k: lk,
+ph: animClock + i,
+pose: 'parade_no_lance',
+showWep: false
+});
 } else if (i === curIdx && !p.finished) {
 var dt =
 (Date.now() - paradeAnimStart) / 1000;
 var tProg = Math.min(1, dt / 1.6);
 
 if (p.subStep === 'RIDE_TO_RACK') {
-var rx = -60 + tProg * 310;
+var rx = -60 + tProg * (rackX + 60);
 var tempK = {
 colorIdx: lk.colorIdx,
 helmIdx: lk.helmIdx,
@@ -448,44 +447,62 @@ shieldIdx: lk.shieldIdx,
 horseIdx: lk.horseIdx,
 weaponIdx: -1
 };
-window.KnightArt.drawMountedKnight(
-ctx,
-rx,
-285,
-1.05,
-tempK,
-animClock,
-tProg < 1 ? 'run' : 'parade_no_lance'
-);
+drawQueue.push({
+x: rx,
+y: 320,
+sc: 1.08,
+k: tempK,
+ph: animClock,
+pose:
+tProg < 1 ? 'run' : 'parade_no_lance',
+showWep: false
+});
 } else {
 var lx =
-250 + tProg * (slotX - 250);
+rackX + tProg * (slotX - rackX);
 var ly =
-285 + tProg * (slotY - 285);
-var sc = 1.05 - tProg * 0.27;
+320 + tProg * (slotY - 320);
+var sc = 1.08 - tProg * 0.14;
+drawQueue.push({
+x: lx,
+y: ly,
+sc: sc,
+k: lk,
+ph: animClock,
+pose:
+tProg < 1 ? 'run' : 'parade_no_lance',
+showWep: tProg < 0.75
+});
+}
+}
+}
+
+// sort riders from back to front by y
+// prevents back row overlapping front row
+drawQueue.sort(function (a, b) {
+return a.y - b.y;
+});
+
+for (var dIdx = 0; dIdx < drawQueue.length; dIdx++) {
+var item = drawQueue[dIdx];
 window.KnightArt.drawMountedKnight(
 ctx,
-lx,
-ly,
-sc,
-lk,
-animClock,
-tProg < 1 ? 'run' : 'parade_no_lance'
+item.x,
+item.y,
+item.sc,
+item.k,
+item.ph,
+item.pose
 );
-
-// highlight chosen weapon above knight
-// floats above helm while riding to line
-if (tProg < 0.75) {
+if (item.showWep) {
 window.KnightArt.drawWeapon(
 ctx,
-lx,
-ly - 115,
-0.95,
-lk.weaponIdx,
+item.x,
+item.y - 122,
+0.98,
+item.k.weaponIdx,
 0.25
 );
-}
-}
 }
 }
 
@@ -790,10 +807,9 @@ listEl.className = 'betsList hidden';
 // keeps W/L in english across all languages
 function fillPreviewSide(side, k, odds) {
 var d = getDict();
-var favTag = k.hasFavWeapon ? ' ★' : '';
 document.getElementById(
 'p' + side + 'Name'
-).innerHTML = k.name + favTag;
+).innerHTML = k.name;
 document.getElementById(
 'p' + side + 'Rec'
 ).innerHTML =

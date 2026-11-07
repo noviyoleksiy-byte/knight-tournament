@@ -1587,39 +1587,115 @@ iconSz
 }
 
 // draw readable banner on castle wall
-// uses clean single-color background
+// stretched on iron wall anchors below merlons
 function drawWallCottonBanner(
 ctx,
 w,
 wallTop,
-wallH,
-merlonH
+wallH
 ) {
+var by = Math.round(wallTop + 6);
 var banH = Math.max(
-96,
-Math.round(wallH * 1.42)
+78,
+Math.round(wallH - 8)
 );
 var banW = Math.round(
-banH * (685 / 260) * 1.08
+banH * (685 / 260) * 1.1
 );
 var bx = Math.round((w - banW) * 0.5);
-var by = Math.round(
-wallTop - (merlonH || 16) + 2
+
+var yTopTie = by + 8;
+var yBotTie = by + banH - 8;
+var xLeftAnchor = bx - 14;
+var xRightAnchor = bx + banW + 14;
+
+// drop shadow on stone wall behind banner
+// gives depth to stretched wall cloth
+fillRoundBox(
+ctx,
+bx + 3,
+by + 4,
+banW,
+banH,
+8,
+'rgba(9,13,22,0.38)',
+null,
+0
 );
 
+// forged iron wall anchor plates on stone
+// hammered left and right of streamer
+ctx.fillStyle = '#1E293B';
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 2;
+var anchors = [
+[xLeftAnchor, yTopTie],
+[xRightAnchor, yTopTie],
+[xLeftAnchor, yBotTie],
+[xRightAnchor, yBotTie]
+];
+for (var a = 0; a < anchors.length; a++) {
+ctx.beginPath();
+ctx.arc(
+anchors[a][0],
+anchors[a][1],
+4.5,
+0,
+Math.PI * 2
+);
+ctx.fill();
+ctx.stroke();
+}
+
 // solid single-color cotton background
-// no corner triangles or extra clutter
+// keeps clean colors without triangles
 fillRoundBox(
 ctx,
 bx,
 by,
 banW,
 banH,
-10,
+8,
 '#F5F0E6',
 '#072E1B',
 3.5
 );
+
+// horizontal taut cords from wall anchors
+// fastens four corners to castle wall
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 3;
+ctx.beginPath();
+ctx.moveTo(xLeftAnchor, yTopTie);
+ctx.lineTo(bx + 7, yTopTie);
+ctx.moveTo(xRightAnchor, yTopTie);
+ctx.lineTo(bx + banW - 7, yTopTie);
+ctx.moveTo(xLeftAnchor, yBotTie);
+ctx.lineTo(bx + 7, yBotTie);
+ctx.moveTo(xRightAnchor, yBotTie);
+ctx.lineTo(bx + banW - 7, yBotTie);
+ctx.stroke();
+
+// corner grommets where cords tie in
+// small dark green rings on cotton
+ctx.fillStyle = '#072E1B';
+var grommets = [
+[bx + 7, yTopTie],
+[bx + banW - 7, yTopTie],
+[bx + 7, yBotTie],
+[bx + banW - 7, yBotTie]
+];
+for (var g = 0; g < grommets.length; g++) {
+ctx.beginPath();
+ctx.arc(
+grommets[g][0],
+grommets[g][1],
+2.8,
+0,
+Math.PI * 2
+);
+ctx.fill();
+}
 
 // draw full rowan events logo large
 // fills banner for clear readability
@@ -1628,7 +1704,7 @@ rowanFullLogoImg &&
 rowanFullLogoImg.complete &&
 rowanFullLogoImg.naturalWidth > 0
 ) {
-var lh = banH - 12;
+var lh = banH - 10;
 var lw = Math.round(lh * (685 / 260));
 var lx = Math.round(
 bx + (banW - lw) * 0.5
@@ -1671,12 +1747,18 @@ isVictory || crowdMood === 'CHEER';
 ctx.fillStyle = '#1E293B';
 ctx.fillRect(0, 0, w, wallBottomY);
 
-var wallH = Math.max(42, wallBottomY * 0.34);
+var wallH = Math.max(
+68,
+Math.round(wallBottomY * 0.4)
+);
 var wallTop = wallBottomY - wallH;
 var merlonW = Math.max(22, Math.floor(w / 32));
 var gapW = Math.max(14, Math.floor(merlonW * 0.62));
 var stepX = merlonW + gapW;
-var merlonH = Math.max(14, wallH * 0.34);
+var merlonH = Math.max(
+14,
+Math.round(wallH * 0.26)
+);
 
 // 2. banners on left and right of spectators
 // shows fighter shields or brand icon on parade
