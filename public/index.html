@@ -13,20 +13,19 @@
 <div class="prizeBannerInner" id="prizeToastText">PRIZE CLAIMED!</div>
 </div>
 
-<div id="screenWaiting" class="tvScreen">
-<div class="waitingCard">
-<div class="waitingBrand" id="waitingBrandText">KNIGHT TOURNAMENT</div>
-<div class="waitingSubText" id="waitingSubText">Waiting for the host to select or create a pub on the controller...</div>
-<div class="waitingNetBox">
-<div class="waitingNetLabel" id="waitingNetLabel">CONNECT TV OR HOST AT ADDRESS:</div>
-<div class="waitingNetUrl" id="waitingNetUrl">http://127.0.0.1:3000</div>
+<div id="screenWaiting" class="tvScreen waitingFullScreen">
+<canvas id="waitingCanvas" width="1864" height="1040"></canvas>
+<div class="waitingHeroOverlay">
+<div class="waitingBrand" id="waitingBrandText">РЫЦАРСКИЙ ТУРНИР</div>
+<div class="waitingLogoPlaque">
+<img src="assets/aistudio/rowan-events-option-1_004e6aed.svg" alt="Rowan Events" class="waitingBigLogo">
 </div>
 </div>
 </div>
 
 <div id="screenParade" class="tvScreen hidden">
 <div class="paradeHeaderBanner">
-<div class="paradeKicker" id="paradeStepBadge">PARADE OF CONTENDERS & WEAPON DRAFT (1 OF 8)</div>
+<div class="paradeKicker" id="paradeStepBadge"></div>
 <div class="paradeMainTitle" id="paradeHeroName"></div>
 <div class="paradeSubTitle" id="paradeHeroDetails"></div>
 </div>
@@ -42,35 +41,35 @@
 <div class="bracketArea">
 
 <div class="bracketCol colLeftQF">
-<div class="colHeader" id="colHeadQfWest">QUARTERFINALS (WEST)</div>
+<div class="colHeader" id="colHeadQfWest"></div>
 <div class="matchBox" id="matchBox0"></div>
 <div class="matchBox" id="matchBox1"></div>
 </div>
 
 <div class="bracketCol colLeftSF">
-<div class="colHeader" id="colHeadSfLeft">SEMIFINALS</div>
+<div class="colHeader" id="colHeadSfLeft"></div>
 <div class="matchBox sfBox" id="matchBox4"></div>
 </div>
 
 <div class="bracketCenter">
 <div class="finalBoxWrap">
-<div class="colHeader finalHeader" id="colHeadFinal">TOURNAMENT GRAND FINAL</div>
+<div class="colHeader finalHeader" id="colHeadFinal"></div>
 <div class="matchBox finalBox" id="matchBox6"></div>
 </div>
 
 <div class="nextBoutCard" id="nextBoutPanel">
 <div class="boutCardHeader">
-<span id="nextBoutTitle">NEXT BOUT</span>
-<span id="liveBetIndicator" class="liveTag">BETTING OPEN</span>
+<span id="nextBoutTitle"></span>
+<span id="liveBetIndicator" class="liveTag"></span>
 </div>
 <div class="boutVsRow">
 <div class="boutFighter leftFighter">
 <canvas id="previewCanvasLeft" width="360" height="240"></canvas>
-<div class="fName" id="pLeftName">Sir Ragnar</div>
+<div class="fName" id="pLeftName"></div>
 <div class="fRecord" id="pLeftRec">W: 0 / L: 0</div>
 <div class="fOddsBox">
-<span class="oddsValue" id="pLeftOdds">BOUT x1.8</span>
-<span class="outrightSub" id="pLeftOutright">TOUR x5.2</span>
+<span class="oddsValue" id="pLeftOdds"></span>
+<span class="outrightSub" id="pLeftOutright"></span>
 </div>
 </div>
 
@@ -83,31 +82,31 @@
 
 <div class="boutFighter rightFighter">
 <canvas id="previewCanvasRight" width="360" height="240"></canvas>
-<div class="fName" id="pRightName">Sir Corvus</div>
+<div class="fName" id="pRightName"></div>
 <div class="fRecord" id="pRightRec">W: 0 / L: 0</div>
 <div class="fOddsBox">
-<span class="oddsValue" id="pRightOdds">BOUT x2.0</span>
-<span class="outrightSub" id="pRightOutright">TOUR x5.8</span>
+<span class="oddsValue" id="pRightOdds"></span>
+<span class="outrightSub" id="pRightOutright"></span>
 </div>
 </div>
 </div>
 </div>
 
 <div id="championRevealCard" class="champCard hidden">
-<div class="champKicker" id="champKickerText">THE CHAMPION REMOVES HIS HELM! TRUE TITLE REVEALED:</div>
-<div class="champRoyalTitle" id="champSecretTitle">His Highness Crown Prince</div>
-<div class="champSirName" id="champNameText">Sir Ragnar Bloody Horn</div>
-<div class="champLore" id="champNoticeText">In the next tournament he will ride out again as a simple Sir!</div>
+<div class="champKicker" id="champKickerText"></div>
+<div class="champRoyalTitle" id="champSecretTitle"></div>
+<div class="champSirName" id="champNameText"></div>
+<div class="champLore" id="champNoticeText"></div>
 </div>
 </div>
 
 <div class="bracketCol colRightSF">
-<div class="colHeader" id="colHeadSfRight">SEMIFINALS</div>
+<div class="colHeader" id="colHeadSfRight"></div>
 <div class="matchBox sfBox" id="matchBox5"></div>
 </div>
 
 <div class="bracketCol colRightQF">
-<div class="colHeader" id="colHeadQfEast">QUARTERFINALS (EAST)</div>
+<div class="colHeader" id="colHeadQfEast"></div>
 <div class="matchBox" id="matchBox2"></div>
 <div class="matchBox" id="matchBox3"></div>
 </div>
@@ -118,24 +117,24 @@
 <div id="screenCombat" class="tvScreen hidden">
 <div class="combatHudTop">
 <div class="combatFighterHud leftHud">
-<div class="cHudName" id="cLeftName">Sir Ragnar</div>
-<div class="cHudSub" id="cLeftSub">Black Charger · Battle Axe</div>
-<div class="cHudStatus" id="cLeftStatus">Shield intact · Full of strength</div>
+<div class="cHudName" id="cLeftName"></div>
+<div class="cHudSub" id="cLeftSub"></div>
+<div class="cHudStatus" id="cLeftStatus"></div>
 </div>
 
 <div class="combatCenterHud">
-<div class="combatPassTitle" id="combatPassBadge">JOUST PASS 1 OF 3</div>
+<div class="combatPassTitle" id="combatPassBadge"></div>
 <div class="combatLiveOddsRow">
-<span class="cOddsPill leftOddsPill" id="cLeftLiveOdds">K1: 1.85</span>
-<span class="cPhaseNote" id="combatSubNote">Charging down the lists...</span>
-<span class="cOddsPill rightOddsPill" id="cRightLiveOdds">K2: 1.95</span>
+<span class="cOddsPill leftOddsPill" id="cLeftLiveOdds"></span>
+<span class="cPhaseNote" id="combatSubNote"></span>
+<span class="cOddsPill rightOddsPill" id="cRightLiveOdds"></span>
 </div>
 </div>
 
 <div class="combatFighterHud rightHud">
-<div class="cHudName" id="cRightName">Sir Corvus</div>
-<div class="cHudSub" id="cRightSub">Snow White · Halberd</div>
-<div class="cHudStatus" id="cRightStatus">Shield intact · Full of strength</div>
+<div class="cHudName" id="cRightName"></div>
+<div class="cHudSub" id="cRightSub"></div>
+<div class="cHudStatus" id="cRightStatus"></div>
 </div>
 </div>
 

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 12 232 232" width="232" height="232" role="img" aria-label="Rowan Events Icon">
+<path class="svg-badge-bg" fill="#072e1b" d="M 130 14 C 188 14, 214 16, 228 30 C 242 44, 244 70, 244 128 C 244 186, 242 212, 228 226 C 214 240, 188 242, 130 242 C 72 242, 46 240, 32 226 C 18 212, 16 186, 16 128 C 16 70, 18 44, 32 30 C 46 16, 72 14, 130 14 Z"/>
+<g class="svg-branch-light" fill="#f4f7f5" stroke="#f4f7f5" stroke-linecap="round" stroke-linejoin="round">
+<path stroke="none" d="M 42.5 204.5 C 40.0 201.5, 41.5 194.5, 46.5 184.5 C 58.5 160.5, 80.5 129.5, 111.5 102.5 C 117.5 97.5, 123.0 93.5, 127.5 91.0 L 130.5 96.5 C 125.0 99.5, 118.5 104.5, 111.5 111.0 C 84.5 135.5, 62.5 167.5, 50.0 201.5 C 48.0 206.5, 44.5 207.0, 42.5 204.5 Z"/>
+<path fill="none" stroke-width="3.6" d="M 73.0 150.0 C 84.0 156.0, 94.0 168.0, 102.0 183.0"/>
+<path fill="none" stroke-width="3.5" d="M 83.0 137.0 C 97.0 138.0, 110.0 144.0, 122.0 154.0"/>
+<path fill="none" stroke-width="3.6" d="M 96.0 120.0 C 114.0 125.0, 132.0 140.0, 150.0 167.0"/>
+<path fill="none" stroke-width="3.6" d="M 106.0 110.0 C 124.0 107.0, 142.0 114.0, 158.0 128.0"/>
+<path fill="none" stroke-width="3.4" d="M 132.0 110.0 C 156.0 106.0, 178.0 115.0, 196.0 135.0"/>
+<path fill="#f4f7f5" stroke="none" d="M 68.7 159.4 C 81.3 133.7, 70.2 97.5, 50.0 72.0 C 38.1 103.0, 37.9 141.1, 61.3 160.6 Z"/>
+<path fill="#f4f7f5" stroke="none" d="M 94.7 127.0 C 116.8 108.3, 121.8 70.1, 114.0 38.0 C 89.9 61.8, 73.8 97.1, 87.3 125.0 Z"/>
+<path fill="#f4f7f5" stroke="none" d="M 123.9 100.3 C 151.4 102.8, 181.0 80.7, 198.0 54.0 C 165.4 53.0, 130.2 65.4, 120.1 93.7 Z"/>
+</g>
+<g class="svg-vein-dark">
+<path class="svg-vein-dark" fill="#072e1b" d="M 62.1 153.4 Q 56.5 127.0 52.9 95.0 Q 58.1 126.8 65.5 152.8 Z"/>
+<path class="svg-vein-dark" fill="#072e1b" d="M 91.1 118.8 Q 97.0 91.9 107.1 60.6 Q 98.6 92.3 94.4 119.7 Z"/>
+<path class="svg-vein-dark" fill="#072e1b" d="M 127.3 92.1 Q 149.5 78.2 177.7 64.3 Q 150.3 79.6 128.9 95.0 Z"/>
+</g>
+<g class="svg-berries-group">
+<circle class="svg-berry-rim" cx="162.0" cy="131.0" r="20.3" fill="#072e1b"/>
+<circle class="svg-berry-rim" cx="200.0" cy="139.0" r="20.6" fill="#072e1b"/>
+<circle class="svg-berry-rim" cx="125.0" cy="155.0" r="20.3" fill="#072e1b"/>
+<circle class="svg-berry-rim" cx="155.0" cy="171.0" r="20.8" fill="#072e1b"/>
+<circle class="svg-berry-rim" cx="105.0" cy="186.0" r="20.6" fill="#072e1b"/>
+<circle class="svg-berry-rim" cx="181.0" cy="192.0" r="20.3" fill="#072e1b"/>
+<circle class="svg-berry-rim" cx="137.0" cy="204.0" r="20.4" fill="#072e1b"/>
+<circle class="svg-berry-shadow" cx="162.0" cy="131.0" r="17.5" fill="#d81e05"/>
+<circle class="svg-berry-base" cx="161.3" cy="130.3" r="16.8" fill="#f22c08"/>
+<path class="svg-berry-hi" d="M 150.6 132.9 A 11.6 11.6 0 0 1 162.7 119.5 A 9.8 10.5 0 0 0 150.6 132.9 Z" fill="#ff642e"/>
+<path class="svg-berry-contour" d="M 172.1 129.8 A 10.1 10.1 0 0 1 161.9 141.1" fill="none" stroke="#b91604" stroke-width="1.5" stroke-linecap="round"/>
+<ellipse class="svg-berry-dot" cx="167.2" cy="135.7" rx="3.15" ry="2.39" transform="rotate(-48.0 167.2 135.7)" fill="#072e1b"/>
+<circle class="svg-berry-shadow" cx="200.0" cy="139.0" r="17.8" fill="#d81e05"/>
+<circle class="svg-berry-base" cx="199.3" cy="138.3" r="17.1" fill="#f22c08"/>
+<path class="svg-berry-hi" d="M 188.4 141.0 A 11.7 11.7 0 0 1 200.7 127.3 A 10.0 10.7 0 0 0 188.4 141.0 Z" fill="#ff642e"/>
+<path class="svg-berry-contour" d="M 210.3 137.8 A 10.3 10.3 0 0 1 199.9 149.3" fill="none" stroke="#b91604" stroke-width="1.5" stroke-linecap="round"/>
+<ellipse class="svg-berry-dot" cx="205.3" cy="143.8" rx="3.20" ry="2.44" transform="rotate(-48.0 205.3 143.8)" fill="#072e1b"/>
+<circle class="svg-berry-shadow" cx="125.0" cy="155.0" r="17.5" fill="#d81e05"/>
+<circle class="svg-berry-base" cx="124.3" cy="154.3" r="16.8" fill="#f22c08"/>
+<path class="svg-berry-hi" d="M 113.6 156.9 A 11.6 11.6 0 0 1 125.7 143.5 A 9.8 10.5 0 0 0 113.6 156.9 Z" fill="#ff642e"/>
+<path class="svg-berry-contour" d="M 135.1 153.8 A 10.1 10.1 0 0 1 124.9 165.1" fill="none" stroke="#b91604" stroke-width="1.5" stroke-linecap="round"/>
+<ellipse class="svg-berry-dot" cx="130.2" cy="159.7" rx="3.15" ry="2.39" transform="rotate(-48.0 130.2 159.7)" fill="#072e1b"/>
+<circle class="svg-berry-shadow" cx="155.0" cy="171.0" r="18.0" fill="#d81e05"/>
+<circle class="svg-berry-base" cx="154.3" cy="170.3" r="17.3" fill="#f22c08"/>
+<path class="svg-berry-hi" d="M 143.3 173.0 A 11.9 11.9 0 0 1 155.7 159.1 A 10.1 10.8 0 0 0 143.3 173.0 Z" fill="#ff642e"/>
+<path class="svg-berry-contour" d="M 165.4 169.8 A 10.4 10.4 0 0 1 154.9 181.4" fill="none" stroke="#b91604" stroke-width="1.5" stroke-linecap="round"/>
+<ellipse class="svg-berry-dot" cx="160.4" cy="175.8" rx="3.24" ry="2.46" transform="rotate(-48.0 160.4 175.8)" fill="#072e1b"/>
+<circle class="svg-berry-shadow" cx="105.0" cy="186.0" r="17.8" fill="#d81e05"/>
+<circle class="svg-berry-base" cx="104.3" cy="185.3" r="17.1" fill="#f22c08"/>
+<path class="svg-berry-hi" d="M 93.4 188.0 A 11.7 11.7 0 0 1 105.7 174.3 A 10.0 10.7 0 0 0 93.4 188.0 Z" fill="#ff642e"/>
+<path class="svg-berry-contour" d="M 115.3 184.8 A 10.3 10.3 0 0 1 104.9 196.3" fill="none" stroke="#b91604" stroke-width="1.5" stroke-linecap="round"/>
+<ellipse class="svg-berry-dot" cx="110.3" cy="190.8" rx="3.20" ry="2.44" transform="rotate(-48.0 110.3 190.8)" fill="#072e1b"/>
+<circle class="svg-berry-shadow" cx="181.0" cy="192.0" r="17.5" fill="#d81e05"/>
+<circle class="svg-berry-base" cx="180.3" cy="191.3" r="16.8" fill="#f22c08"/>
+<path class="svg-berry-hi" d="M 169.6 193.9 A 11.6 11.6 0 0 1 181.7 180.5 A 9.8 10.5 0 0 0 169.6 193.9 Z" fill="#ff642e"/>
+<path class="svg-berry-contour" d="M 191.1 190.8 A 10.1 10.1 0 0 1 180.9 202.1" fill="none" stroke="#b91604" stroke-width="1.5" stroke-linecap="round"/>
+<ellipse class="svg-berry-dot" cx="186.2" cy="196.7" rx="3.15" ry="2.39" transform="rotate(-48.0 186.2 196.7)" fill="#072e1b"/>
+<circle class="svg-berry-shadow" cx="137.0" cy="204.0" r="17.6" fill="#d81e05"/>
+<circle class="svg-berry-base" cx="136.3" cy="203.3" r="16.9" fill="#f22c08"/>
+<path class="svg-berry-hi" d="M 125.5 205.9 A 11.6 11.6 0 0 1 137.7 192.4 A 9.9 10.6 0 0 0 125.5 205.9 Z" fill="#ff642e"/>
+<path class="svg-berry-contour" d="M 147.1 202.8 A 10.2 10.2 0 0 1 136.9 214.2" fill="none" stroke="#b91604" stroke-width="1.5" stroke-linecap="round"/>
+<ellipse class="svg-berry-dot" cx="142.2" cy="208.7" rx="3.17" ry="2.41" transform="rotate(-48.0 142.2 208.7)" fill="#072e1b"/>
+</g>
+</svg>

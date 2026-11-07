@@ -1102,7 +1102,7 @@ URL.revokeObjectURL(url);
 xhr.send();
 }
 
-var HOST_BACKUP_KEY = 'kt_active_backup_v4';
+var HOST_BACKUP_KEY = 'kt_active_backup_v5';
 var hostTriedRestore = false;
 try {
 window.localStorage.removeItem(
@@ -1110,6 +1110,9 @@ window.localStorage.removeItem(
 );
 window.localStorage.removeItem(
 'kt_active_backup_v3'
+);
+window.localStorage.removeItem(
+'kt_active_backup_v4'
 );
 } catch (e) {}
 

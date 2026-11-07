@@ -3,6 +3,19 @@
 (function (global) {
 'use strict';
 
+// preload brand icon and full logo svgs
+// used on parade banners wall and flags
+var rowanIconImg = null;
+var rowanFullLogoImg = null;
+if (typeof Image !== 'undefined') {
+rowanIconImg = new Image();
+rowanIconImg.src =
+'assets/aistudio/rowan-icon.svg';
+rowanFullLogoImg = new Image();
+rowanFullLogoImg.src =
+'assets/aistudio/rowan-events-option-1_004e6aed.svg';
+}
+
 // 6 armor color themes without any yellow
 // we define main dark light and trim hex
 var ARMOR_COLORS = [
@@ -1534,8 +1547,8 @@ sIdx,
 );
 }
 
-// draw pub logo placeholder on parade banners
-// shows purple pub crest on left and right
+// draw brand icon on parade side banners
+// shows left icon part without text
 function drawPubLogoBanner(
 ctx,
 bx,
@@ -1546,34 +1559,22 @@ bh
 ctx.fillStyle = '#1E293B';
 ctx.fillRect(bx, by, bw, bh);
 
-var pad = 6;
+var pad = 5;
 var cx = bx + pad;
 var cy = by + pad;
 var cw = bw - pad * 2;
 var ch = bh - pad * 2;
 
-// purple pub cloth background
-ctx.fillStyle = '#581C87';
+// natural cotton cloth backing in frame
+ctx.fillStyle = '#F5F0E6';
 ctx.fillRect(cx, cy, cw, ch);
-ctx.fillStyle = '#7E22CE';
-ctx.fillRect(cx, cy, cw * 0.5, ch);
-
-// subtle diagonal fabric sheen
-ctx.fillStyle = 'rgba(255,255,255,0.08)';
-ctx.beginPath();
-ctx.moveTo(cx, cy);
-ctx.lineTo(cx + cw * 0.65, cy);
-ctx.lineTo(cx + cw * 0.25, cy + ch);
-ctx.lineTo(cx, cy + ch);
-ctx.closePath();
-ctx.fill();
 
 ctx.strokeStyle = '#090D16';
 ctx.lineWidth = 3;
 ctx.strokeRect(cx, cy, cw, ch);
 
-ctx.strokeStyle = '#C084FC';
-ctx.lineWidth = 1.5;
+ctx.strokeStyle = '#072E1B';
+ctx.lineWidth = 2;
 ctx.strokeRect(
 cx + 3,
 cy + 3,
@@ -1581,38 +1582,138 @@ cw - 6,
 ch - 6
 );
 
-// center shield crest with pub mug & text
-var mx = bx + bw * 0.5;
-var my = by + bh * 0.5;
-var r = Math.max(12, Math.min(cw, ch) * 0.28);
+// draw rowan icon centered in banner
+var iconSz = Math.max(
+24,
+Math.min(cw, ch) - 12
+);
+var ix = bx + (bw - iconSz) * 0.5;
+var iy = by + (bh - iconSz) * 0.5;
+if (
+rowanIconImg &&
+rowanIconImg.complete &&
+rowanIconImg.naturalWidth > 0
+) {
+ctx.drawImage(
+rowanIconImg,
+ix,
+iy,
+iconSz,
+iconSz
+);
+} else {
+fillRoundBox(
+ctx,
+ix,
+iy,
+iconSz,
+iconSz,
+iconSz * 0.22,
+'#072E1B',
+null,
+0
+);
+}
+}
 
-ctx.fillStyle = '#3B0764';
-ctx.strokeStyle = '#E9D5FF';
-ctx.lineWidth = 2;
+// draw cotton streamer with full logo
+// hangs on castle wall before spectators
+function drawWallCottonBanner(
+ctx,
+w,
+wallTop,
+wallH
+) {
+var banH = Math.max(
+54,
+Math.round(wallH * 0.92)
+);
+var banW = Math.round(
+banH * (685 / 260) * 1.16
+);
+var bx = Math.round((w - banW) * 0.5);
+var by = Math.round(
+wallTop + (wallH - banH) * 0.5
+);
+
+// iron wall ties at four banner corners
+ctx.strokeStyle = '#090D16';
+ctx.lineWidth = 3;
 ctx.beginPath();
-ctx.arc(mx, my, r, 0, Math.PI * 2);
-ctx.fill();
+ctx.moveTo(bx - 8, wallTop + 2);
+ctx.lineTo(bx + 6, by + 6);
+ctx.moveTo(bx + banW + 8, wallTop + 2);
+ctx.lineTo(bx + banW - 6, by + 6);
+ctx.moveTo(bx - 8, wallTop + wallH - 2);
+ctx.lineTo(bx + 6, by + banH - 6);
+ctx.moveTo(
+bx + banW + 8,
+wallTop + wallH - 2
+);
+ctx.lineTo(
+bx + banW - 6,
+by + banH - 6
+);
 ctx.stroke();
 
-ctx.fillStyle = '#F8FAFC';
-ctx.font =
-'900 ' +
-Math.max(9, Math.round(r * 0.52)) +
-'px sans-serif';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-var pubWord =
-global.currentLang === 'uk' ||
-global.currentLang === 'ru'
-? 'ПАБ'
-: 'PUB';
-ctx.fillText(pubWord, mx, my - r * 0.22);
-ctx.fillStyle = '#C084FC';
-ctx.font =
-'700 ' +
-Math.max(8, Math.round(r * 0.42)) +
-'px sans-serif';
-ctx.fillText('LOGO', mx, my + r * 0.32);
+// warm woven cotton banner cloth
+fillRoundBox(
+ctx,
+bx,
+by,
+banW,
+banH,
+7,
+'#F5F0E6',
+'#090D16',
+2.5
+);
+
+// subtle inner cotton stitch border
+ctx.strokeStyle = '#C8B9A6';
+ctx.lineWidth = 1.5;
+ctx.strokeRect(
+bx + 4,
+by + 4,
+banW - 8,
+banH - 8
+);
+
+// corner grommet rings on cotton cloth
+ctx.fillStyle = '#475569';
+var gx1 = bx + 8;
+var gx2 = bx + banW - 8;
+var gy1 = by + 8;
+var gy2 = by + banH - 8;
+ctx.beginPath();
+ctx.arc(gx1, gy1, 2.5, 0, Math.PI * 2);
+ctx.arc(gx2, gy1, 2.5, 0, Math.PI * 2);
+ctx.arc(gx1, gy2, 2.5, 0, Math.PI * 2);
+ctx.arc(gx2, gy2, 2.5, 0, Math.PI * 2);
+ctx.fill();
+
+// draw full rowan events logo on cotton
+if (
+rowanFullLogoImg &&
+rowanFullLogoImg.complete &&
+rowanFullLogoImg.naturalWidth > 0
+) {
+var lh = banH - 12;
+var lw = Math.round(lh * (685 / 260));
+var lx = Math.round(
+bx + (banW - lw) * 0.5
+);
+var ly = Math.round(
+by + (banH - lh) * 0.5
+);
+ctx.drawImage(
+rowanFullLogoImg,
+lx,
+ly,
+lw,
+lh
+);
+}
 }
 
 // draw castle wall spectators and meadow
@@ -1631,6 +1732,7 @@ lastChampId,
 windDir
 ) {
 var t = animPhase || 0;
+var noCrowd = crowdMood === 'NONE';
 var isVictory = crowdMood === 'VICTORY';
 var isCheer =
 isVictory || crowdMood === 'CHEER';
@@ -1647,8 +1749,8 @@ var stepX = merlonW + gapW;
 var merlonH = Math.max(14, wallH * 0.34);
 
 // 2. banners on left and right of spectators
-// shows fighter shields or pub logo on parade
-if (w >= 600) {
+// shows fighter shields or brand icon on parade
+if (w >= 600 && !noCrowd) {
 var towerW = Math.max(48, w * 0.08);
 var towerTop = 4;
 var bannerH = Math.max(
@@ -1706,8 +1808,8 @@ bannerH
 }
 
 // 3. 5 tiered rows of larger spectators
-// fills upper stands without empty space
-if (w >= 600) {
+// skipped on waiting screen when noCrowd
+if (w >= 600 && !noCrowd) {
 var stLeft = w * 0.132;
 var stRight = w * 0.868;
 var standsTop = 4;
@@ -1836,7 +1938,17 @@ ctx.moveTo(0, wallBottomY);
 ctx.lineTo(w, wallBottomY);
 ctx.stroke();
 
-// 4. dark-green meadow lawn (лужайка)
+// cotton streamer with full logo on wall
+if (w >= 600 && !noCrowd) {
+drawWallCottonBanner(
+ctx,
+w,
+wallTop,
+wallH
+);
+}
+
+// 5. dark-green meadow lawn (лужайка)
 ctx.fillStyle = '#14532D';
 ctx.fillRect(
 0,
@@ -1864,93 +1976,128 @@ w,
 lawnH * 0.16
 );
 
-// 5. purple pub flags along jousting lists
-// hangs down or flutters left/right with wind
+// 6. large branded flags along jousting lists
+// shows rowan icon clearly on every flag
 if (showRail) {
 var wDir = windDir || 0;
-for (var rx = 120; rx < w - 110; rx += 140) {
-// dark iron flagpole post in turf
+var hasIcon = Boolean(
+rowanIconImg &&
+rowanIconImg.complete &&
+rowanIconImg.naturalWidth > 0
+);
+for (var rx = 135; rx < w - 125; rx += 190) {
+// tall iron flagpole post in turf
 fillRoundBox(
 ctx,
-rx - 2.5,
-350,
-5,
-76,
+rx - 3,
+318,
+6,
+108,
 2,
 '#475569',
 '#090D16',
-1.8
+2
 );
 
-// silver finial ball atop pole
-ctx.fillStyle = '#E9D5FF';
+// finial ball atop pole
+ctx.fillStyle = '#F5F0E6';
 ctx.strokeStyle = '#090D16';
-ctx.lineWidth = 1.5;
+ctx.lineWidth = 1.8;
 ctx.beginPath();
-ctx.arc(rx, 348, 4.2, 0, Math.PI * 2);
+ctx.arc(rx, 314, 5.2, 0, Math.PI * 2);
 ctx.fill();
 ctx.stroke();
 
 if (wDir === 0) {
-// calm wind: purple flag hangs down pole
-ctx.fillStyle = '#9333EA';
-ctx.strokeStyle = '#090D16';
-ctx.lineWidth = 2;
+// calm wind: large banner hangs under bar
+fillRoundBox(
+ctx,
+rx - 29,
+320,
+58,
+4,
+2,
+'#334155',
+'#090D16',
+1.5
+);
+ctx.fillStyle = '#F5F0E6';
+ctx.strokeStyle = '#072E1B';
+ctx.lineWidth = 2.2;
 ctx.beginPath();
-ctx.moveTo(rx - 3, 353);
-ctx.lineTo(rx + 12, 355);
-ctx.lineTo(rx + 9, 405);
-ctx.lineTo(rx + 1, 396);
-ctx.lineTo(rx - 6, 404);
+ctx.moveTo(rx - 26, 324);
+ctx.lineTo(rx + 26, 324);
+ctx.lineTo(rx + 26, 378);
+ctx.lineTo(rx, 390);
+ctx.lineTo(rx - 26, 378);
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
 
-ctx.fillStyle = '#C084FC';
-ctx.fillRect(rx - 1, 355, 4, 38);
+if (hasIcon) {
+ctx.drawImage(
+rowanIconImg,
+rx - 22,
+328,
+44,
+44
+);
+}
 } else {
-// blowing left (-1) or right (+1)
+// wind blowing left (-1) or right (+1)
 var wave =
 Math.sin(t * 7.5 + rx * 0.04) * 4.5;
-var tipX = rx + wDir * 52;
-var midX = rx + wDir * 28;
-var notchX = rx + wDir * 39;
+var fW = 70;
+var fH = 54;
+var tipX = rx + wDir * fW;
+var midX = rx + wDir * (fW * 0.5);
+var notchX = rx + wDir * (fW - 12);
+var topY = 322;
 
-ctx.fillStyle = '#9333EA';
-ctx.strokeStyle = '#090D16';
-ctx.lineWidth = 2;
+ctx.fillStyle = '#F5F0E6';
+ctx.strokeStyle = '#072E1B';
+ctx.lineWidth = 2.2;
 ctx.beginPath();
-ctx.moveTo(rx + wDir * 2, 353);
+ctx.moveTo(rx + wDir * 3, topY);
 ctx.quadraticCurveTo(
 midX,
-351 + wave * 0.5,
+topY - 2 + wave * 0.5,
 tipX,
-356 + wave
+topY + 3 + wave
 );
-ctx.lineTo(notchX, 366 + wave * 0.7);
-ctx.lineTo(tipX, 376 + wave);
+ctx.lineTo(
+notchX,
+topY + fH * 0.5 + wave * 0.7
+);
+ctx.lineTo(tipX, topY + fH - 3 + wave);
 ctx.quadraticCurveTo(
 midX,
-378 + wave * 0.5,
-rx + wDir * 2,
-376
+topY + fH + 2 + wave * 0.5,
+rx + wDir * 3,
+topY + fH
 );
 ctx.closePath();
 ctx.fill();
 ctx.stroke();
 
-// light purple pub stripe along pennant
-ctx.strokeStyle = '#C084FC';
-ctx.lineWidth = 2.5;
-ctx.beginPath();
-ctx.moveTo(rx + wDir * 4, 364.5);
-ctx.quadraticCurveTo(
-midX,
-364.5 + wave * 0.5,
-notchX - wDir * 3,
-366 + wave * 0.7
+if (hasIcon) {
+var icSz = 42;
+var icX =
+wDir > 0
+? rx + 8
+: rx - 8 - icSz;
+var icY =
+topY +
+(fH - icSz) * 0.5 +
+wave * 0.45;
+ctx.drawImage(
+rowanIconImg,
+icX,
+icY,
+icSz,
+icSz
 );
-ctx.stroke();
+}
 }
 }
 }

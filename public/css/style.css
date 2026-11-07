@@ -49,58 +49,69 @@ cursor: pointer;
 -webkit-tap-highlight-color: transparent;
 }
 
-/* waiting screen before pub is selected */
-/* displays game title and local network url */
-.waitingCard {
-height: 100%;
+/* full-screen waiting view before parade */
+/* castle wall top and green jousting lawn */
+.waitingFullScreen {
+position: relative;
+height: 1036px !important;
 width: 100%;
-background: #111827;
-border: 2px solid #2563EB;
-border-radius: 16px;
+border-radius: 14px;
+overflow: hidden;
+border: 2px solid #1E293B;
+}
+
+#waitingCanvas {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+display: block;
+}
+
+.waitingHeroOverlay {
+position: absolute;
+top: 215px;
+left: 0;
+right: 0;
+bottom: 0;
 display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: center;
-text-align: center;
-padding: 48px;
+gap: 44px;
+padding: 24px 48px 40px 48px;
+pointer-events: none;
 }
 
 .waitingBrand {
-font-size: 68px;
+font-size: 96px;
 font-weight: 900;
-letter-spacing: 3px;
+letter-spacing: 6px;
 color: #F8FAFC;
-margin-bottom: 18px;
+text-align: center;
+text-shadow:
+0 6px 0 #090D16,
+0 10px 24px rgba(9, 13, 22, 0.65);
 }
 
-.waitingSubText {
-font-size: 28px;
-font-weight: 700;
-color: #94A3B8;
-margin-bottom: 44px;
-max-width: 1100px;
+.waitingLogoPlaque {
+background: #F5F0E6;
+border: 5px solid #072E1B;
+outline: 3px solid #090D16;
+border-radius: 28px;
+padding: 40px 76px;
+box-shadow: 0 16px 0 rgba(9, 13, 22, 0.42);
+display: flex;
+align-items: center;
+justify-content: center;
 }
 
-.waitingNetBox {
-background: #090D16;
-border: 2px solid #38BDF8;
-border-radius: 14px;
-padding: 28px 56px;
-}
-
-.waitingNetLabel {
-font-size: 20px;
-font-weight: 800;
-color: #34D399;
-letter-spacing: 1.5px;
-margin-bottom: 12px;
-}
-
-.waitingNetUrl {
-font-size: 46px;
-font-weight: 900;
-color: #38BDF8;
-font-family: monospace;
+.waitingBigLogo {
+width: 980px;
+height: 372px;
+display: block;
+object-fit: contain;
 }
 
 /* prize celebration toast banner */

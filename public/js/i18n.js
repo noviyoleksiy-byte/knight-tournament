@@ -144,8 +144,7 @@ redeemLbl:
 btnClaimPrize: 'AWARD PRIZE',
 addTableLbl:
 'ADD NEW TABLE OR PLAYER:',
-newTablePlaceholder:
-'E.g. Table #5 or Bar Counter',
+newTablePlaceholder: 'Table or player name',
 btnAddTable: '+ TABLE',
 settingsSection:
 'PUB & TOURNAMENT SETTINGS',
@@ -197,8 +196,8 @@ bonusGiftCard: 'WIN GIFT: ',
 tvNetBarLbl: 'TV URL: ',
 selectPubTitle: 'SELECT OR CREATE PUB',
 btnAddPubInit: '+ ADD PUB',
-newPubNamePlaceholder: 'Pub name (e.g. Old Oak)',
-newPubSeedPlaceholder: 'Seed (optional, e.g. 257)',
+newPubNamePlaceholder: 'Pub name',
+newPubSeedPlaceholder: 'Seed (optional)',
 btnCreatePub: 'CREATE PUB',
 btnCancelPub: 'CANCEL',
 btnSelectPub: 'OPEN',
@@ -206,7 +205,7 @@ btnSwitchPub: 'SWITCH PUB',
 btnExportData: 'EXPORT ALL DATA (JSON)',
 orderGridTitle:
 'PURCHASE BONUS GRID (ITEM / CAPS)',
-orderItemPlaceholder: 'Item (e.g. Stout)',
+orderItemPlaceholder: 'Item name',
 orderCapsPlaceholder: 'Caps',
 btnAddOrderItem: '+ ITEM',
 noOrderItemsHint:
@@ -386,8 +385,7 @@ redeemLbl:
 btnClaimPrize: 'ВИДАТИ ПРИЗ',
 addTableLbl:
 'ДОДАТИ НОВИЙ СТІЛ АБО ГРАВЦЯ:',
-newTablePlaceholder:
-'Напр. Стіл №5 або Барна стійка',
+newTablePlaceholder: 'Назва столу або гравця',
 btnAddTable: '+ СТІЛ',
 settingsSection:
 'НАЛАШТУВАННЯ ПАБУ ТА ТУРНІРУ',
@@ -440,7 +438,7 @@ tvNetBarLbl: 'ТБ АДРЕСА: ',
 selectPubTitle: 'ОБЕРІТЬ АБО СТВОРІТЬ ПАБ',
 btnAddPubInit: '+ ДОДАТИ ПАБ',
 newPubNamePlaceholder: 'Назва пабу',
-newPubSeedPlaceholder: 'Сід (необов., напр. 257)',
+newPubSeedPlaceholder: 'Сід (необов’язково)',
 btnCreatePub: 'СТВОРИТИ ПАБ',
 btnCancelPub: 'СКАСУВАТИ',
 btnSelectPub: 'ВІДКРИТИ',
@@ -448,7 +446,7 @@ btnSwitchPub: 'ЗМІНИТИ ПАБ',
 btnExportData: 'ЕКСПОРТ УСІХ ДАНИХ (JSON)',
 orderGridTitle:
 'СІТКА БОНУСІВ ЗА ПОКУПКУ (ТОВАР / КРИШКИ)',
-orderItemPlaceholder: 'Товар (напр. Келих)',
+orderItemPlaceholder: 'Назва товару',
 orderCapsPlaceholder: 'Кришок',
 btnAddOrderItem: '+ ТОВАР',
 noOrderItemsHint:
@@ -628,8 +626,7 @@ redeemLbl:
 btnClaimPrize: 'ВЫДАТЬ ПРИЗ',
 addTableLbl:
 'ДОБАВИТЬ НОВЫЙ СТОЛ ИЛИ ИГРОКА:',
-newTablePlaceholder:
-'Напр. Стол №5 или Барная стойка',
+newTablePlaceholder: 'Название стола или игрока',
 btnAddTable: '+ СТОЛ',
 settingsSection:
 'НАСТРОЙКИ ПАБА И ТУРНИРА',
@@ -682,7 +679,7 @@ tvNetBarLbl: 'АДРЕС ТВ: ',
 selectPubTitle: 'ВЫБЕРИТЕ ИЛИ СОЗДАЙТЕ ПАБ',
 btnAddPubInit: '+ ДОБАВИТЬ ПАБ',
 newPubNamePlaceholder: 'Название паба',
-newPubSeedPlaceholder: 'Сид (необяз., напр. 257)',
+newPubSeedPlaceholder: 'Сид (необязательно)',
 btnCreatePub: 'СОЗДАТЬ ПАБ',
 btnCancelPub: 'ОТМЕНА',
 btnSelectPub: 'ОТКРЫТЬ',
@@ -690,7 +687,7 @@ btnSwitchPub: 'СМЕНИТЬ ПАБ',
 btnExportData: 'ЭКСПОРТ ВСЕХ ДАННЫХ (JSON)',
 orderGridTitle:
 'СЕТКА БОНУСОВ ЗА ПОКУПКУ (ТОВАР / КРЫШЕК)',
-orderItemPlaceholder: 'Товар (напр. Бокал)',
+orderItemPlaceholder: 'Название товара',
 orderCapsPlaceholder: 'Крышек',
 btnAddOrderItem: '+ ТОВАР',
 noOrderItemsHint:

@@ -39,6 +39,8 @@ document.getElementById('tvBottomBar');
 
 var screenWaiting =
 document.getElementById('screenWaiting');
+var waitingCanvas =
+document.getElementById('waitingCanvas');
 var screenParade =
 document.getElementById('screenParade');
 var screenBracket =
@@ -74,11 +76,11 @@ var arenaCanvas =
 document.getElementById('arenaCanvas');
 
 // get dictionary for active state language
-// defaults to english when lang is unset
+// defaults to russian when lang is unset
 function getDict() {
 var lang =
 (currentState && currentState.lang) ||
-'en';
+'ru';
 if (window.GameI18n) {
 return window.GameI18n.getDict(lang);
 }
@@ -1023,41 +1025,19 @@ s.combat.mode === 'JOUST'
 }
 }
 
-var netUrlEl =
-document.getElementById('waitingNetUrl');
-if (netUrlEl) {
-var dispUrl =
-s.lanUrl &&
-s.lanUrl.indexOf('127.0.0.1') === -1
-? s.lanUrl
-: window.location.origin;
-netUrlEl.textContent = dispUrl;
-}
-
 if (s.noPubSelected || s.tvScreen === 'WAITING') {
-var wSubEl =
-document.getElementById('waitingSubText');
-if (wSubEl) {
-wSubEl.textContent =
-!s.noPubSelected && s.pubName
-? s.pubName + (d.waitingReadySub || '')
-: d.waitingSub || '';
-}
 if (screenWaiting) {
-screenWaiting.className = 'tvScreen';
+screenWaiting.className =
+'tvScreen waitingFullScreen';
 }
 screenParade.className = 'tvScreen hidden';
 screenBracket.className = 'tvScreen hidden';
 screenCombat.className = 'tvScreen hidden';
 if (tvBottomBar) {
-if (!s.noPubSelected) {
-tvBottomBar.className = 'bottomBar';
-renderBottomBar(s);
-} else {
 tvBottomBar.className = 'bottomBar hidden';
 }
-}
 prizeToast.className = 'prizeBanner hidden';
+drawWaitingFrame();
 return;
 }
 
@@ -1266,11 +1246,41 @@ particles.splice(pIdx, 1);
 }
 }
 
+// draw castle wall and green field on waiting
+// top wall has no spectators or side banners
+function drawWaitingFrame() {
+if (!waitingCanvas || !window.KnightArt) {
+return;
+}
+var wCtx = waitingCanvas.getContext('2d');
+var ww = waitingCanvas.width;
+var wh = waitingCanvas.height;
+wCtx.clearRect(0, 0, ww, wh);
+window.KnightArt.drawCastleScene(
+wCtx,
+ww,
+wh,
+215,
+false,
+0,
+'NONE',
+null,
+null,
+null,
+0
+);
+}
+
 // draw parade or combat canvas every frame
 // drives 60fps animation on tv stage
 function drawArenaFrame() {
 animClock += 0.035;
-if (!currentState) {
+if (
+!currentState ||
+currentState.noPubSelected ||
+currentState.tvScreen === 'WAITING'
+) {
+drawWaitingFrame();
 requestNextFrame();
 return;
 }
@@ -1817,13 +1827,16 @@ return setTimeout(cb, 33);
 raf(drawArenaFrame);
 }
 
-var BACKUP_KEY = 'kt_active_backup_v4';
+var BACKUP_KEY = 'kt_active_backup_v5';
 try {
 window.localStorage.removeItem(
 'kt_active_backup_v2'
 );
 window.localStorage.removeItem(
 'kt_active_backup_v3'
+);
+window.localStorage.removeItem(
+'kt_active_backup_v4'
 );
 } catch (e) {}
 
