@@ -384,12 +384,18 @@ return picked;
 }
 
 // build initial 24 knight pub roster
-// defaults to english language
-function createPubData(customSeed, lang) {
+// starts with zero wins tables and prizes
+function createPubData(
+pubName,
+customSeed,
+lang
+) {
 var l = lang || 'en';
+var parsedSeed = parseInt(customSeed, 10);
 var seed =
-customSeed ||
-Math.floor(100 + Math.random() * 899);
+parsedSeed && parsedSeed > 0
+? parsedSeed
+: Math.floor(100 + Math.random() * 899);
 var templates = selectPubTemplates(seed);
 var roster = [];
 
@@ -446,224 +452,150 @@ localizeKnight(kObj, l);
 roster.push(kObj);
 }
 
-// seed defending champion for tour 1
-// gives silver banner on first parade
-if (roster.length >= 2) {
-roster[0].wins = 3;
-roster[0].titles = 1;
-roster[0].vsWins = { K2: 1 };
-roster[1].wins = 2;
-roster[1].losses = 1;
-roster[1].vsWins = {};
-}
+var pId =
+'pub_' +
+Date.now() +
+'_' +
+Math.floor(Math.random() * 999);
+var cleanName = String(
+pubName || 'Pub #' + seed
+).trim();
 
-var data = {
-economyVersion: 2,
+return {
+id: pId,
+name: cleanName,
+economyVersion: 3,
 lang: l,
 pubSeed: seed,
+gameMode: 'PUB',
+allowLiveBets: true,
+paradeBonusType: 'PERCENT_20',
+paradeGiftText: '',
 tournamentNumber: 0,
-lastChampionId: 'K1',
-lastFinalistId: 'K2',
+lastChampionId: null,
+lastFinalistId: null,
 roster: roster,
-tables: [
-{ id: 1, name: 'Table #1', balance: 0 },
-{ id: 2, name: 'Table #2', balance: 0 },
-{ id: 3, name: 'Table #3', balance: 0 },
-{
-id: 4,
-name: 'Bar Counter',
-balance: 0
-}
-],
-prizes: [
-{
-id: 1,
-title: PRIZE_NAMES[1][l],
-cost: 5
-},
-{
-id: 2,
-title: PRIZE_NAMES[2][l],
-cost: 10
-},
-{
-id: 3,
-title: PRIZE_NAMES[3][l],
-cost: 20
-},
-{
-id: 4,
-title: PRIZE_NAMES[4][l],
-cost: 40
-}
-]
+tables: [],
+orderGrid: [],
+prizes: [],
+activeTournament: null
 };
-for (var t = 0; t < data.tables.length; t++) {
-localizeTableName(data.tables[t], l);
-}
-return data;
 }
 
-// load persistent pub roster from disk
-// resets legacy test pub data if version old
-function loadPubData() {
+var STORE_FILE = path.join(
+DATA_DIR,
+'pubs_store.json'
+);
+var storeVersion = 1;
+
+// remove legacy test files on first run
+// keeps production storage clean
+function cleanLegacyTestFiles() {
 try {
 if (fs.existsSync(ROSTER_FILE)) {
+fs.unlinkSync(ROSTER_FILE);
+}
+if (fs.existsSync(STATE_FILE)) {
+fs.unlinkSync(STATE_FILE);
+}
+} catch (e) {}
+}
+
+cleanLegacyTestFiles();
+
+// load multi-pub registry from disk
+// starts with empty pubs array on fresh boot
+function loadPubStore() {
+try {
+if (fs.existsSync(STORE_FILE)) {
 var raw =
-fs.readFileSync(ROSTER_FILE, 'utf8');
+fs.readFileSync(STORE_FILE, 'utf8');
 var parsed = JSON.parse(raw);
 if (
 parsed &&
-parsed.roster &&
-parsed.economyVersion === 2
+parsed.schemaVersion === 3 &&
+Array.isArray(parsed.pubs)
 ) {
 parsed.lang = parsed.lang || 'en';
-if (!parsed.lastChampionId) {
-parsed.lastChampionId = 'K1';
-parsed.lastFinalistId = 'K2';
-if (parsed.roster[0]) {
-parsed.roster[0].titles = Math.max(
-1,
-parsed.roster[0].titles || 0
-);
-parsed.roster[0].wins = Math.max(
-3,
-parsed.roster[0].wins || 0
-);
-}
-}
-var templates = selectPubTemplates(
-parsed.pubSeed || 257
-);
-for (
-var i = 0;
-i < parsed.roster.length;
-i++
-) {
-var tpl = templates[i];
-if (tpl) {
-var shIdx =
-tpl.shieldIdx % SHIELDS.length;
-parsed.roster[i].poolIndex =
-tpl.poolIndex;
-parsed.roster[i].colorIdx =
-tpl.colorIdx;
-parsed.roster[i].helmIdx =
-tpl.helmIdx;
-parsed.roster[i].shieldIdx = shIdx;
-localizeKnight(
-parsed.roster[i],
-parsed.lang
-);
-if (
-parsed.roster[i].favHorseIdx ===
-undefined
-) {
-var pSeed = parsed.pubSeed || 257;
-parsed.roster[i].favHorseIdx =
-Math.floor(
-seededHash(pSeed, i * 31 + 9) * 10
-) % 10;
-}
-if (!parsed.roster[i].vsWins) {
-parsed.roster[i].vsWins = {};
-}
-}
-}
-if (
-parsed.roster[0] &&
-parsed.roster[1] &&
-Object.keys(
-parsed.roster[0].vsWins || {}
-).length === 0
-) {
-parsed.roster[0].vsWins = { K2: 1 };
-parsed.roster[1].losses = Math.max(
-1,
-parsed.roster[1].losses || 0
-);
-}
-if (parsed.tables) {
-for (
-var tb = 0;
-tb < parsed.tables.length;
-tb++
-) {
-localizeTableName(
-parsed.tables[tb],
-parsed.lang
-);
-}
-}
-if (parsed.prizes) {
-for (
-var pr = 0;
-pr < parsed.prizes.length;
-pr++
-) {
-var pObj = parsed.prizes[pr];
-if (PRIZE_NAMES[pObj.id]) {
-pObj.title =
-PRIZE_NAMES[pObj.id][parsed.lang];
-}
-}
-}
-savePubData(parsed);
 return parsed;
 }
 }
 } catch (e) {
-console.log('read roster err:', e);
+console.log('read store err:', e);
 }
-var fresh = createPubData(null, 'en');
-savePubData(fresh);
-return fresh;
+var emptyStore = {
+schemaVersion: 3,
+lang: 'en',
+activePubId: null,
+pubs: []
+};
+savePubStore(emptyStore);
+return emptyStore;
 }
 
-// write pub roster and tables to disk
-// uses atomic tmp rename to prevent corruption
-function savePubData(data) {
+// write multi-pub store to disk atomically
+// writes tmp file then renames on disk
+function savePubStore(stObj) {
 try {
 if (!fs.existsSync(DATA_DIR)) {
 fs.mkdirSync(DATA_DIR, {
 recursive: true
 });
 }
-var tmpFile = ROSTER_FILE + '.tmp';
+var target = stObj || pubStore;
+if (!target) return;
+target.savedAt = Date.now();
+var tmpFile = STORE_FILE + '.tmp';
 fs.writeFileSync(
 tmpFile,
-JSON.stringify(data, null, 2)
+JSON.stringify(target)
 );
-fs.renameSync(tmpFile, ROSTER_FILE);
+fs.renameSync(tmpFile, STORE_FILE);
 } catch (e) {
-console.log('save roster err:', e);
+console.log('save store err:', e);
 }
 }
 
-// write active mid-game state to disk
-// allows instant resume after power loss
+// save current pub data into multi-pub store
+// persists roster tables prizes and settings
+function savePubData(data) {
+if (!pubStore) return;
+savePubStore(pubStore);
+}
+
+// save active tournament into current pub
+// allows instant resume after crash or switch
 function saveGameState(st) {
-if (!st) return;
-try {
-if (!fs.existsSync(DATA_DIR)) {
-fs.mkdirSync(DATA_DIR, {
-recursive: true
-});
-}
-st.stateSchema = 2;
+if (!pubStore) return;
+if (pubData && st && !st.noPubSelected) {
+delete st.storeBackup;
+st.stateSchema = 3;
 st.savedAt = Date.now();
-var tmpState = STATE_FILE + '.tmp';
-fs.writeFileSync(
-tmpState,
-JSON.stringify(st)
-);
-fs.renameSync(tmpState, STATE_FILE);
-} catch (e) {
-console.log('save state err:', e);
+pubData.activeTournament = st;
 }
+savePubStore(pubStore);
 }
 
-var pubData = loadPubData();
+var pubStore = loadPubStore();
+var pubData = null;
+
+// find pub record by id in store
+// returns null when pub id does not exist
+function findPubById(pubId) {
+if (!pubId || !pubStore || !pubStore.pubs) {
+return null;
+}
+for (
+var i = 0;
+i < pubStore.pubs.length;
+i++
+) {
+if (pubStore.pubs[i].id === pubId) {
+return pubStore.pubs[i];
+}
+}
+return null;
+}
 
 // select 8 fighters from 24 pub roster
 // champion and finalist stay to defend
@@ -1104,9 +1036,11 @@ mx.k2.outrightOdds = alive[y].outrightOdds;
 }
 
 // create new 8 knight tournament state
-// we set up quarterfinals semis and final
+// sets up quarterfinals semis and final
 function buildNewTournament(existingMode) {
-var l = pubData.lang || 'en';
+if (!pubData) return buildWaitingState();
+var l =
+pubData.lang || pubStore.lang || 'en';
 pubData.tournamentNumber += 1;
 savePubData(pubData);
 
@@ -1185,12 +1119,21 @@ winnerId: null
 ];
 
 var st = {
-version: 1,
+version: storeVersion++,
+noPubSelected: false,
+pubId: pubData.id,
+pubName: pubData.name,
 lang: l,
 pubSeed: pubData.pubSeed,
 tournamentNumber: pubData.tournamentNumber,
-gameMode: existingMode || 'PUB',
-allowLiveBets: true,
+gameMode:
+existingMode || pubData.gameMode || 'PUB',
+allowLiveBets:
+pubData.allowLiveBets !== false,
+paradeBonusType:
+pubData.paradeBonusType || 'PERCENT_20',
+paradeGiftText:
+pubData.paradeGiftText || '',
 tvScreen: 'PARADE',
 tournamentStatus: 'ACTIVE',
 statusKey: 'PARADE_START',
@@ -1199,8 +1142,9 @@ currentMatchIndex: 0,
 matches: matches,
 aliveKnights: eight,
 activeBets: [],
-tables: pubData.tables,
-prizes: pubData.prizes,
+tables: pubData.tables || [],
+orderGrid: pubData.orderGrid || [],
+prizes: pubData.prizes || [],
 recentPayouts: [],
 prizeBannerText: null,
 champion: null,
@@ -1243,25 +1187,62 @@ saveGameState(st);
 return st;
 }
 
-// load ongoing tournament or build new one
-// resumes mid-game state after crash or reboot
+// build waiting screen state when no pub active
+// shown on tv before presenter selects pub
+function buildWaitingState() {
+var l = (pubStore && pubStore.lang) || 'en';
+return {
+version: storeVersion++,
+noPubSelected: true,
+tvScreen: 'WAITING',
+lang: l,
+statusKey: 'WAITING_PUB',
+statusText: getStatusStr('WAITING_PUB', l),
+tables: [],
+orderGrid: [],
+prizes: [],
+matches: []
+};
+}
+
+// load ongoing tournament for selected pub
+// returns waiting state if no pub is active
 function loadOrBuildGameState() {
-try {
-if (fs.existsSync(STATE_FILE)) {
-var rawSt =
-fs.readFileSync(STATE_FILE, 'utf8');
-var saved = JSON.parse(rawSt);
+if (!pubStore || !pubStore.activePubId) {
+pubData = null;
+return buildWaitingState();
+}
+var found = findPubById(
+pubStore.activePubId
+);
+if (!found) {
+pubStore.activePubId = null;
+pubData = null;
+savePubStore(pubStore);
+return buildWaitingState();
+}
+pubData = found;
+var saved = pubData.activeTournament;
 if (
 saved &&
-saved.stateSchema === 2 &&
-saved.pubSeed === pubData.pubSeed &&
 saved.matches &&
 saved.matches.length === 7
 ) {
+saved.noPubSelected = false;
+saved.pubId = pubData.id;
+saved.pubName = pubData.name;
 saved.lang =
-pubData.lang || saved.lang || 'en';
-saved.tables = pubData.tables;
-saved.prizes = pubData.prizes;
+pubData.lang ||
+pubStore.lang ||
+saved.lang ||
+'en';
+saved.tables = pubData.tables || [];
+saved.orderGrid = pubData.orderGrid || [];
+saved.prizes = pubData.prizes || [];
+saved.paradeBonusType =
+pubData.paradeBonusType || 'PERCENT_20';
+saved.paradeGiftText =
+pubData.paradeGiftText || '';
 saved.soundToPlay = null;
 saved.prizeBannerText = null;
 saved.lastParadeAt = Date.now();
@@ -1275,18 +1256,17 @@ updateAllOdds(saved);
 saveGameState(saved);
 return saved;
 }
-}
-} catch (e) {
-console.log('load state err:', e);
-}
-return buildNewTournament('PUB');
+return buildNewTournament(
+pubData.gameMode || 'PUB'
+);
 }
 
 var gameState = loadOrBuildGameState();
 
 // settle bets and advance winner in bracket
-// we pay tables and update eternal roster
+// pays caps and awards parade gift on win
 function finishCurrentMatch(winnerSide) {
+if (!pubData || !gameState.matches) return;
 var m =
 gameState.matches[
 gameState.currentMatchIndex
@@ -1320,6 +1300,21 @@ loseK.vsWins = rk.vsWins;
 }
 }
 
+var l = gameState.lang || 'en';
+var giftVerb =
+l === 'uk'
+? ' ОТРИМУЄ ПОДАРУНОК ПАРАДУ: '
+: l === 'ru'
+? ' ПОЛУЧАЕТ ПОДАРОК ПАРАДА: '
+: ' WINS PARADE GIFT: ';
+var giftTagWord =
+l === 'uk'
+? ' + ПОДАРУНОК: '
+: l === 'ru'
+? ' + ПОДАРОК: '
+: ' + GIFT: ';
+var wonGifts = [];
+
 // pay winning match bets to tables
 var remainingBets = [];
 var payLogs = [];
@@ -1336,9 +1331,23 @@ bet.amount,
 bet.odds
 );
 creditTableById(bet.tableId, winAmt);
+var giftExtra = bet.paradeGift
+? giftTagWord + bet.paradeGift
+: '';
 payLogs.push(
-bet.tableName + ': +' + winAmt
+bet.tableName +
+': +' +
+winAmt +
+giftExtra
 );
+if (bet.paradeGift) {
+wonGifts.push(
+bet.tableName.toUpperCase() +
+giftVerb +
+bet.paradeGift.toUpperCase() +
+'!'
+);
+}
 }
 } else {
 remainingBets.push(bet);
@@ -1401,7 +1410,6 @@ winK.titles = pubData.roster[t].titles;
 }
 }
 
-var l = gameState.lang || 'en';
 var tTag =
 l === 'uk'
 ? ' [ТУРНІР]: +'
@@ -1424,14 +1432,33 @@ ob.amount,
 ob.odds
 );
 creditTableById(ob.tableId, outWin);
+var outGiftExtra = ob.paradeGift
+? giftTagWord + ob.paradeGift
+: '';
 payLogs.push(
-ob.tableName + tTag + outWin
+ob.tableName +
+tTag +
+outWin +
+outGiftExtra
 );
+if (ob.paradeGift) {
+wonGifts.push(
+ob.tableName.toUpperCase() +
+giftVerb +
+ob.paradeGift.toUpperCase() +
+'!'
+);
+}
 }
 }
 gameState.activeBets = [];
 }
 
+if (wonGifts.length > 0) {
+gameState.prizeBannerText =
+wonGifts.join(' · ');
+gameState.soundToPlay = 'prize';
+}
 if (payLogs.length > 0) {
 gameState.recentPayouts = payLogs.slice(0, 4);
 }
@@ -1441,8 +1468,9 @@ saveGameState(gameState);
 }
 
 // add balance to a table by id
-// we update both gameState and pubData
+// updates both gameState and pubData
 function creditTableById(tableId, delta) {
+if (!pubData || !pubData.tables) return;
 for (
 var i = 0;
 i < pubData.tables.length;
@@ -1811,6 +1839,9 @@ finishCurrentMatch(winSide);
 // step parade and combat timers on server
 // saves state on every step for crash recovery
 setInterval(function () {
+if (!pubData || gameState.noPubSelected) {
+return;
+}
 if (
 gameState.tvScreen === 'PARADE' &&
 gameState.parade &&
@@ -1821,7 +1852,7 @@ Date.now() -
 (gameState.lastParadeAt || 0);
 if (pWait >= 2400) {
 gameState.lastParadeAt = Date.now();
-gameState.version += 1;
+gameState.version = storeVersion++;
 var pr = gameState.parade;
 if (pr.subStep === 'RIDE_TO_RACK') {
 pr.subStep = 'PICKED';
@@ -1833,9 +1864,13 @@ pr.subStep = 'RIDE_TO_RACK';
 gameState.soundToPlay = 'hoof';
 } else {
 pr.finished = true;
-gameState.statusKey = 'BONUS_BETS';
+var bKey =
+gameState.paradeBonusType === 'GIFT'
+? 'BONUS_BETS_GIFT'
+: 'BONUS_BETS';
+gameState.statusKey = bKey;
 gameState.statusText = getStatusStr(
-'BONUS_BETS',
+bKey,
 gameState.lang
 );
 gameState.soundToPlay = 'horn';
@@ -1858,7 +1893,7 @@ gameState.combat.mode === 'MELEE'
 : 6600;
 if (elapsed >= stepDur) {
 gameState.lastStepAt = Date.now();
-gameState.version += 1;
+gameState.version = storeVersion++;
 runNextCombatPhase();
 saveGameState(gameState);
 }
@@ -1866,6 +1901,7 @@ saveGameState(gameState);
 }, 450);
 
 // get local network ip for phone host
+// scans non-internal ipv4 interfaces
 function getLocalIp() {
 var nets = os.networkInterfaces();
 for (var name in nets) {
@@ -1883,40 +1919,142 @@ return net.address;
 return '127.0.0.1';
 }
 
-// return current state to tv and host
-// includes roster backup for client storage
-app.get('/api/state', function (req, res) {
-res.set('Cache-Control', 'no-store');
+// build compact list of saved pubs
+// sent to host selector screen
+function getPubsSummary() {
+var list = [];
+var pubs =
+(pubStore && pubStore.pubs) || [];
+for (var i = 0; i < pubs.length; i++) {
+var p = pubs[i];
+list.push({
+id: p.id,
+name: p.name,
+pubSeed: p.pubSeed,
+tournamentNumber:
+p.tournamentNumber || 0,
+gameMode: p.gameMode || 'PUB',
+tablesCount: (p.tables || []).length,
+prizesCount: (p.prizes || []).length,
+ordersCount: (p.orderGrid || []).length
+});
+}
+return list;
+}
+
+// attach network address and store metadata
+// returns complete state for tv and host
+function buildClientResponse() {
+var ip = getLocalIp();
+var lanUrl = 'http://' + ip + ':' + PORT;
+if (!pubData || gameState.noPubSelected) {
+var w = buildWaitingState();
+w.lanIp = ip;
+w.lanUrl = lanUrl;
+w.pubsSummary = getPubsSummary();
+w.storeBackup = pubStore;
+return w;
+}
 if (gameState.combat) {
 gameState.combat.stepElapsedMs =
 Date.now() - (gameState.lastStepAt || 0);
 }
+delete gameState.storeBackup;
+gameState.noPubSelected = false;
+gameState.pubId = pubData.id;
+gameState.pubName = pubData.name;
+gameState.lanIp = ip;
+gameState.lanUrl = lanUrl;
+gameState.tables = pubData.tables || [];
+gameState.orderGrid =
+pubData.orderGrid || [];
+gameState.prizes = pubData.prizes || [];
+gameState.paradeBonusType =
+pubData.paradeBonusType || 'PERCENT_20';
+gameState.paradeGiftText =
+pubData.paradeGiftText || '';
+gameState.pubsSummary = getPubsSummary();
 gameState.rosterBackup = pubData.roster;
-res.json(gameState);
+var out = Object.assign({}, gameState);
+out.storeBackup = pubStore;
+return out;
+}
+
+// return current state to tv and host
+// includes multi-pub backup for client
+app.get('/api/state', function (req, res) {
+res.set('Cache-Control', 'no-store');
+res.json(buildClientResponse());
+});
+
+// export all multi-pub data as json file
+// protects pub history across reinstalls
+app.get('/api/export', function (req, res) {
+res.set('Cache-Control', 'no-store');
+res.set(
+'Content-Type',
+'application/json;charset=UTF-8'
+);
+res.set(
+'Content-Disposition',
+'attachment; filename="knight_tournament_backup.json"'
+);
+var payload = {
+schemaVersion: 3,
+exportedAt: new Date().toISOString(),
+lang: pubStore.lang || 'en',
+activePubId: pubStore.activePubId,
+pubs: pubStore.pubs || []
+};
+res.send(
+JSON.stringify(payload, null, 2)
+);
 });
 
 // return local ip and port info
+// used by tv and host network bar
 app.get('/api/ip', function (req, res) {
+var ip = getLocalIp();
 res.json({
-ip: getLocalIp(),
-port: PORT
+ip: ip,
+port: PORT,
+lanUrl: 'http://' + ip + ':' + PORT
 });
 });
 
 // process presenter actions from phone
+// updates active pub and saves store
 app.post('/api/action', function (req, res) {
 var body = req.body || {};
 var type = body.type;
-gameState.version += 1;
+storeVersion += 1;
+if (gameState) {
+gameState.version = storeVersion;
 gameState.soundToPlay = null;
 gameState.prizeBannerText = null;
+}
 
 if (
 type === 'restore_snapshot' &&
-body.snapshot &&
-body.snapshot.matches
+body.snapshot
 ) {
 var snap = body.snapshot;
+if (
+snap.storeBackup &&
+Array.isArray(snap.storeBackup.pubs) &&
+snap.storeBackup.pubs.length > 0 &&
+pubStore.pubs.length === 0
+) {
+pubStore = snap.storeBackup;
+savePubStore(pubStore);
+gameState = loadOrBuildGameState();
+res.json({
+ok: true,
+state: buildClientResponse()
+});
+return;
+}
+if (pubData && snap.matches) {
 if (
 snap.rosterBackup &&
 snap.rosterBackup.length ===
@@ -1926,6 +2064,9 @@ pubData.roster = snap.rosterBackup;
 }
 if (snap.tables) {
 pubData.tables = snap.tables;
+}
+if (snap.orderGrid) {
+pubData.orderGrid = snap.orderGrid;
 }
 if (snap.prizes) {
 pubData.prizes = snap.prizes;
@@ -1940,30 +2081,98 @@ snap.lastChampionId;
 }
 if (snap.lang) {
 pubData.lang = snap.lang;
+pubStore.lang = snap.lang;
 }
 savePubData(pubData);
 gameState = snap;
 gameState.tables = pubData.tables;
+gameState.orderGrid = pubData.orderGrid;
 gameState.prizes = pubData.prizes;
 gameState.lastParadeAt = Date.now();
 gameState.lastStepAt = Date.now();
 saveGameState(gameState);
-res.json({ ok: true, state: gameState });
+}
+res.json({
+ok: true,
+state: buildClientResponse()
+});
+return;
+} else if (type === 'create_pub') {
+var pName = String(
+body.name || ''
+).trim();
+if (!pName) {
+res.json({
+ok: false,
+state: buildClientResponse()
+});
+return;
+}
+var newPub = createPubData(
+pName,
+body.seed,
+pubStore.lang || 'en'
+);
+pubStore.pubs.push(newPub);
+pubStore.activePubId = newPub.id;
+pubData = newPub;
+gameState = buildNewTournament('PUB');
+savePubStore(pubStore);
+res.json({
+ok: true,
+state: buildClientResponse()
+});
+return;
+} else if (type === 'select_pub') {
+var targetPub = findPubById(body.pubId);
+if (targetPub) {
+pubStore.activePubId = targetPub.id;
+pubData = targetPub;
+gameState = loadOrBuildGameState();
+savePubStore(pubStore);
+}
+res.json({
+ok: true,
+state: buildClientResponse()
+});
+return;
+} else if (type === 'unselect_pub') {
+pubStore.activePubId = null;
+pubData = null;
+gameState = buildWaitingState();
+savePubStore(pubStore);
+res.json({
+ok: true,
+state: buildClientResponse()
+});
 return;
 } else if (type === 'cycle_lang') {
-var curL = gameState.lang || 'en';
+var curL =
+(pubData && pubData.lang) ||
+pubStore.lang ||
+'en';
 var nextL =
 curL === 'en'
 ? 'uk'
 : curL === 'uk'
 ? 'ru'
 : 'en';
+pubStore.lang = nextL;
+if (pubData && !gameState.noPubSelected) {
 gameState.lang = nextL;
 localizeAllState(
 gameState,
 pubData,
 savePubData
 );
+} else {
+savePubStore(pubStore);
+}
+res.json({
+ok: true,
+state: buildClientResponse()
+});
+return;
 } else if (type === 'set_lang') {
 var reqL = body.lang;
 if (
@@ -1971,21 +2180,156 @@ reqL === 'en' ||
 reqL === 'uk' ||
 reqL === 'ru'
 ) {
+pubStore.lang = reqL;
+if (pubData && !gameState.noPubSelected) {
 gameState.lang = reqL;
 localizeAllState(
 gameState,
 pubData,
 savePubData
 );
+} else {
+savePubStore(pubStore);
 }
-} else if (type === 'toggle_mode') {
+}
+res.json({
+ok: true,
+state: buildClientResponse()
+});
+return;
+}
+
+if (!pubData || gameState.noPubSelected) {
+res.json({
+ok: false,
+state: buildClientResponse()
+});
+return;
+}
+
+if (type === 'toggle_mode') {
 gameState.gameMode =
 gameState.gameMode === 'PUB'
 ? 'CASH'
 : 'PUB';
+pubData.gameMode = gameState.gameMode;
+savePubData(pubData);
 } else if (type === 'toggle_live_bets') {
 gameState.allowLiveBets =
 !gameState.allowLiveBets;
+pubData.allowLiveBets =
+gameState.allowLiveBets;
+savePubData(pubData);
+} else if (type === 'add_order_item') {
+var itemTitle = String(
+body.title || ''
+).trim();
+var itemCaps =
+parseInt(body.caps, 10) || 0;
+if (itemTitle && itemCaps > 0) {
+if (!pubData.orderGrid) {
+pubData.orderGrid = [];
+}
+var nextOId = Date.now() +
+Math.floor(Math.random() * 999);
+pubData.orderGrid.push({
+id: nextOId,
+title: itemTitle,
+caps: itemCaps
+});
+gameState.orderGrid = pubData.orderGrid;
+savePubData(pubData);
+}
+} else if (type === 'delete_order_item') {
+var delOId = parseInt(body.itemId, 10);
+if (pubData.orderGrid) {
+var keptOrders = [];
+for (
+var oi = 0;
+oi < pubData.orderGrid.length;
+oi++
+) {
+if (pubData.orderGrid[oi].id !== delOId) {
+keptOrders.push(pubData.orderGrid[oi]);
+}
+}
+pubData.orderGrid = keptOrders;
+gameState.orderGrid = keptOrders;
+savePubData(pubData);
+}
+} else if (type === 'add_prize_item') {
+var prTitle = String(
+body.title || ''
+).trim();
+var prCost =
+parseInt(body.cost, 10) || 0;
+if (prTitle && prCost > 0) {
+if (!pubData.prizes) {
+pubData.prizes = [];
+}
+var nextPId = Date.now() +
+Math.floor(Math.random() * 999);
+pubData.prizes.push({
+id: nextPId,
+cost: prCost,
+title: prTitle
+});
+gameState.prizes = pubData.prizes;
+savePubData(pubData);
+}
+} else if (type === 'delete_prize_item') {
+var delPId = parseInt(body.prizeId, 10);
+if (pubData.prizes) {
+var keptPrizes = [];
+for (
+var pri = 0;
+pri < pubData.prizes.length;
+pri++
+) {
+if (pubData.prizes[pri].id !== delPId) {
+keptPrizes.push(pubData.prizes[pri]);
+}
+}
+pubData.prizes = keptPrizes;
+gameState.prizes = keptPrizes;
+savePubData(pubData);
+}
+} else if (type === 'save_parade_bonus') {
+var bMode =
+body.bonusType === 'GIFT'
+? 'GIFT'
+: 'PERCENT_20';
+var gTxt = String(
+body.giftText || ''
+).trim();
+// block saving gift mode if gift is empty
+if (bMode === 'GIFT' && !gTxt) {
+res.json({
+ok: false,
+error: 'GIFT_REQUIRED',
+state: buildClientResponse()
+});
+return;
+}
+pubData.paradeBonusType = bMode;
+pubData.paradeGiftText = gTxt;
+gameState.paradeBonusType = bMode;
+gameState.paradeGiftText = gTxt;
+if (
+gameState.statusKey === 'BONUS_BETS' ||
+gameState.statusKey === 'BONUS_BETS_GIFT'
+) {
+var sKey =
+bMode === 'GIFT'
+? 'BONUS_BETS_GIFT'
+: 'BONUS_BETS';
+gameState.statusKey = sKey;
+gameState.statusText = getStatusStr(
+sKey,
+gameState.lang
+);
+}
+savePubData(pubData);
 } else if (type === 'restart_parade') {
 gameState.tvScreen = 'PARADE';
 gameState.statusKey = 'PARADE_START';
@@ -2068,11 +2412,19 @@ ak.outrightOdds
 }
 }
 
-// apply +20% bonus during opening parade
+// apply parade bonus: gift on win or +20%
+var paradeGift = null;
 if (gameState.tvScreen === 'PARADE') {
+if (
+pubData.paradeBonusType === 'GIFT' &&
+pubData.paradeGiftText
+) {
+paradeGift = pubData.paradeGiftText;
+} else {
 lockedOdds = parseFloat(
 calcParadeBonusOdd(lockedOdds)
 );
+}
 }
 
 tableObj.balance -= amt;
@@ -2083,7 +2435,8 @@ knightId: kId,
 knightName: kName,
 amount: amt,
 odds: lockedOdds,
-betType: bType
+betType: bType,
+paradeGift: paradeGift
 });
 gameState.soundToPlay = 'bet';
 savePubData(pubData);
@@ -2141,7 +2494,9 @@ gameState.soundToPlay = 'prize';
 savePubData(pubData);
 }
 } else if (type === 'add_table') {
-var newId = pubData.tables.length + 1;
+var newId = Date.now() +
+Math.floor(Math.random() * 999);
+var nextNum = pubData.tables.length + 1;
 var defPref =
 gameState.lang === 'uk'
 ? 'Стіл №'
@@ -2150,7 +2505,7 @@ gameState.lang === 'uk'
 : 'Table #';
 pubData.tables.push({
 id: newId,
-name: body.name || defPref + newId,
+name: body.name || defPref + nextNum,
 balance: 0
 });
 gameState.tables = pubData.tables;
@@ -2165,9 +2520,13 @@ gameState.parade &&
 gameState.parade.currentIndex = 7;
 gameState.parade.subStep = 'PICKED';
 gameState.parade.finished = true;
-gameState.statusKey = 'BONUS_BETS';
+var bKey2 =
+pubData.paradeBonusType === 'GIFT'
+? 'BONUS_BETS_GIFT'
+: 'BONUS_BETS';
+gameState.statusKey = bKey2;
 gameState.statusText = getStatusStr(
-'BONUS_BETS',
+bKey2,
 gameState.lang
 );
 gameState.soundToPlay = 'horn';
@@ -2182,7 +2541,10 @@ gameState.lang
 gameState.soundToPlay = 'horn';
 }
 saveGameState(gameState);
-res.json({ ok: true, state: gameState });
+res.json({
+ok: true,
+state: buildClientResponse()
+});
 return;
 }
 
@@ -2197,7 +2559,10 @@ if (
 gameState.tournamentStatus === 'FINISHED'
 ) {
 saveGameState(gameState);
-res.json({ ok: true, state: gameState });
+res.json({
+ok: true,
+state: buildClientResponse()
+});
 return;
 }
 
@@ -2279,10 +2644,16 @@ gameState = buildNewTournament(
 gameState.gameMode
 );
 } else if (type === 'new_pub_seed') {
-pubData = createPubData(
+var freshPub = createPubData(
+pubData.name,
 null,
 gameState.lang || 'en'
 );
+pubData.pubSeed = freshPub.pubSeed;
+pubData.roster = freshPub.roster;
+pubData.tournamentNumber = 0;
+pubData.lastChampionId = null;
+pubData.lastFinalistId = null;
 savePubData(pubData);
 gameState = buildNewTournament(
 gameState.gameMode
@@ -2290,12 +2661,10 @@ gameState.gameMode
 }
 
 saveGameState(gameState);
-if (gameState.combat) {
-gameState.combat.stepElapsedMs =
-Date.now() - (gameState.lastStepAt || 0);
-}
-gameState.rosterBackup = pubData.roster;
-res.json({ ok: true, state: gameState });
+res.json({
+ok: true,
+state: buildClientResponse()
+});
 });
 
 // start express server on 0.0.0.0:3000

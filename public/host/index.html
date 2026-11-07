@@ -9,11 +9,49 @@
 <body>
 <div id="hostApp">
 
+<div class="netAddressBar">
+<div class="netAddrLeft">
+<span class="netAddrLbl" id="tvNetBarLbl">TV URL: </span>
+<b class="netAddrVal" id="tvNetBarUrl">http://127.0.0.1:3000</b>
+</div>
+<button class="btn btnDark btnLangSmall" id="btnHostLang">LANG: EN</button>
+</div>
+
+<div id="pubSelectView">
+<div class="topBar">
+<div class="barTitle" id="selectPubTitle">SELECT OR CREATE PUB</div>
+</div>
+
+<div id="savedPubsList" class="pubsListWrap"></div>
+
+<div class="card formCard" id="addPubBtnWrap">
+<button class="btn btnGreen btnFull" id="btnShowAddPub">+ ADD PUB</button>
+</div>
+
+<div class="card formCard hidden" id="createPubFormCard">
+<div class="inputRow">
+<input type="text" id="newPubNameInput" placeholder="Pub name (e.g. Old Oak)">
+</div>
+<div class="inputRow">
+<input type="number" id="newPubSeedInput" placeholder="Seed (optional, e.g. 257)">
+</div>
+<div class="btnGrid grid2" style="margin-top:8px;margin-bottom:0;">
+<button class="btn btnGreen" id="btnConfirmCreatePub">CREATE PUB</button>
+<button class="btn btnDark" id="btnCancelCreatePub">CANCEL</button>
+</div>
+</div>
+
+<div id="exportSelectWrap" class="hidden" style="margin-top:12px;">
+<button class="btn btnBlue btnFull" id="btnExportSelect">EXPORT ALL DATA (JSON)</button>
+</div>
+</div>
+
+<div id="pubWorkView" class="hidden">
 <div class="topBar">
 <div class="barTitle" id="hostHeaderTitle">HOST PANEL</div>
 <div style="display:flex;gap:6px;align-items:center;">
-<button class="btn btnDark" id="btnHostLang" style="padding:5px 10px;font-size:12px;">LANG: EN</button>
 <div class="barBadge" id="hostTourBadge">TOURNAMENT #1</div>
+<button class="btn btnDark btnLangSmall" id="btnSwitchPub">SWITCH PUB</button>
 </div>
 </div>
 
@@ -22,8 +60,8 @@
 <span><span id="hostTvScreenLbl">TV SCREEN: </span><b id="hostScreenText">BRACKET</b></span>
 <span><span id="hostModeLbl">MODE: </span><b id="hostModeText">PUB</b></span>
 </div>
-<div class="boutSummary" id="hostBoutTitle">Match #1: Sir Ragnar vs Sir Corvus</div>
-<div class="boutSubStatus" id="hostBoutSub">Betting open · K1: 1.85 | K2: 1.95</div>
+<div class="boutSummary" id="hostBoutTitle">Match #1</div>
+<div class="boutSubStatus" id="hostBoutSub">Betting open</div>
 </div>
 
 <div class="sectionTitle" id="secCtrlTitle">SCREEN & BOUT CONTROLS</div>
@@ -68,10 +106,10 @@
 <div class="sectionTitle" id="economySectionTitle">PUB CASHIER: ORDERS & PRIZES</div>
 <div class="card formCard">
 <div class="fieldLabel" id="creditLabel">AWARD CAPS FOR BAR ORDER:</div>
-<div class="btnGrid grid3">
-<button class="btn btnCopper" id="btnAddDrink">+DRINK (+1)</button>
-<button class="btn btnCopper" id="btnAddFood">+FOOD (+3)</button>
-<button class="btn btnCopper" id="btnAddSet">+SET (+5)</button>
+<div id="pubOrderQuickBtns" class="quickOrderWrap"></div>
+<div id="cashDepositRow" class="inputRow hidden">
+<input type="number" id="cashDepositInput" value="10" min="1" placeholder="Cash amount">
+<button class="btn btnCopper btnSmallAdd" id="btnAddCashDeposit">+ DEPOSIT</button>
 </div>
 
 <div id="prizeRedeemBlock">
@@ -84,9 +122,42 @@
 
 <div class="fieldLabel" id="lblAddTable">ADD NEW TABLE OR PLAYER:</div>
 <div class="inputRow">
-<input type="text" id="newTableName" placeholder="E.g. Table #5 or Bar Counter">
+<input type="text" id="newTableName" placeholder="E.g. Table #1 or Bar Counter">
 <button class="btn btnDark btnSmallAdd" id="btnAddTable">+ TABLE</button>
 </div>
+</div>
+
+<div class="sectionTitle" id="secOrderGridTitle">PURCHASE BONUS GRID (ITEM / CAPS)</div>
+<div class="card formCard">
+<div id="orderGridList" class="cfgList"></div>
+<div class="inputRow">
+<input type="text" id="orderItemInput" placeholder="Item (e.g. Stout)">
+<input type="number" id="orderCapsInput" class="numShortInput" min="1" placeholder="Caps">
+<button class="btn btnCopper btnSmallAdd" id="btnAddOrderItem">+ ITEM</button>
+</div>
+</div>
+
+<div class="sectionTitle" id="secPrizeGridTitle">PRIZE GRID (CAPS COST / PRIZE)</div>
+<div class="card formCard">
+<div id="prizeGridList" class="cfgList"></div>
+<div class="inputRow">
+<input type="number" id="prizeCostInput" class="numShortInput" min="1" placeholder="Caps">
+<input type="text" id="prizeTitleInput" placeholder="Prize name">
+<button class="btn btnBlue btnSmallAdd" id="btnAddPrizeItem">+ PRIZE</button>
+</div>
+</div>
+
+<div class="sectionTitle" id="secParadeBonusTitle">PARADE BET BONUS MODE</div>
+<div class="card formCard">
+<div class="btnGrid grid2">
+<button class="btn btnSmallTab activeTab" id="tabParade20">+20% CAPS ODDS</button>
+<button class="btn btnSmallTab" id="tabParadeGift">GIFT ON WIN</button>
+</div>
+<div id="paradeGiftInputWrap" class="inputRow hidden">
+<input type="text" id="paradeGiftInput" placeholder="Enter gift name (required for Gift mode)">
+</div>
+<div id="paradeBonusMsg" class="cfgMsg hidden"></div>
+<button class="btn btnGreen btnFull" id="btnSaveParadeBonus" style="margin-top:8px;">SAVE PARADE BONUS</button>
 </div>
 
 <div class="sectionTitle" id="secSettingsTitle">PUB & TOURNAMENT SETTINGS</div>
@@ -97,6 +168,10 @@
 <div class="btnGrid grid2">
 <button class="btn btnRed" id="btnNewSeed">CHANGE PUB SEED</button>
 <a href="/" class="btn btnDark linkBtn" id="btnOpenTv">OPEN TV SCREEN</a>
+</div>
+<div class="btnGrid grid2">
+<button class="btn btnBlue btnFull" id="btnExportWork">EXPORT ALL DATA (JSON)</button>
+</div>
 </div>
 
 </div>

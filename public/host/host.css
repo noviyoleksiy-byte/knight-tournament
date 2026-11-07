@@ -297,3 +297,168 @@ align-items: center;
 justify-content: center;
 text-decoration: none;
 }
+
+.hidden {
+display: none !important;
+}
+
+.btnFull {
+width: 100%;
+}
+
+.btnLangSmall {
+min-height: 34px;
+padding: 4px 10px;
+font-size: 12px;
+}
+
+/* network url banner at top of host */
+/* shows phone address for tv browser */
+.netAddressBar {
+background: #0F172A;
+border: 1px solid #2563EB;
+border-radius: 8px;
+padding: 8px 12px;
+margin-bottom: 10px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 8px;
+}
+
+.netAddrLeft {
+font-size: 13px;
+color: #94A3B8;
+word-break: break-all;
+}
+
+.netAddrVal {
+color: #38BDF8;
+font-family: monospace;
+font-size: 14px;
+}
+
+/* saved pubs selector list */
+/* lets host pick or create pub */
+.pubsListWrap {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin-bottom: 10px;
+}
+
+.pubItemRow {
+background: #131C2E;
+border: 1px solid #1E293B;
+border-radius: 10px;
+padding: 12px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+}
+
+.pubItemTitle {
+font-size: 16px;
+font-weight: 800;
+color: #F8FAFC;
+}
+
+.pubItemSub {
+font-size: 12px;
+font-weight: 700;
+color: #94A3B8;
+margin-top: 3px;
+}
+
+/* quick order buttons and config grids */
+/* renders bar items and prize showcase */
+.quickOrderWrap {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+margin-bottom: 8px;
+}
+
+.quickOrderBtn {
+flex: 1 1 45%;
+min-height: 44px;
+background: #C2410C;
+color: #FFFFFF;
+border: none;
+border-radius: 8px;
+font-size: 13px;
+font-weight: 800;
+padding: 6px 10px;
+cursor: pointer;
+}
+
+.emptyHintBox {
+width: 100%;
+font-size: 12px;
+color: #64748B;
+padding: 6px 2px;
+}
+
+.cfgList {
+display: flex;
+flex-direction: column;
+gap: 6px;
+margin-bottom: 8px;
+}
+
+.cfgRow {
+background: #090D16;
+border: 1px solid #1E293B;
+border-radius: 7px;
+padding: 8px 10px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 8px;
+font-size: 13px;
+font-weight: 700;
+color: #E2E8F0;
+}
+
+.cfgRow b {
+color: #34D399;
+}
+
+.cfgDelBtn {
+background: #BE123C;
+color: #FFFFFF;
+border: none;
+border-radius: 6px;
+width: 34px;
+height: 34px;
+font-size: 14px;
+font-weight: 900;
+cursor: pointer;
+flex-shrink: 0;
+}
+
+.numShortInput {
+max-width: 92px;
+}
+
+.cfgMsg {
+font-size: 13px;
+font-weight: 800;
+margin-top: 8px;
+padding: 8px 10px;
+border-radius: 6px;
+text-align: center;
+}
+
+.cfgMsg.errMsg {
+background: #4C0519;
+border: 1px solid #F43F5E;
+color: #FDA4AF;
+}
+
+.cfgMsg.okMsg {
+background: #064E3B;
+border: 1px solid #10B981;
+color: #A7F3D0;
+}

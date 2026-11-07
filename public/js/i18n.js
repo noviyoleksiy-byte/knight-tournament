@@ -180,8 +180,56 @@ btnNextPhase:
 btnStartBout:
 'CLOSE BETS & START BOUT',
 bonusTag20: ' [BONUS +20%]',
+bonusTagGift: ' [GIFT: ',
 boutOpt: ' — Bout (x',
-tourOpt: ' — Tourney (x'
+tourOpt: ' — Tourney (x',
+waitingSub:
+'Waiting for the host to select or create a pub on the controller...',
+waitingNetLbl:
+'CONNECT TV OR HOST AT ADDRESS:',
+noTablesTv: 'No tables added yet',
+noPrizesTv: 'No prizes configured yet',
+paradeDoneKickerGift:
+'PARADE FINISHED · FIRST BETTING ROUND WITH PARADE GIFT: ',
+paradeDoneSubGift:
+'Winning bets placed now also receive gift: ',
+bonusGiftCard: 'WIN GIFT: ',
+tvNetBarLbl: 'TV URL: ',
+selectPubTitle: 'SELECT OR CREATE PUB',
+btnAddPubInit: '+ ADD PUB',
+newPubNamePlaceholder: 'Pub name (e.g. Old Oak)',
+newPubSeedPlaceholder: 'Seed (optional, e.g. 257)',
+btnCreatePub: 'CREATE PUB',
+btnCancelPub: 'CANCEL',
+btnSelectPub: 'OPEN',
+btnSwitchPub: 'SWITCH PUB',
+btnExportData: 'EXPORT ALL DATA (JSON)',
+orderGridTitle:
+'PURCHASE BONUS GRID (ITEM / CAPS)',
+orderItemPlaceholder: 'Item (e.g. Stout)',
+orderCapsPlaceholder: 'Caps',
+btnAddOrderItem: '+ ITEM',
+noOrderItemsHint:
+'Configure purchase items below to award caps',
+cashTopupPlaceholder: 'Cash amount',
+btnAddCash: '+ DEPOSIT',
+prizeGridTitle:
+'PRIZE GRID (CAPS COST / PRIZE)',
+prizeCostPlaceholder: 'Caps',
+prizeTitlePlaceholder: 'Prize name',
+btnAddPrizeItem: '+ PRIZE',
+paradeBonusSec:
+'PARADE BET BONUS MODE',
+tabBonus20: '+20% CAPS ODDS',
+tabBonusGift: 'GIFT ON WIN',
+giftNamePlaceholder:
+'Enter gift name (required for Gift mode)',
+btnSaveParadeBonus: 'SAVE PARADE BONUS',
+giftRequiredErr:
+'Enter a gift name before saving Gift mode!',
+paradeBonusSaved: 'Parade bonus saved!',
+paradeDoneHostTitleGift:
+'PARADE DONE: BONUS BETS (GIFT: '
 },
 
 uk: {
@@ -365,8 +413,56 @@ btnNextPhase:
 btnStartBout:
 'ЗАКРИТИ СТАВКИ І ПОЧАТИ БІЙ',
 bonusTag20: ' [БОНУС +20%]',
+bonusTagGift: ' [ПОДАРУНОК: ',
 boutOpt: ' — Бій (x',
-tourOpt: ' — Турнір (x'
+tourOpt: ' — Турнір (x',
+waitingSub:
+'Очікування вибору або створення пабу на пульті ведучого...',
+waitingNetLbl:
+'АДРЕСА ДЛЯ ПІДКЛЮЧЕННЯ ТБ ТА ВЕДУЧОГО:',
+noTablesTv: 'Столи ще не додані',
+noPrizesTv: 'Призи ще не налаштовані',
+paradeDoneKickerGift:
+'ПАРАД ЗАВЕРШЕНО · ПЕРШИЙ РАУНД СТАВОК ІЗ ПОДАРУНКОМ: ',
+paradeDoneSubGift:
+'Переможні ставки на параді також отримують подарунок: ',
+bonusGiftCard: 'ПОДАРУНОК: ',
+tvNetBarLbl: 'ТБ АДРЕСА: ',
+selectPubTitle: 'ОБЕРІТЬ АБО СТВОРІТЬ ПАБ',
+btnAddPubInit: '+ ДОДАТИ ПАБ',
+newPubNamePlaceholder: 'Назва пабу',
+newPubSeedPlaceholder: 'Сід (необов., напр. 257)',
+btnCreatePub: 'СТВОРИТИ ПАБ',
+btnCancelPub: 'СКАСУВАТИ',
+btnSelectPub: 'ВІДКРИТИ',
+btnSwitchPub: 'ЗМІНИТИ ПАБ',
+btnExportData: 'ЕКСПОРТ УСІХ ДАНИХ (JSON)',
+orderGridTitle:
+'СІТКА БОНУСІВ ЗА ПОКУПКУ (ТОВАР / КРИШКИ)',
+orderItemPlaceholder: 'Товар (напр. Келих)',
+orderCapsPlaceholder: 'Кришок',
+btnAddOrderItem: '+ ТОВАР',
+noOrderItemsHint:
+'Додайте товари в сітку нижче для нарахування кришок',
+cashTopupPlaceholder: 'Сума поповнення',
+btnAddCash: '+ ВНЕСТИ',
+prizeGridTitle:
+'СІТКА ПРИЗІВ (КІЛЬКІСТЬ КРИШОК / ПРИЗ)',
+prizeCostPlaceholder: 'Кришок',
+prizeTitlePlaceholder: 'Назва призу',
+btnAddPrizeItem: '+ ПРИЗ',
+paradeBonusSec:
+'БОНУС ЗА СТАВКУ НА ПАРАДІ',
+tabBonus20: '+20% КРИШОК',
+tabBonusGift: 'ПОДАРУНОК',
+giftNamePlaceholder:
+'Вкажіть подарунок (обов’язково)',
+btnSaveParadeBonus: 'ЗБЕРЕГТИ БОНУС ПАРАДУ',
+giftRequiredErr:
+'Вкажіть подарунок, інакше зберегти не можна!',
+paradeBonusSaved: 'Бонус параду збережено!',
+paradeDoneHostTitleGift:
+'ПАРАД ЗАВЕРШЕНО: БОНУС-СТАВКИ (ПОДАРУНОК: '
 },
 
 ru: {
@@ -550,8 +646,56 @@ btnNextPhase:
 btnStartBout:
 'ЗАКРЫТЬ СТАВКИ И НАЧАТЬ БОЙ',
 bonusTag20: ' [БОНУС +20%]',
+bonusTagGift: ' [ПОДАРОК: ',
 boutOpt: ' — Бой (x',
-tourOpt: ' — Турнир (x'
+tourOpt: ' — Турнир (x',
+waitingSub:
+'Ожидание выбора или создания паба на пульте ведущего...',
+waitingNetLbl:
+'АДРЕС ДЛЯ ПОДКЛЮЧЕНИЯ ТВ И ВЕДУЩЕГО:',
+noTablesTv: 'Столы ещё не добавлены',
+noPrizesTv: 'Призы ещё не настроены',
+paradeDoneKickerGift:
+'ПАРАД ЗАВЕРШЁН · ПЕРВЫЙ РАУНД СТАВОК С ПОДАРКОМ: ',
+paradeDoneSubGift:
+'Выигравшие ставки на параде также получают подарок: ',
+bonusGiftCard: 'ПОДАРОК: ',
+tvNetBarLbl: 'АДРЕС ТВ: ',
+selectPubTitle: 'ВЫБЕРИТЕ ИЛИ СОЗДАЙТЕ ПАБ',
+btnAddPubInit: '+ ДОБАВИТЬ ПАБ',
+newPubNamePlaceholder: 'Название паба',
+newPubSeedPlaceholder: 'Сид (необяз., напр. 257)',
+btnCreatePub: 'СОЗДАТЬ ПАБ',
+btnCancelPub: 'ОТМЕНА',
+btnSelectPub: 'ОТКРЫТЬ',
+btnSwitchPub: 'СМЕНИТЬ ПАБ',
+btnExportData: 'ЭКСПОРТ ВСЕХ ДАННЫХ (JSON)',
+orderGridTitle:
+'СЕТКА БОНУСОВ ЗА ПОКУПКУ (ТОВАР / КРЫШЕК)',
+orderItemPlaceholder: 'Товар (напр. Бокал)',
+orderCapsPlaceholder: 'Крышек',
+btnAddOrderItem: '+ ТОВАР',
+noOrderItemsHint:
+'Добавьте товары в сетку ниже для начисления крышек',
+cashTopupPlaceholder: 'Сумма пополнения',
+btnAddCash: '+ ВНЕСТИ',
+prizeGridTitle:
+'СЕТКА ПРИЗОВ (КРЫШЕК / ПРИЗ)',
+prizeCostPlaceholder: 'Крышек',
+prizeTitlePlaceholder: 'Название приза',
+btnAddPrizeItem: '+ ПРИЗ',
+paradeBonusSec:
+'БОНУС ЗА СТАВКУ НА ПАРАДЕ',
+tabBonus20: '+20% КРЫШЕК',
+tabBonusGift: 'ПОДАРОК',
+giftNamePlaceholder:
+'Укажите подарок (обязательно)',
+btnSaveParadeBonus: 'СОХРАНИТЬ БОНУС ПАРАДА',
+giftRequiredErr:
+'Укажите подарок, иначе сохранить нельзя!',
+paradeBonusSaved: 'Бонус парада сохранён!',
+paradeDoneHostTitleGift:
+'ПАРАД ЗАВЕРШЁН: БОНУС-СТАВКИ (ПОДАРОК: '
 }
 };
 

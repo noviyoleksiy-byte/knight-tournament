@@ -253,6 +253,11 @@ en: 'FIRST BETTING ROUND (BONUS +20%)',
 uk: 'ПЕРШИЙ РАУНД СТАВОК (БОНУС +20%)',
 ru: 'ПЕРВЫЙ РАУНД СТАВОК (БОНУС +20%)'
 },
+BONUS_BETS_GIFT: {
+en: 'FIRST BETTING ROUND (PARADE GIFT)',
+uk: 'ПЕРШИЙ РАУНД СТАВОК (ПОДАРУНОК)',
+ru: 'ПЕРВЫЙ РАУНД СТАВОК (ПОДАРОК)'
+},
 BETS_OPEN: {
 en: 'BETTING OPEN',
 uk: 'ПРИЙОМ СТАВОК ВІДКРИТО',
@@ -272,6 +277,11 @@ NEXT_BETS: {
 en: 'BETS ON NEXT BOUT',
 uk: 'СТАВКИ НА НАСТУПНИЙ БІЙ',
 ru: 'СТАВКИ НА СЛЕДУЮЩИЙ БОЙ'
+},
+WAITING_PUB: {
+en: 'WAITING FOR HOST TO SELECT PUB',
+uk: 'ОЧІКУВАННЯ ВИБОРУ ПАБУ ВЕДУЧИМ',
+ru: 'ОЖИДАНИЕ ВЫБОРА ПАБА ВЕДУЩИМ'
 }
 };
 
@@ -653,16 +663,17 @@ st,
 pubData,
 saveCb
 ) {
-if (!st) return;
+if (!st || !pubData) return;
 var l = st.lang || 'en';
 pubData.lang = l;
 
+var roster = pubData.roster || [];
 for (
 var r = 0;
-r < pubData.roster.length;
+r < roster.length;
 r++
 ) {
-localizeKnight(pubData.roster[r], l);
+localizeKnight(roster[r], l);
 }
 
 var kMap = {};
@@ -691,28 +702,19 @@ localizeKnight(st.champion, l);
 }
 
 var tMap = {};
+var tables = pubData.tables || [];
 for (
 var t = 0;
-t < pubData.tables.length;
+t < tables.length;
 t++
 ) {
-localizeTableName(pubData.tables[t], l);
-tMap[pubData.tables[t].id] =
-pubData.tables[t].name;
+localizeTableName(tables[t], l);
+tMap[tables[t].id] =
+tables[t].name;
 }
-st.tables = pubData.tables;
-
-for (
-var p = 0;
-p < pubData.prizes.length;
-p++
-) {
-var pr = pubData.prizes[p];
-if (PRIZE_NAMES[pr.id]) {
-pr.title = PRIZE_NAMES[pr.id][l];
-}
-}
-st.prizes = pubData.prizes;
+st.tables = tables;
+st.prizes = pubData.prizes || [];
+st.orderGrid = pubData.orderGrid || [];
 
 var bets = st.activeBets || [];
 for (var b = 0; b < bets.length; b++) {

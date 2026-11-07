@@ -28,25 +28,17 @@ var FLOWER_COLORS = [
 '#FB923C'
 ];
 
-// dom references for header and screens
+// dom references for screens and banners
 // we cache nodes once at startup
-var pubSeedBadge =
-document.getElementById('pubSeedBadge');
-var tourCounter =
-document.getElementById('tourCounter');
-var phaseText =
-document.getElementById('phaseText');
-var modeBadge =
-document.getElementById('modeBadge');
-var btnSoundToggle =
-document.getElementById('btnSoundToggle');
-var btnLangToggle =
-document.getElementById('btnLangToggle');
 var prizeToast =
 document.getElementById('prizeToast');
 var prizeToastText =
 document.getElementById('prizeToastText');
+var tvBottomBar =
+document.getElementById('tvBottomBar');
 
+var screenWaiting =
+document.getElementById('screenWaiting');
 var screenParade =
 document.getElementById('screenParade');
 var screenBracket =
@@ -114,9 +106,9 @@ var el = document.getElementById(id);
 if (el && val) el.innerHTML = val;
 };
 
-setTxt('brandTitleText', d.brandTitle);
-setTxt('btnRestartParade', d.restartParade);
-setTxt('hostLinkBtn', d.hostPanelBtn);
+setTxt('waitingBrandText', d.brandTitle);
+setTxt('waitingSubText', d.waitingSub);
+setTxt('waitingNetLabel', d.waitingNetLbl);
 setTxt('colHeadQfWest', d.qfWest);
 setTxt('colHeadQfEast', d.qfEast);
 setTxt('colHeadSfLeft', d.sfHeader);
@@ -124,19 +116,6 @@ setTxt('colHeadSfRight', d.sfHeader);
 setTxt('colHeadFinal', d.grandFinalHeader);
 setTxt('champKickerText', d.champKicker);
 setTxt('champNoticeText', d.champLore);
-
-if (btnLangToggle) {
-btnLangToggle.innerHTML =
-getLangBtnLabel(lang);
-}
-if (btnSoundToggle) {
-var isMuted =
-window.GameSound &&
-window.GameSound.muted;
-btnSoundToggle.innerHTML = isMuted
-? d.soundOff
-: d.soundOn;
-}
 }
 
 // spawn wood or steel debris particles
@@ -235,13 +214,29 @@ paradeSubSeen = p.subStep;
 paradeAnimStart = Date.now();
 }
 
+var isGiftMode =
+s.paradeBonusType === 'GIFT' &&
+Boolean(s.paradeGiftText);
+
 if (p.finished) {
+if (isGiftMode) {
+paradeStepBadge.innerHTML =
+d.paradeDoneKickerGift +
+s.paradeGiftText.toUpperCase() +
+'!';
+paradeHeroName.innerHTML =
+d.paradeDoneTitle;
+paradeHeroDetails.innerHTML =
+d.paradeDoneSubGift +
+s.paradeGiftText;
+} else {
 paradeStepBadge.innerHTML =
 d.paradeDoneKicker;
 paradeHeroName.innerHTML =
 d.paradeDoneTitle;
 paradeHeroDetails.innerHTML =
 d.paradeDoneSub;
+}
 } else {
 var curK = list[idx];
 paradeStepBadge.innerHTML =
@@ -280,7 +275,7 @@ d.andJoinsLine;
 }
 
 // build 8 lineup cards with bonus odds
-// shows horse weapon wins and +20% odds
+// shows +20% odd or parade gift on win
 var html = '';
 for (var i = 0; i < 8; i++) {
 var k = list[i];
@@ -305,10 +300,12 @@ k.outrightOdds || 5.0
 );
 var boosted =
 Math.round(baseOdd * 1.2 * 10) / 10;
-var bonusOdd = Math.max(
-baseOdd + 0.2,
-boosted
-).toFixed(1);
+var bonusOdd = isGiftMode
+? baseOdd.toFixed(1)
+: Math.max(baseOdd + 0.2, boosted).toFixed(1);
+var bonusLbl = isGiftMode
+? d.bonusGiftCard + s.paradeGiftText
+: d.bonusBet20;
 
 html +=
 '<div class="' +
@@ -338,7 +335,7 @@ wText +
 '</div>' +
 '<div class="pCardOddsBox">' +
 '<span class="pCardOddsLabel">' +
-d.bonusBet20 +
+bonusLbl +
 '</span>' +
 '<span class="pCardOddsVal">x' +
 bonusOdd +
@@ -748,6 +745,9 @@ var tag =
 b.betType === 'OUTRIGHT'
 ? d.tagTour
 : d.tagBout;
+var gNote = b.paradeGift
+? ' + ' + b.paradeGift
+: '';
 rowsHtml +=
 '<div class="betItemRow"><b>' +
 b.tableName +
@@ -759,6 +759,7 @@ b.knightName +
 Number(b.odds).toFixed(1) +
 ') ' +
 tag +
+gNote +
 '</div>';
 }
 
@@ -1022,16 +1023,37 @@ s.combat.mode === 'JOUST'
 }
 }
 
-pubSeedBadge.innerHTML =
-d.pubBadge + s.pubSeed;
-tourCounter.innerHTML =
-d.tourNo + s.tournamentNumber;
-phaseText.innerHTML =
-s.statusText || d.paradePhase;
-modeBadge.innerHTML =
-s.gameMode === 'CASH'
-? d.modeCashFull
-: d.modePubFull;
+var netUrlEl =
+document.getElementById('waitingNetUrl');
+if (netUrlEl) {
+var dispUrl =
+s.lanUrl &&
+s.lanUrl.indexOf('127.0.0.1') === -1
+? s.lanUrl
+: window.location.origin;
+netUrlEl.textContent = dispUrl;
+}
+
+if (s.noPubSelected || s.tvScreen === 'WAITING') {
+if (screenWaiting) {
+screenWaiting.className = 'tvScreen';
+}
+screenParade.className = 'tvScreen hidden';
+screenBracket.className = 'tvScreen hidden';
+screenCombat.className = 'tvScreen hidden';
+if (tvBottomBar) {
+tvBottomBar.className = 'bottomBar hidden';
+}
+prizeToast.className = 'prizeBanner hidden';
+return;
+}
+
+if (screenWaiting) {
+screenWaiting.className = 'tvScreen hidden';
+}
+if (tvBottomBar) {
+tvBottomBar.className = 'bottomBar';
+}
 
 if (s.prizeBannerText) {
 prizeToast.className = 'prizeBanner';
@@ -1100,7 +1122,7 @@ lastVersion = s.version;
 }
 
 // render bottom tables and prize showcase
-// updates balances and localized prize names
+// updates balances and configured prizes
 function renderBottomBar(s) {
 var d = getDict();
 var tTitle =
@@ -1128,7 +1150,11 @@ tb.name +
 fmtVal(tb.balance, s.gameMode) +
 '</span></div>';
 }
-tRow.innerHTML = tHtml;
+tRow.innerHTML =
+tHtml ||
+'<div class="prizeChip">' +
+(d.noTablesTv || '') +
+'</div>';
 
 if (s.gameMode === 'CASH') {
 pTitle.innerHTML = d.payoutsTitle;
@@ -1159,7 +1185,11 @@ pr.cost +
 d.curCaps +
 '</b></div>';
 }
-pRow.innerHTML = pHtml;
+pRow.innerHTML =
+pHtml ||
+'<div class="prizeChip">' +
+(d.noPrizesTv || '') +
+'</div>';
 }
 }
 
@@ -1774,13 +1804,13 @@ return setTimeout(cb, 33);
 raf(drawArenaFrame);
 }
 
-var BACKUP_KEY = 'kt_active_backup_v2';
+var BACKUP_KEY = 'kt_active_backup_v3';
 var triedRestore = false;
 
 // save latest state snapshot to localStorage
 // keeps mid-game backup on web and android
 function saveLocalBackup(s) {
-if (!s || !s.matches) return;
+if (!s) return;
 try {
 window.localStorage.setItem(
 BACKUP_KEY,
@@ -1807,28 +1837,15 @@ return null;
 function checkServerRecovery(srvState) {
 if (triedRestore || !srvState) return false;
 var cached = loadLocalBackup();
-if (
-!cached ||
-!cached.matches ||
-cached.pubSeed !== srvState.pubSeed
-) {
-return false;
-}
-var srvFresh =
-srvState.tournamentNumber <= 1 &&
-srvState.version <= 2 &&
-srvState.tvScreen === 'PARADE' &&
-srvState.parade &&
-!srvState.parade.finished &&
-srvState.parade.currentIndex === 0 &&
-(srvState.activeBets || []).length === 0;
-var clientAhead =
-cached.tournamentNumber >
-srvState.tournamentNumber ||
-cached.version > srvState.version + 2 ||
-cached.tvScreen !== 'PARADE';
+if (!cached) return false;
 
-if (srvFresh && clientAhead) {
+if (
+srvState.noPubSelected &&
+(srvState.pubsSummary || []).length === 0 &&
+cached.storeBackup &&
+Array.isArray(cached.storeBackup.pubs) &&
+cached.storeBackup.pubs.length > 0
+) {
 triedRestore = true;
 postTvAction({
 type: 'restore_snapshot',
@@ -1874,7 +1891,7 @@ isPolling = false;
 xhr.send();
 }
 
-// send post action from tv header button
+// send post action from tv client
 // saves updated state to local backup
 function postTvAction(payload) {
 var xhr = new XMLHttpRequest();
@@ -1900,38 +1917,36 @@ applyState(r.state);
 xhr.send(JSON.stringify(payload));
 }
 
-if (btnSoundToggle) {
-btnSoundToggle.onclick = function () {
+// bind bottom-right invisible triple-tap button
+// opens host panel after 3 quick taps
+var secretBtn =
+document.getElementById('secretHostTap');
+var tapTimes = [];
+if (secretBtn) {
+secretBtn.onclick = function () {
 if (window.GameSound) {
 window.GameSound.init();
-var m =
-window.GameSound.toggleMute();
-var d = getDict();
-btnSoundToggle.innerHTML = m
-? d.soundOff
-: d.soundOn;
 }
-};
+var now = Date.now();
+var recent = [];
+for (var i = 0; i < tapTimes.length; i++) {
+if (now - tapTimes[i] < 900) {
+recent.push(tapTimes[i]);
 }
-
-if (btnLangToggle) {
-btnLangToggle.onclick = function () {
-postTvAction({ type: 'cycle_lang' });
-};
 }
-
-var btnRestartParade =
-document.getElementById('btnRestartParade');
-if (btnRestartParade) {
-btnRestartParade.onclick = function () {
-postTvAction({ type: 'restart_parade' });
+recent.push(now);
+tapTimes = recent;
+if (tapTimes.length >= 3) {
+tapTimes = [];
+window.location.href = '/host';
+}
 };
 }
 
 // hydrate immediately from local backup on boot
 // avoids blank screen on android capacitor
 var bootCache = loadLocalBackup();
-if (bootCache && bootCache.matches) {
+if (bootCache) {
 applyState(bootCache);
 }
 

@@ -9,39 +9,30 @@
 <body>
 <div id="tvStage">
 
-<div class="topHeader">
-<div class="brandBox">
-<span class="brandTitle" id="brandTitleText">KNIGHT TOURNAMENT</span>
-<span class="pubSeedTag" id="pubSeedBadge">PUB #101</span>
-</div>
-<div class="headerCenter">
-<span class="tourBadge" id="tourCounter">TOURNAMENT #1</span>
-<span class="dotSep">·</span>
-<span class="phaseBadge" id="phaseText">KNIGHT PARADE</span>
-<span class="dotSep">·</span>
-<span class="modeBadge" id="modeBadge">MODE: PUB (CAPS)</span>
-</div>
-<div class="headerRight">
-<button class="muteBtn" id="btnLangToggle">LANG: EN</button>
-<button class="muteBtn" id="btnRestartParade">RESTART PARADE</button>
-<a href="/host" target="_blank" class="hostLinkBtn" id="hostLinkBtn">HOST PANEL (/HOST)</a>
-<button class="muteBtn" id="btnSoundToggle">SOUND: ON</button>
-</div>
-</div>
-
 <div id="prizeToast" class="prizeBanner hidden">
-<div class="prizeBannerInner" id="prizeToastText">TABLE #1 CLAIMS A PRIZE!</div>
+<div class="prizeBannerInner" id="prizeToastText">PRIZE CLAIMED!</div>
 </div>
 
-<div id="screenParade" class="tvScreen">
+<div id="screenWaiting" class="tvScreen">
+<div class="waitingCard">
+<div class="waitingBrand" id="waitingBrandText">KNIGHT TOURNAMENT</div>
+<div class="waitingSubText" id="waitingSubText">Waiting for the host to select or create a pub on the controller...</div>
+<div class="waitingNetBox">
+<div class="waitingNetLabel" id="waitingNetLabel">CONNECT TV OR HOST AT ADDRESS:</div>
+<div class="waitingNetUrl" id="waitingNetUrl">http://127.0.0.1:3000</div>
+</div>
+</div>
+</div>
+
+<div id="screenParade" class="tvScreen hidden">
 <div class="paradeHeaderBanner">
 <div class="paradeKicker" id="paradeStepBadge">PARADE OF CONTENDERS & WEAPON DRAFT (1 OF 8)</div>
-<div class="paradeMainTitle" id="paradeHeroName">Sir Ragnar Bloody Horn rides onto the lists!</div>
-<div class="paradeSubTitle" id="paradeHeroDetails">Horse: Black Charger · Gallops to the weapon rack...</div>
+<div class="paradeMainTitle" id="paradeHeroName"></div>
+<div class="paradeSubTitle" id="paradeHeroDetails"></div>
 </div>
 
 <div class="paradeCanvasWrap">
-<canvas id="paradeCanvas" width="1860" height="440"></canvas>
+<canvas id="paradeCanvas" width="1860" height="490"></canvas>
 </div>
 
 <div class="paradeLineupGrid" id="paradeLineupRow"></div>
@@ -157,7 +148,7 @@
 </div>
 </div>
 
-<div class="bottomBar">
+<div class="bottomBar" id="tvBottomBar">
 <div class="tablesPanel">
 <div class="panelLabel" id="tablesTitle">PUB TABLES (CAPS BALANCE):</div>
 <div class="tablesList" id="tablesRow"></div>
@@ -169,6 +160,8 @@
 </div>
 
 </div>
+
+<button type="button" id="secretHostTap" class="secretHostBtn" aria-label="Debug Host Access"></button>
 
 <script src="js/i18n.js"></script>
 <script src="js/tvscale.js"></script>

@@ -33,95 +33,81 @@ overflow: hidden;
 display: none !important;
 }
 
-/* top header bar across tv screen */
-/* we align brand status and host link */
-.topHeader {
-height: 64px;
-background: #111827;
-border: 1px solid #1E293B;
-border-radius: 10px;
-padding: 0 22px;
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 16px;
-}
-
-.brandBox {
-display: flex;
-align-items: center;
-gap: 14px;
-}
-
-.brandTitle {
-font-size: 26px;
-font-weight: 800;
-letter-spacing: 1.5px;
-color: #F8FAFC;
-}
-
-.pubSeedTag {
-font-size: 15px;
-font-weight: 700;
-color: #D97736;
-background: #1E293B;
-padding: 5px 12px;
-border-radius: 6px;
-}
-
-.headerCenter {
-display: flex;
-align-items: center;
-gap: 14px;
-font-size: 18px;
-font-weight: 700;
-color: #CBD5E1;
-}
-
-.dotSep {
-color: #475569;
-}
-
-.phaseBadge {
-color: #34D399;
-}
-
-.modeBadge {
-color: #60A5FA;
-}
-
-.headerRight {
-display: flex;
-align-items: center;
-gap: 12px;
-}
-
-.hostLinkBtn {
-text-decoration: none;
-background: #1D4ED8;
-color: #FFFFFF;
-font-size: 15px;
-font-weight: 700;
-padding: 9px 16px;
-border-radius: 7px;
-}
-
-.muteBtn {
-background: #1E293B;
-color: #E2E8F0;
-border: 1px solid #334155;
-font-size: 15px;
-font-weight: 700;
-padding: 9px 14px;
-border-radius: 7px;
+/* invisible bottom-right triple-tap button */
+/* opens host panel after 3 quick taps */
+.secretHostBtn {
+position: fixed;
+right: 0;
+bottom: 0;
+width: 96px;
+height: 96px;
+opacity: 0;
+background: transparent;
+border: none;
+z-index: 9999;
 cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+}
+
+/* waiting screen before pub is selected */
+/* displays game title and local network url */
+.waitingCard {
+height: 100%;
+width: 100%;
+background: #111827;
+border: 2px solid #2563EB;
+border-radius: 16px;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+text-align: center;
+padding: 48px;
+}
+
+.waitingBrand {
+font-size: 68px;
+font-weight: 900;
+letter-spacing: 3px;
+color: #F8FAFC;
+margin-bottom: 18px;
+}
+
+.waitingSubText {
+font-size: 28px;
+font-weight: 700;
+color: #94A3B8;
+margin-bottom: 44px;
+max-width: 1100px;
+}
+
+.waitingNetBox {
+background: #090D16;
+border: 2px solid #38BDF8;
+border-radius: 14px;
+padding: 28px 56px;
+}
+
+.waitingNetLabel {
+font-size: 20px;
+font-weight: 800;
+color: #34D399;
+letter-spacing: 1.5px;
+margin-bottom: 12px;
+}
+
+.waitingNetUrl {
+font-size: 46px;
+font-weight: 900;
+color: #38BDF8;
+font-family: monospace;
 }
 
 /* prize celebration toast banner */
 /* we show when a pub table claims prize */
 .prizeBanner {
 position: absolute;
-top: 92px;
+top: 24px;
 left: 460px;
 width: 1000px;
 z-index: 40;
@@ -139,17 +125,17 @@ color: #F8FAFC;
 letter-spacing: 1px;
 }
 
-/* main screen area between bars */
-/* we allocate 840px height for views */
+/* main screen area above bottom bar */
+/* occupies 920px height without top bar */
 .tvScreen {
-height: 840px;
+height: 920px;
 width: 100%;
 }
 
 /* knight parade and weapon rack screen */
 /* we present each knight and bonus odds */
 .paradeHeaderBanner {
-height: 132px;
+height: 136px;
 background: #111827;
 border: 2px solid #2563EB;
 border-radius: 12px;
@@ -162,27 +148,27 @@ justify-content: center;
 }
 
 .paradeKicker {
-font-size: 15px;
+font-size: 16px;
 font-weight: 800;
 color: #38BDF8;
 letter-spacing: 1.5px;
 }
 
 .paradeMainTitle {
-font-size: 32px;
+font-size: 34px;
 font-weight: 900;
 color: #F8FAFC;
 margin: 4px 0;
 }
 
 .paradeSubTitle {
-font-size: 18px;
+font-size: 19px;
 font-weight: 700;
 color: #34D399;
 }
 
 .paradeCanvasWrap {
-height: 446px;
+height: 496px;
 background: #0B111E;
 border: 2px solid #1E293B;
 border-radius: 12px;
@@ -194,7 +180,7 @@ justify-content: center;
 }
 
 .paradeLineupGrid {
-height: 234px;
+height: 260px;
 display: flex;
 gap: 10px;
 justify-content: space-between;
@@ -805,7 +791,7 @@ font-weight: 700;
 .arenaCanvasWrap {
 position: relative;
 width: 100%;
-height: 675px;
+height: 760px;
 background: #0B111E;
 border: 2px solid #1E293B;
 border-radius: 12px;

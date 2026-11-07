@@ -1,11 +1,45 @@
 // mobile presenter host controller
-// we send actions and sync state via xhr
+// syncs multi-pub state and settings
 (function () {
 'use strict';
 
 var betMode = 'MATCH';
 var lastState = null;
 var lastLangSeen = '';
+var lastPubIdSeen = '';
+var draftParadeMode = 'PERCENT_20';
+var isCreatingPub = false;
+var lastPubsSig = '';
+var lastOrderSig = '';
+var lastPrizeSig = '';
+
+var tvNetBarUrl =
+document.getElementById('tvNetBarUrl');
+var pubSelectView =
+document.getElementById('pubSelectView');
+var pubWorkView =
+document.getElementById('pubWorkView');
+var savedPubsList =
+document.getElementById('savedPubsList');
+var addPubBtnWrap =
+document.getElementById('addPubBtnWrap');
+var createPubFormCard =
+document.getElementById(
+'createPubFormCard'
+);
+var exportSelectWrap =
+document.getElementById(
+'exportSelectWrap'
+);
+
+var newPubNameInput =
+document.getElementById(
+'newPubNameInput'
+);
+var newPubSeedInput =
+document.getElementById(
+'newPubSeedInput'
+);
 
 var tourBadge =
 document.getElementById('hostTourBadge');
@@ -40,6 +74,47 @@ document.getElementById('betAmountInput');
 var newTableName =
 document.getElementById('newTableName');
 
+var pubOrderQuickBtns =
+document.getElementById(
+'pubOrderQuickBtns'
+);
+var cashDepositRow =
+document.getElementById('cashDepositRow');
+var cashDepositInput =
+document.getElementById(
+'cashDepositInput'
+);
+var orderGridList =
+document.getElementById('orderGridList');
+var orderItemInput =
+document.getElementById('orderItemInput');
+var orderCapsInput =
+document.getElementById('orderCapsInput');
+
+var prizeGridList =
+document.getElementById('prizeGridList');
+var prizeCostInput =
+document.getElementById('prizeCostInput');
+var prizeTitleInput =
+document.getElementById(
+'prizeTitleInput'
+);
+
+var tabParade20 =
+document.getElementById('tabParade20');
+var tabParadeGift =
+document.getElementById('tabParadeGift');
+var paradeGiftInputWrap =
+document.getElementById(
+'paradeGiftInputWrap'
+);
+var paradeGiftInput =
+document.getElementById(
+'paradeGiftInput'
+);
+var paradeBonusMsg =
+document.getElementById('paradeBonusMsg');
+
 // get dictionary for active state language
 // defaults to english when lang is unset
 function getDict() {
@@ -71,13 +146,33 @@ var el = document.getElementById(id);
 if (el && val) el.innerHTML = val;
 };
 
-setTxt('hostHeaderTitle', d.hostHeader);
+setTxt('tvNetBarLbl', d.tvNetBarLbl);
+setTxt('selectPubTitle', d.selectPubTitle);
+setTxt('btnShowAddPub', d.btnAddPubInit);
+setTxt(
+'btnConfirmCreatePub',
+d.btnCreatePub
+);
+setTxt(
+'btnCancelCreatePub',
+d.btnCancelPub
+);
+setTxt('btnExportSelect', d.btnExportData);
+setTxt('btnExportWork', d.btnExportData);
+setTxt('btnSwitchPub', d.btnSwitchPub);
+
 setTxt('hostTvScreenLbl', d.tvScreenLbl);
 setTxt('hostModeLbl', d.modeLbl);
 setTxt('secCtrlTitle', d.ctrlSection);
 setTxt('btnNextMatch', d.btnNextMatch);
-setTxt('btnReplayParade', d.btnReplayParade);
-setTxt('btnSwitchScreen', d.btnSwitchScreen);
+setTxt(
+'btnReplayParade',
+d.btnReplayParade
+);
+setTxt(
+'btnSwitchScreen',
+d.btnSwitchScreen
+);
 setTxt('secBetTitle', d.betSection);
 setTxt('tabBetMatch', d.tabMatch);
 setTxt('tabBetOutright', d.tabOutright);
@@ -89,12 +184,55 @@ setTxt('lblRedeemPrize', d.redeemLbl);
 setTxt('btnClaimPrize', d.btnClaimPrize);
 setTxt('lblAddTable', d.addTableLbl);
 setTxt('btnAddTable', d.btnAddTable);
-setTxt('secSettingsTitle', d.settingsSection);
+
+setTxt(
+'secOrderGridTitle',
+d.orderGridTitle
+);
+setTxt(
+'btnAddOrderItem',
+d.btnAddOrderItem
+);
+setTxt(
+'btnAddCashDeposit',
+d.btnAddCash
+);
+setTxt(
+'secPrizeGridTitle',
+d.prizeGridTitle
+);
+setTxt(
+'btnAddPrizeItem',
+d.btnAddPrizeItem
+);
+setTxt(
+'secParadeBonusTitle',
+d.paradeBonusSec
+);
+setTxt('tabParade20', d.tabBonus20);
+setTxt('tabParadeGift', d.tabBonusGift);
+setTxt(
+'btnSaveParadeBonus',
+d.btnSaveParadeBonus
+);
+
+setTxt(
+'secSettingsTitle',
+d.settingsSection
+);
 setTxt('btnToggleMode', d.btnToggleMode);
 setTxt('btnNewTour', d.btnNewTour);
 setTxt('btnNewSeed', d.btnNewSeed);
 setTxt('btnOpenTv', d.btnOpenTv);
 
+if (newPubNameInput) {
+newPubNameInput.placeholder =
+d.newPubNamePlaceholder || '';
+}
+if (newPubSeedInput) {
+newPubSeedInput.placeholder =
+d.newPubSeedPlaceholder || '';
+}
 if (betAmountInput && d.betAmtPlaceholder) {
 betAmountInput.placeholder =
 d.betAmtPlaceholder;
@@ -103,14 +241,41 @@ if (newTableName && d.newTablePlaceholder) {
 newTableName.placeholder =
 d.newTablePlaceholder;
 }
+if (orderItemInput) {
+orderItemInput.placeholder =
+d.orderItemPlaceholder || '';
+}
+if (orderCapsInput) {
+orderCapsInput.placeholder =
+d.orderCapsPlaceholder || '';
+}
+if (cashDepositInput) {
+cashDepositInput.placeholder =
+d.cashTopupPlaceholder || '';
+}
+if (prizeCostInput) {
+prizeCostInput.placeholder =
+d.prizeCostPlaceholder || '';
+}
+if (prizeTitleInput) {
+prizeTitleInput.placeholder =
+d.prizeTitlePlaceholder || '';
+}
+if (paradeGiftInput) {
+paradeGiftInput.placeholder =
+d.giftNamePlaceholder || '';
+}
 if (btnHostLang) {
 btnHostLang.innerHTML =
 getLangBtnLabel(lang);
 }
+lastPubsSig = '';
+lastOrderSig = '';
+lastPrizeSig = '';
 }
 
 // build custom touch selector around select
-// avoids native mobile picker blinking on poll
+// avoids native mobile picker blinking
 function initCustomSelect(selectEl) {
 if (!selectEl || selectEl._custom) return;
 selectEl.style.display = 'none';
@@ -207,6 +372,7 @@ function syncSelect(selectEl, items) {
 if (!selectEl) return;
 initCustomSelect(selectEl);
 
+var d = getDict();
 var curVal = selectEl.value;
 var opts = selectEl.options;
 var sameValues =
@@ -260,7 +426,7 @@ if (c.rows.length !== items.length) {
 c.menu.innerHTML = '';
 c.rows = [];
 for (var r = 0; r < items.length; r++) {
-(function (idx) {
+(function () {
 var row = document.createElement('div');
 row.className = 'customSelectOpt';
 row.onclick = function (ev) {
@@ -285,7 +451,7 @@ closeAllCustomSelects();
 };
 c.menu.appendChild(row);
 c.rows.push(row);
-})(r);
+})();
 }
 }
 
@@ -311,8 +477,11 @@ activeText = it.text;
 }
 }
 
-if (!activeText && items.length > 0) {
-activeText = items[0].text;
+if (!activeText) {
+activeText =
+items.length > 0
+? items[0].text
+: d.chooseOpt || '—';
 }
 if (c.label.textContent !== activeText) {
 c.label.textContent = activeText;
@@ -320,8 +489,8 @@ c.label.textContent = activeText;
 }
 
 // send action payload to server api
-// we post json and refresh ui from reply
-function sendAction(payload) {
+// posts json and refreshes ui from reply
+function sendAction(payload, cb) {
 var xhr = new XMLHttpRequest();
 xhr.open('POST', '/api/action', true);
 xhr.setRequestHeader(
@@ -340,6 +509,7 @@ if (resp.state) {
 saveHostBackup(resp.state);
 renderHost(resp.state);
 }
+if (cb) cb(resp);
 } catch (e) {
 // skip json error
 // next poll will sync
@@ -350,7 +520,7 @@ xhr.send(JSON.stringify(payload));
 }
 
 // format balance label for host selects
-// we show caps or cash currency
+// shows caps or cash currency
 function fmtMoney(val, mode) {
 var d = getDict();
 var v = Math.round(val || 0);
@@ -359,8 +529,212 @@ return mode === 'CASH'
 : v + (d.curCaps || ' CAPS');
 }
 
+// update parade bonus mode tab buttons
+// toggles gift text input visibility
+function syncParadeModeUi() {
+if (draftParadeMode === 'GIFT') {
+tabParade20.className =
+'btn btnSmallTab';
+tabParadeGift.className =
+'btn btnSmallTab activeTab';
+paradeGiftInputWrap.className =
+'inputRow';
+} else {
+tabParade20.className =
+'btn btnSmallTab activeTab';
+tabParadeGift.className =
+'btn btnSmallTab';
+paradeGiftInputWrap.className =
+'inputRow hidden';
+}
+}
+
+// render saved pubs list on selector view
+// shows only add pub button when empty
+function renderPubSelector(s) {
+var d = getDict();
+var pubs = s.pubsSummary || [];
+var sig = JSON.stringify(pubs) +
+'_' +
+(s.lang || 'en');
+
+if (pubs.length === 0) {
+savedPubsList.innerHTML = '';
+exportSelectWrap.className = 'hidden';
+lastPubsSig = sig;
+return;
+}
+
+exportSelectWrap.className = '';
+if (sig === lastPubsSig) return;
+lastPubsSig = sig;
+
+savedPubsList.innerHTML = '';
+for (var i = 0; i < pubs.length; i++) {
+(function (pub) {
+var row = document.createElement('div');
+row.className = 'pubItemRow';
+
+var info = document.createElement('div');
+var title = document.createElement('div');
+title.className = 'pubItemTitle';
+title.textContent = pub.name;
+
+var sub = document.createElement('div');
+sub.className = 'pubItemSub';
+sub.textContent =
+d.pubBadge +
+pub.pubSeed +
+' · ' +
+d.tourNo +
+(pub.tournamentNumber || 1);
+
+info.appendChild(title);
+info.appendChild(sub);
+
+var openBtn =
+document.createElement('button');
+openBtn.type = 'button';
+openBtn.className = 'btn btnBlue';
+openBtn.textContent =
+d.btnSelectPub || 'OPEN';
+openBtn.onclick = function () {
+sendAction({
+type: 'select_pub',
+pubId: pub.id
+});
+};
+
+row.appendChild(info);
+row.appendChild(openBtn);
+savedPubsList.appendChild(row);
+})(pubs[i]);
+}
+}
+
+// render purchase bonus grid and quick buttons
+// lets host credit caps or delete items
+function renderOrderGridSection(s) {
+var d = getDict();
+var items = s.orderGrid || [];
+var sig =
+JSON.stringify(items) +
+'_' +
+s.gameMode +
+'_' +
+(s.lang || 'en');
+if (sig === lastOrderSig) return;
+lastOrderSig = sig;
+
+pubOrderQuickBtns.innerHTML = '';
+orderGridList.innerHTML = '';
+
+if (items.length === 0) {
+var hint = document.createElement('div');
+hint.className = 'emptyHintBox';
+hint.textContent =
+d.noOrderItemsHint || '';
+pubOrderQuickBtns.appendChild(hint);
+return;
+}
+
+for (var i = 0; i < items.length; i++) {
+(function (item) {
+var qBtn =
+document.createElement('button');
+qBtn.type = 'button';
+qBtn.className = 'quickOrderBtn';
+qBtn.textContent =
+'+' +
+item.title +
+' (+' +
+item.caps +
+(d.curCaps || ' CAPS') +
+')';
+qBtn.onclick = function () {
+var tId = parseInt(selectTable.value, 10);
+if (!tId) return;
+sendAction({
+type: 'add_credit',
+tableId: tId,
+delta: item.caps
+});
+};
+pubOrderQuickBtns.appendChild(qBtn);
+
+var row = document.createElement('div');
+row.className = 'cfgRow';
+var txt = document.createElement('span');
+txt.innerHTML =
+item.title +
+' → <b>+' +
+item.caps +
+(d.curCaps || ' CAPS') +
+'</b>';
+
+var del = document.createElement('button');
+del.type = 'button';
+del.className = 'cfgDelBtn';
+del.textContent = '✕';
+del.onclick = function () {
+sendAction({
+type: 'delete_order_item',
+itemId: item.id
+});
+};
+
+row.appendChild(txt);
+row.appendChild(del);
+orderGridList.appendChild(row);
+})(items[i]);
+}
+}
+
+// render prize showcase grid in host panel
+// lets host add or remove pub prizes
+function renderPrizeGridSection(s) {
+var d = getDict();
+var prizes = s.prizes || [];
+var sig =
+JSON.stringify(prizes) +
+'_' +
+(s.lang || 'en');
+if (sig === lastPrizeSig) return;
+lastPrizeSig = sig;
+
+prizeGridList.innerHTML = '';
+for (var i = 0; i < prizes.length; i++) {
+(function (pr) {
+var row = document.createElement('div');
+row.className = 'cfgRow';
+var txt = document.createElement('span');
+txt.innerHTML =
+'<b>' +
+pr.cost +
+(d.curCaps || ' CAPS') +
+'</b> → ' +
+pr.title;
+
+var del = document.createElement('button');
+del.type = 'button';
+del.className = 'cfgDelBtn';
+del.textContent = '✕';
+del.onclick = function () {
+sendAction({
+type: 'delete_prize_item',
+prizeId: pr.id
+});
+};
+
+row.appendChild(txt);
+row.appendChild(del);
+prizeGridList.appendChild(row);
+})(prizes[i]);
+}
+}
+
 // update host controller dom from state
-// we keep dropdown selections stable
+// switches between pub selector and work view
 function renderHost(s) {
 if (!s) return;
 lastState = s;
@@ -372,6 +746,44 @@ applyHostTranslations(lang);
 }
 
 var d = getDict();
+
+if (tvNetBarUrl) {
+var netUrl =
+s.lanUrl &&
+s.lanUrl.indexOf('127.0.0.1') === -1
+? s.lanUrl
+: window.location.origin;
+tvNetBarUrl.textContent = netUrl;
+}
+
+if (s.noPubSelected || !s.pubId) {
+pubSelectView.className = '';
+pubWorkView.className = 'hidden';
+lastPubIdSeen = '';
+renderPubSelector(s);
+return;
+}
+
+pubSelectView.className = 'hidden';
+pubWorkView.className = '';
+
+if (s.pubId !== lastPubIdSeen) {
+lastPubIdSeen = s.pubId;
+draftParadeMode =
+s.paradeBonusType || 'PERCENT_20';
+paradeGiftInput.value =
+s.paradeGiftText || '';
+paradeBonusMsg.className =
+'cfgMsg hidden';
+syncParadeModeUi();
+}
+
+var hdrEl =
+document.getElementById('hostHeaderTitle');
+if (hdrEl) {
+hdrEl.textContent =
+s.pubName || d.hostHeader;
+}
 
 tourBadge.innerHTML =
 d.tourNo +
@@ -395,12 +807,20 @@ btnLiveToggle.innerHTML = s.allowLiveBets
 ? d.liveBtnOn
 : d.liveBtnOff;
 
+var isGiftParade =
+s.paradeBonusType === 'GIFT' &&
+Boolean(s.paradeGiftText);
+
 var m =
 s.matches &&
 s.matches[s.currentMatchIndex];
 if (s.tvScreen === 'PARADE' && s.parade) {
 if (s.parade.finished) {
-boutTitle.innerHTML = d.paradeDoneHostTitle;
+boutTitle.innerHTML = isGiftParade
+? d.paradeDoneHostTitleGift +
+s.paradeGiftText.toUpperCase() +
+')'
+: d.paradeDoneHostTitle;
 boutSub.innerHTML = d.paradeDoneHostSub;
 } else {
 var pk =
@@ -503,7 +923,6 @@ btnStartStep.innerHTML = d.btnStartBout;
 // update economy labels by mode
 // switches between pub caps and cash bank
 var isCash = s.gameMode === 'CASH';
-var curSym = d.curCash || ' $';
 document.getElementById(
 'economySectionTitle'
 ).innerHTML = isCash
@@ -514,26 +933,21 @@ document.getElementById(
 ).innerHTML = isCash
 ? d.creditCashLbl
 : d.creditPubLbl;
-document.getElementById(
-'btnAddDrink'
-).innerHTML = isCash
-? '+1' + curSym
-: d.addDrinkPub;
-document.getElementById(
-'btnAddFood'
-).innerHTML = isCash
-? '+3' + curSym
-: d.addFoodPub;
-document.getElementById(
-'btnAddSet'
-).innerHTML = isCash
-? '+5' + curSym
-: d.addSetPub;
+
+pubOrderQuickBtns.className = isCash
+? 'quickOrderWrap hidden'
+: 'quickOrderWrap';
+cashDepositRow.className = isCash
+? 'inputRow'
+: 'inputRow hidden';
 document.getElementById(
 'prizeRedeemBlock'
 ).style.display = isCash
 ? 'none'
 : 'block';
+
+renderOrderGridSection(s);
+renderPrizeGridSection(s);
 
 // populate tables dropdown preserving value
 // formats each table with current balance
@@ -553,22 +967,29 @@ fmtMoney(tb.balance, s.gameMode) +
 syncSelect(selectTable, tItems);
 
 // format knight odd with optional +20% bonus
-// keeps 0.1 step and +0.2 minimum boost
+// keeps base odd when gift mode is active
 function fmtHostOdd(rawOdd, isParade) {
 var b = parseFloat(rawOdd) || 1.9;
-if (!isParade) return b.toFixed(1);
+if (!isParade || isGiftParade) {
+return b.toFixed(1);
+}
 var boosted =
 Math.round(b * 1.2 * 10) / 10;
 return Math.max(b + 0.2, boosted).toFixed(1);
 }
 
 // populate knights dropdown by bet mode
-// adds +20% bonus tag during parade
+// adds +20% or gift tag during parade
 var kItems = [];
 var isParade = s.tvScreen === 'PARADE';
-var bonusLabel = isParade
-? d.bonusTag20
-: '';
+var bonusLabel = '';
+if (isParade) {
+bonusLabel = isGiftParade
+? d.bonusTagGift +
+s.paradeGiftText +
+']'
+: d.bonusTag20;
+}
 
 if (betMode === 'MATCH' && m && m.k1 && m.k2) {
 kItems.push({
@@ -607,7 +1028,7 @@ bonusLabel
 syncSelect(selectKnight, kItems);
 
 // populate pub prizes dropdown
-// lists localized prizes and caps cost
+// lists configured prizes and caps cost
 var pItems = [];
 var prizes = s.prizes || [];
 for (var p = 0; p < prizes.length; p++) {
@@ -625,13 +1046,58 @@ d.curCaps +
 syncSelect(selectPrize, pItems);
 }
 
-var HOST_BACKUP_KEY = 'kt_active_backup_v2';
+// download complete multi-pub json backup
+// protects pub history across reinstalls
+function exportAllDataJson() {
+var xhr = new XMLHttpRequest();
+xhr.open('GET', '/api/export', true);
+xhr.onreadystatechange = function () {
+if (xhr.readyState === 4) {
+var jsonStr = '';
+if (xhr.status === 200 && xhr.responseText) {
+jsonStr = xhr.responseText;
+} else if (
+lastState &&
+lastState.storeBackup
+) {
+jsonStr = JSON.stringify(
+lastState.storeBackup,
+null,
+2
+);
+}
+if (!jsonStr) return;
+var blob = new Blob([jsonStr], {
+type: 'application/json;charset=utf-8'
+});
+var url = URL.createObjectURL(blob);
+var a = document.createElement('a');
+var dt = new Date()
+.toISOString()
+.slice(0, 10);
+a.href = url;
+a.download =
+'knight_tournament_backup_' +
+dt +
+'.json';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+setTimeout(function () {
+URL.revokeObjectURL(url);
+}, 1500);
+}
+};
+xhr.send();
+}
+
+var HOST_BACKUP_KEY = 'kt_active_backup_v3';
 var hostTriedRestore = false;
 
 // save latest state snapshot on host device
-// keeps mid-game backup on phone and android
+// keeps multi-pub backup on phone storage
 function saveHostBackup(s) {
-if (!s || !s.matches) return;
+if (!s) return;
 try {
 window.localStorage.setItem(
 HOST_BACKUP_KEY,
@@ -654,35 +1120,22 @@ return null;
 }
 }
 
-// restore mid-game backup if server reset
+// restore multi-pub backup if server reset
 // syncs phone storage back to server state
 function checkHostRecovery(srvState) {
 if (hostTriedRestore || !srvState) {
 return false;
 }
 var cached = loadHostBackup();
-if (
-!cached ||
-!cached.matches ||
-cached.pubSeed !== srvState.pubSeed
-) {
-return false;
-}
-var srvFresh =
-srvState.tournamentNumber <= 1 &&
-srvState.version <= 2 &&
-srvState.tvScreen === 'PARADE' &&
-srvState.parade &&
-!srvState.parade.finished &&
-srvState.parade.currentIndex === 0 &&
-(srvState.activeBets || []).length === 0;
-var clientAhead =
-cached.tournamentNumber >
-srvState.tournamentNumber ||
-cached.version > srvState.version + 2 ||
-cached.tvScreen !== 'PARADE';
+if (!cached) return false;
 
-if (srvFresh && clientAhead) {
+if (
+srvState.noPubSelected &&
+(srvState.pubsSummary || []).length === 0 &&
+cached.storeBackup &&
+Array.isArray(cached.storeBackup.pubs) &&
+cached.storeBackup.pubs.length > 0
+) {
 hostTriedRestore = true;
 sendAction({
 type: 'restore_snapshot',
@@ -717,6 +1170,63 @@ renderHost(s);
 };
 xhr.send();
 }
+
+// bind pub creation and selection controls
+// opens form when add pub button tapped
+document.getElementById(
+'btnShowAddPub'
+).onclick = function () {
+isCreatingPub = true;
+addPubBtnWrap.className =
+'card formCard hidden';
+createPubFormCard.className =
+'card formCard';
+newPubNameInput.focus();
+};
+
+document.getElementById(
+'btnCancelCreatePub'
+).onclick = function () {
+isCreatingPub = false;
+addPubBtnWrap.className = 'card formCard';
+createPubFormCard.className =
+'card formCard hidden';
+};
+
+document.getElementById(
+'btnConfirmCreatePub'
+).onclick = function () {
+var pName = newPubNameInput.value.trim();
+if (!pName) {
+newPubNameInput.focus();
+return;
+}
+var pSeed = newPubSeedInput.value.trim();
+isCreatingPub = false;
+addPubBtnWrap.className = 'card formCard';
+createPubFormCard.className =
+'card formCard hidden';
+newPubNameInput.value = '';
+newPubSeedInput.value = '';
+sendAction({
+type: 'create_pub',
+name: pName,
+seed: pSeed
+});
+};
+
+document.getElementById(
+'btnSwitchPub'
+).onclick = function () {
+sendAction({ type: 'unselect_pub' });
+};
+
+document.getElementById(
+'btnExportSelect'
+).onclick = exportAllDataJson;
+document.getElementById(
+'btnExportWork'
+).onclick = exportAllDataJson;
 
 // bind button click listeners on phone
 // sends presenter commands to server
@@ -803,45 +1313,110 @@ betType: betMode
 });
 };
 
-// bind drink and deposit credit buttons
-// awards 1 3 or 5 caps to selected table
+// bind cash deposit and grid item buttons
+// adds items prizes and tables to pub
 document.getElementById(
-'btnAddDrink'
+'btnAddCashDeposit'
 ).onclick = function () {
+var tId = parseInt(selectTable.value, 10);
+var delta =
+parseInt(cashDepositInput.value, 10) || 0;
+if (!tId || delta <= 0) return;
 sendAction({
 type: 'add_credit',
-tableId: parseInt(selectTable.value, 10),
-delta: 1
+tableId: tId,
+delta: delta
 });
 };
 
 document.getElementById(
-'btnAddFood'
+'btnAddOrderItem'
 ).onclick = function () {
+var title = orderItemInput.value.trim();
+var caps =
+parseInt(orderCapsInput.value, 10) || 0;
+if (!title || caps <= 0) return;
 sendAction({
-type: 'add_credit',
-tableId: parseInt(selectTable.value, 10),
-delta: 3
+type: 'add_order_item',
+title: title,
+caps: caps
 });
+orderItemInput.value = '';
+orderCapsInput.value = '';
 };
 
 document.getElementById(
-'btnAddSet'
+'btnAddPrizeItem'
 ).onclick = function () {
+var cost =
+parseInt(prizeCostInput.value, 10) || 0;
+var title = prizeTitleInput.value.trim();
+if (!title || cost <= 0) return;
 sendAction({
-type: 'add_credit',
-tableId: parseInt(selectTable.value, 10),
-delta: 5
+type: 'add_prize_item',
+cost: cost,
+title: title
 });
+prizeCostInput.value = '';
+prizeTitleInput.value = '';
+};
+
+tabParade20.onclick = function () {
+draftParadeMode = 'PERCENT_20';
+paradeBonusMsg.className = 'cfgMsg hidden';
+syncParadeModeUi();
+};
+
+tabParadeGift.onclick = function () {
+draftParadeMode = 'GIFT';
+paradeBonusMsg.className = 'cfgMsg hidden';
+syncParadeModeUi();
+};
+
+document.getElementById(
+'btnSaveParadeBonus'
+).onclick = function () {
+var d = getDict();
+var gTxt = paradeGiftInput.value.trim();
+if (draftParadeMode === 'GIFT' && !gTxt) {
+paradeBonusMsg.className = 'cfgMsg errMsg';
+paradeBonusMsg.textContent =
+d.giftRequiredErr || '';
+paradeGiftInput.focus();
+return;
+}
+sendAction(
+{
+type: 'save_parade_bonus',
+bonusType: draftParadeMode,
+giftText: gTxt
+},
+function (resp) {
+if (resp && resp.ok) {
+paradeBonusMsg.className =
+'cfgMsg okMsg';
+paradeBonusMsg.textContent =
+d.paradeBonusSaved || '';
+} else {
+paradeBonusMsg.className =
+'cfgMsg errMsg';
+paradeBonusMsg.textContent =
+d.giftRequiredErr || '';
+}
+}
+);
 };
 
 document.getElementById(
 'btnClaimPrize'
 ).onclick = function () {
+var tId = parseInt(selectTable.value, 10);
+var pId = parseInt(selectPrize.value, 10);
+if (!tId || !pId) return;
 sendAction({
 type: 'claim_prize',
-tableId: parseInt(selectTable.value, 10),
-prizeId: parseInt(selectPrize.value, 10)
+tableId: tId,
+prizeId: pId
 });
 };
 
@@ -879,7 +1454,7 @@ sendAction({ type: 'new_pub_seed' });
 
 // hydrate host immediately from local backup
 var initCache = loadHostBackup();
-if (initCache && initCache.matches) {
+if (initCache) {
 renderHost(initCache);
 }
 
